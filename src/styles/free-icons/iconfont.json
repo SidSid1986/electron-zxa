@@ -1,0 +1,30 @@
+{
+  "id": "5076835",
+  "name": "aijiu",
+  "font_family": "iconfont",
+  "css_prefix_text": "icon-",
+  "description": "",
+  "glyphs": [
+    {
+      "icon_id": "27072305",
+      "name": "窗口最小化",
+      "font_class": "chuangkouzuixiaohua",
+      "unicode": "e7b4",
+      "unicode_decimal": 59316
+    },
+    {
+      "icon_id": "7065355",
+      "name": "删除_line",
+      "font_class": "delete_line",
+      "unicode": "e666",
+      "unicode_decimal": 58982
+    },
+    {
+      "icon_id": "28410459",
+      "name": "窗口最大化",
+      "font_class": "chuangkouzuidahua",
+      "unicode": "e65b",
+      "unicode_decimal": 58971
+    }
+  ]
+}
