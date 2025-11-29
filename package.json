@@ -41,11 +41,13 @@
     "asar": true,
     "asarUnpack": [
       "**/*.node",
-      "**/*.dll"
+      "**/*.dll",
+      "dist/**/*",
+      "node_modules/element-plus/**/*"
     ],
     "mac": {
       "category": "public.app-category.utilities",
-      "icon": "public/home.png",
+      "icon": "public/home.ico",
       "target": [
         "dmg",
         "zip"
@@ -66,7 +68,7 @@
           ]
         }
       ],
-      "icon": "public/home.png",
+      "icon": "public/home.ico",
       "requestedExecutionLevel": "highestAvailable",
       "artifactName": "${productName}-${version}-setup.${ext}",
       "executableName": "紫小艾"
@@ -77,7 +79,7 @@
         "deb",
         "rpm"
       ],
-      "icon": "public/home.png"
+      "icon": "public/home.ico"
     },
     "nsis": {
       "oneClick": false,
@@ -85,9 +87,9 @@
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "紫小艾",
-      "installerIcon": "public/home.png",
-      "uninstallerIcon": "public/home.png",
-      "installerHeaderIcon": "public/home.png",
+      "installerIcon": "public/home.ico",
+      "uninstallerIcon": "public/home.ico",
+      "installerHeaderIcon": "public/home.ico",
       "license": "LICENSE.txt",
       "artifactName": "${productName}-${version}-setup.${ext}"
     }

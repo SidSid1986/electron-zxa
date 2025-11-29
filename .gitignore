@@ -10,7 +10,7 @@ docs/_book
 test/
 
 node_modules/
-electron-dist/
+electron_dist/
 dist/
 package-lock.json
 *.zip
