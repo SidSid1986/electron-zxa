@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-09-28 16:34:05
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-11-29 10:33:34
+ * @LastEditTime: 2025-12-01 14:56:41
  * @FilePath: \ai\src\router\index.js
  * @Description:
  */
@@ -25,6 +25,17 @@ const routes = [
     path: "/home",
     name: "Home",
     component: () => import("@/views/home.vue"),
+  },
+
+  {
+    path: "/check",
+    name: "Check",
+    component: () => import("@/views/check.vue"),
+  },
+  {
+    path: "/main",
+    name: "Main",
+    component: () => import("@/views/main.vue"),
   },
 ];
 

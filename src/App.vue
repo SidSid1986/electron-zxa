@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-11-29 10:30:03
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-01 09:16:54
+ * @LastEditTime: 2025-12-01 16:04:56
  * @FilePath: \ai\src\App.vue
  * @Description: 
 -->
@@ -45,7 +45,7 @@ onUnmounted(() => {
 <style>
 /* 原有样式 */
 .main-content {
-  min-height: 96vh;
+  height: 96vh;
   box-sizing: border-box;
   /* transition: all 0.3s ease; */
   /* overflow: hidden ; */

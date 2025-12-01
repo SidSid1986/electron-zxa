@@ -4,7 +4,7 @@
  * @LastEditors: Sid Li
  * @LastEditTime: 2025-11-29 13:41:22
  * @FilePath: \ai\vite.config.js
- * @Description: 
+ * @Description:
  */
 import { defineConfig, loadEnv } from "vite";
 import vue from "@vitejs/plugin-vue";
@@ -79,7 +79,7 @@ export default ({ mode }) => {
       }),
     ],
 
-    base: mode === 'production' ? './' : '/', // 关键修改：生产环境用相对路径，开发环境用绝对路径
+    base: mode === "production" ? "./" : "/", // 关键修改：生产环境用相对路径，开发环境用绝对路径
     server: {
       host: "0.0.0.0", // 监听所有网络接口
       port: 5173, // 端口号
@@ -100,11 +100,11 @@ export default ({ mode }) => {
       rollupOptions: {
         output: {
           // 确保静态资源路径正确
-          assetFileNames: 'assets/[name].[hash].[ext]',
-          chunkFileNames: 'assets/[name].[hash].js',
-          entryFileNames: 'assets/[name].[hash].js',
-        }
-      }
+          assetFileNames: "assets/[name].[hash].[ext]",
+          chunkFileNames: "assets/[name].[hash].js",
+          entryFileNames: "assets/[name].[hash].js",
+        },
+      },
     },
     assetsInclude: ["**/*.png", "**/*.jpg", "**/*.jpeg", "**/*.gif"],
     configureWebpack: {

@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-01 08:40:17
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-01 10:06:52
+ * @LastEditTime: 2025-12-01 14:47:19
  * @FilePath: \ai\src\views\home.vue
  * @Description: 
 -->
@@ -40,6 +40,8 @@
 
 <script setup>
 import { ref, reactive, onMounted, computed } from "vue";
+import { useRouter } from "vue-router";
+const router = useRouter();
 
 // 连接状态
 const isConnected = ref(false);
@@ -57,6 +59,8 @@ const connectDevice = () => {
     // 模拟连接成功
     setTimeout(() => {
       isConnected.value = true;
+
+      router.push("/check");
     }, 500);
   }
 };
