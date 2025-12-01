@@ -21,6 +21,11 @@ const routes = [
     name: "Load",
     component: () => import("@/views/load.vue"),
   },
+  {
+    path: "/home",
+    name: "Home",
+    component: () => import("@/views/home.vue"),
+  },
 ];
 
 // 创建路由实例

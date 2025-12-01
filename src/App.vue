@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-11-29 10:30:03
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-11-29 15:06:01
+ * @LastEditTime: 2025-12-01 09:16:54
  * @FilePath: \ai\src\App.vue
  * @Description: 
 -->
@@ -47,8 +47,9 @@ onUnmounted(() => {
 .main-content {
   min-height: 96vh;
   box-sizing: border-box;
-  transition: all 0.3s ease;
-  overflow: hidden; /* 添加这个 */
+  /* transition: all 0.3s ease; */
+  /* overflow: hidden ; */
+  /* background: blue; */
 }
 
 .main-content.fullscreen {
@@ -59,7 +60,6 @@ onUnmounted(() => {
 html,
 body,
 #app {
-  height: 100%;
   margin: 0;
   padding: 0;
   overflow: hidden !important; /* 强制隐藏滚动条 */
