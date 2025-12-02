@@ -105,16 +105,50 @@
 
         <!-- 开始按钮容器 -->
         <div class="start-content">
-          <el-button round type="primary" class="start-btn">开始</el-button>
+          <el-button
+            round
+            type="primary"
+            class="start-btn"
+            @click="handleStartClick"
+            >开始</el-button
+          >
         </div>
       </div>
     </div>
+
+    <!-- dialog -->
+    <el-dialog v-model="dialogVisible" width="500">
+      <div class="dialog-content">
+        <div class="dialog-title">预备定穴</div>
+        <div class="dialog-text">客户在艾灸床上躺好后，点击</div>
+        <div class="dialog-text">下方【开始定穴】按钮，进行定穴</div>
+        <div class="dialog-btn-content">
+          <el-button
+            round
+            type="primary"
+            @click="cancelDialog"
+            class="title-btn"
+            >取消</el-button
+          >
+          <el-button
+            round
+            type="primary"
+            @click="confirmDialog"
+            class="title-btn"
+            >开始定穴</el-button
+          >
+        </div>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, onUnmounted, nextTick } from "vue";
 import caseData from "@/data/caseData.json";
+
+// dialog 状态
+const dialogVisible = ref(false);
 
 // 核心数据状态
 const selectedCaseId = ref(1);
@@ -196,6 +230,17 @@ const initRightHeight = () => {
     // 6. 更新滚动限制
     updateRightMaxOffset();
   }
+};
+
+const handleStartClick = () => {
+  console.log("start");
+  dialogVisible.value = true;
+};
+
+const handleStartConfirm = () => {
+  dialogVisible.value = false;
+  // 确认开始，执行开始逻辑
+  console.log("开始执行计划");
 };
 
 // 组件挂载初始化
@@ -380,6 +425,13 @@ const handleClick = (id) => {
     setTimeout(initRightHeight, 50); // 确保内容渲染完成
   });
 };
+
+const confirmDialog = () => {
+  dialogVisible.value = false;
+};
+const cancelDialog = () => {
+  dialogVisible.value = false;
+};
 </script>
 
 <style scoped lang="scss">
@@ -391,7 +443,7 @@ const handleClick = (id) => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   width: 100vw;
   height: 100vh;
   margin: 0;
@@ -412,7 +464,6 @@ const handleClick = (id) => {
   .logo {
     width: 6vw;
     height: 4vh;
-    object-fit: contain;
   }
 
   .main-top-middle {
@@ -488,8 +539,8 @@ const handleClick = (id) => {
     // 左侧容器样式（保持不变）
     .left-table {
       margin-top: 10px;
-      border-left: 1px solid #511d6a;
-      border-right: 1px solid #511d6a;
+      border-left: 1px solid #b99aca;
+      border-right: 1px solid #b99aca;
       height: 70vh;
       overflow: hidden;
       position: relative;
@@ -546,7 +597,7 @@ const handleClick = (id) => {
       }
 
       .line-one-bottom {
-        border-bottom: 1px solid #f0e6f5;
+        border-bottom: 1px solid #b99aca;
       }
 
       .line-one-selected {
@@ -559,6 +610,7 @@ const handleClick = (id) => {
   }
 
   .right {
+    padding-top: 4vh;
     width: 70%;
     height: calc(90vh - 80px);
     box-sizing: border-box;
@@ -715,6 +767,72 @@ const handleClick = (id) => {
     margin-right: 40px;
     color: #511d6a;
   }
+}
+
+// Dialog 整体文字样式：居中 + 颜色 #D4BFE1
+:deep(.el-dialog__body) {
+  // 让内部所有文本居中
+  text-align: center;
+  // 移除默认内边距，自定义更美观的间距
+  padding: 30px 20px !important;
+  background-color: #d4bfe1;
+
+  // 所有直接文本节点和 div 内文字的颜色
+}
+
+.dialog-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  height: 25vh;
+  .dialog-title {
+    font-size: 40px;
+    font-weight: bold;
+    color: #511d6a;
+    margin-bottom: 40px;
+  }
+  .dialog-text {
+    font-size: 24px;
+    font-weight: 500;
+    color: #4c1c64;
+    margin-bottom: 20px;
+  }
+}
+
+.dialog-btn-content {
+  margin-top: 40px;
+}
+
+// 按钮样式优化（可选，让按钮与文字颜色协调）
+:deep(.el-dialog .title-btn) {
+  width: 150px;
+  height: 60px;
+  border-radius: 40px;
+  margin: 0 60px;
+  font-size: 24px;
+  font-weight: bold;
+  --el-button-text-color: #fff;
+  --el-button-bg-color: #af7dc4;
+  --el-button-border-color: #af7dc4;
+  --el-button-hover-text-color: #fff;
+  --el-button-hover-bg-color: #9a6cb8;
+  --el-button-hover-border-color: #9a6cb8;
+  --el-button-active-text-color: #fff;
+  --el-button-active-bg-color: #8a5ca0;
+  --el-button-active-border-color: #8a5ca0;
+}
+
+:deep(.el-dialog) {
+  --el-dialog-bg-color: #d4bfe1 !important;
+}
+
+:deep(.el-dialog__close) {
+  color: #ffffff;
+}
+
+:deep(.el-dialog__headerbtn):hover .el-dialog__close {
+  color: #ffffff !important;
 }
 
 // 隐藏所有浏览器的滚动条
