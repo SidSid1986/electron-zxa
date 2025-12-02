@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-09-28 16:34:05
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-01 14:56:41
+ * @LastEditTime: 2025-12-02 14:41:58
  * @FilePath: \ai\src\router\index.js
  * @Description:
  */
@@ -36,6 +36,11 @@ const routes = [
     path: "/main",
     name: "Main",
     component: () => import("@/views/main.vue"),
+  },
+  {
+    path: "/point",
+    name: "Point",
+    component: () => import("@/views/point.vue"),
   },
 ];
 

@@ -6,27 +6,32 @@
       {
         "name": "悬停灸",
         "time": 1,
-        "point": "天枢穴(左)"
+        "point": "天枢穴(左)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "天枢穴(右)"
+        "point": "天枢穴(右)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 1,
-        "point": "神阙穴"
+        "point": "神阙穴",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "上巨虚穴(左)"
+        "point": "上巨虚穴(左)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "上巨虚穴(右)"
+        "point": "上巨虚穴(右)",
+        "status": 0
       }
     ]
   },
@@ -37,17 +42,20 @@
       {
         "name": "回旋灸",
         "time": 1,
-        "point": "大椎穴"
+        "point": "大椎穴",
+        "status": 0
       },
       {
         "name": "回旋灸",
         "time": 1,
-        "point": "风门穴(左)"
+        "point": "风门穴(左)",
+        "status": 0
       },
       {
         "name": "往复灸",
         "time": 2,
-        "point": "风门穴(右),肺俞穴(左)"
+        "point": "风门穴(右),肺俞穴(左)",
+        "status": 0
       }
     ]
   },
@@ -58,27 +66,32 @@
       {
         "name": "悬停灸",
         "time": 1,
-        "point": "天枢穴(左)"
+        "point": "天枢穴(左)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "天枢穴(右)"
+        "point": "天枢穴(右)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 1,
-        "point": "神阙穴"
+        "point": "神阙穴",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "上巨虚穴(左)"
+        "point": "上巨虚穴(左)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "上巨虚穴(右)"
+        "point": "上巨虚穴(右)",
+        "status": 0
       }
     ]
   },
@@ -89,27 +102,32 @@
       {
         "name": "悬停灸",
         "time": 1,
-        "point": "天枢穴(左)"
+        "point": "天枢穴(左)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "天枢穴(右)"
+        "point": "天枢穴(右)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 1,
-        "point": "神阙穴"
+        "point": "神阙穴",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "上巨虚穴(左)"
+        "point": "上巨虚穴(左)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "上巨虚穴(右)"
+        "point": "上巨虚穴(右)",
+        "status": 0
       }
     ]
   },
@@ -120,27 +138,32 @@
       {
         "name": "悬停灸",
         "time": 1,
-        "point": "天枢穴(左)"
+        "point": "天枢穴(左)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "天枢穴(右)"
+        "point": "天枢穴(右)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 1,
-        "point": "神阙穴"
+        "point": "神阙穴",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "上巨虚穴(左)"
+        "point": "上巨虚穴(左)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "上巨虚穴(右)"
+        "point": "上巨虚穴(右)",
+        "status": 0
       }
     ]
   },
@@ -151,27 +174,32 @@
       {
         "name": "悬停灸",
         "time": 1,
-        "point": "天枢穴(左)"
+        "point": "天枢穴(左)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "天枢穴(右)"
+        "point": "天枢穴(右)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 1,
-        "point": "神阙穴"
+        "point": "神阙穴",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "上巨虚穴(左)"
+        "point": "上巨虚穴(左)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "上巨虚穴(右)"
+        "point": "上巨虚穴(右)",
+        "status": 0
       }
     ]
   },
@@ -182,17 +210,20 @@
       {
         "name": "悬停灸",
         "time": 1,
-        "point": "神阙穴"
+        "point": "神阙穴",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 1,
-        "point": "足三里穴(左)"
+        "point": "足三里穴(左)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 1,
-        "point": "足三里穴(右)"
+        "point": "足三里穴(右)",
+        "status": 0
       }
     ]
   },
@@ -203,77 +234,92 @@
       {
         "name": "悬停灸",
         "time": 1,
-        "point": "天枢穴(左)"
+        "point": "天枢穴(左)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "天枢穴(右)"
+        "point": "天枢穴(右)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 1,
-        "point": "神阙穴"
+        "point": "神阙穴",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "上巨虚穴(左)"
+        "point": "上巨虚穴(左)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "上巨虚穴(右)"
+        "point": "上巨虚穴(右)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 1,
-        "point": "天枢穴(左)"
+        "point": "天枢穴(左)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "天枢穴(右)"
+        "point": "天枢穴(右)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 1,
-        "point": "神阙穴"
+        "point": "神阙穴",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "上巨虚穴(左)"
+        "point": "上巨虚穴(左)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "上巨虚穴(右)"
+        "point": "上巨虚穴(右)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 1,
-        "point": "天枢穴(左)"
+        "point": "天枢穴(左)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "天枢穴(右)"
+        "point": "天枢穴(右)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 1,
-        "point": "神阙穴"
+        "point": "神阙穴",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "上巨虚穴(左)"
+        "point": "上巨虚穴(左)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "上巨虚穴(右)"
+        "point": "上巨虚穴(右)",
+        "status": 0
       }
     ]
   },
@@ -284,27 +330,32 @@
       {
         "name": "悬停灸",
         "time": 1,
-        "point": "天枢穴(左)"
+        "point": "天枢穴(左)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "天枢穴(右)"
+        "point": "天枢穴(右)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 1,
-        "point": "神阙穴"
+        "point": "神阙穴",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "上巨虚穴(左)"
+        "point": "上巨虚穴(左)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "上巨虚穴(右)"
+        "point": "上巨虚穴(右)",
+        "status": 0
       }
     ]
   },
@@ -315,27 +366,32 @@
       {
         "name": "悬停灸",
         "time": 1,
-        "point": "天枢穴(左)"
+        "point": "天枢穴(左)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "天枢穴(右)"
+        "point": "天枢穴(右)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 1,
-        "point": "神阙穴"
+        "point": "神阙穴",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "上巨虚穴(左)"
+        "point": "上巨虚穴(左)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "上巨虚穴(右)"
+        "point": "上巨虚穴(右)",
+        "status": 0
       }
     ]
   },
@@ -346,27 +402,32 @@
       {
         "name": "悬停灸",
         "time": 1,
-        "point": "天枢穴(左)"
+        "point": "天枢穴(左)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "天枢穴(右)"
+        "point": "天枢穴(右)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 1,
-        "point": "神阙穴"
+        "point": "神阙穴",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "上巨虚穴(左)"
+        "point": "上巨虚穴(左)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "上巨虚穴(右)"
+        "point": "上巨虚穴(右)",
+        "status": 0
       }
     ]
   },
@@ -377,27 +438,32 @@
       {
         "name": "悬停灸",
         "time": 1,
-        "point": "天枢穴(左)"
+        "point": "天枢穴(左)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "天枢穴(右)"
+        "point": "天枢穴(右)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 1,
-        "point": "神阙穴"
+        "point": "神阙穴",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "上巨虚穴(左)"
+        "point": "上巨虚穴(左)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "上巨虚穴(右)"
+        "point": "上巨虚穴(右)",
+        "status": 0
       }
     ]
   },
@@ -408,27 +474,32 @@
       {
         "name": "悬停灸",
         "time": 1,
-        "point": "天枢穴(左)"
+        "point": "天枢穴(左)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "天枢穴(右)"
+        "point": "天枢穴(右)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 1,
-        "point": "神阙穴"
+        "point": "神阙穴",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "上巨虚穴(左)"
+        "point": "上巨虚穴(左)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "上巨虚穴(右)"
+        "point": "上巨虚穴(右)",
+        "status": 0
       }
     ]
   },
@@ -439,27 +510,32 @@
       {
         "name": "悬停灸",
         "time": 1,
-        "point": "天枢穴(左)"
+        "point": "天枢穴(左)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "天枢穴(右)"
+        "point": "天枢穴(右)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 1,
-        "point": "神阙穴"
+        "point": "神阙穴",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "上巨虚穴(左)"
+        "point": "上巨虚穴(左)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "上巨虚穴(右)"
+        "point": "上巨虚穴(右)",
+        "status": 0
       }
     ]
   },
@@ -470,27 +546,32 @@
       {
         "name": "悬停灸",
         "time": 1,
-        "point": "天枢穴(左)"
+        "point": "天枢穴(左)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "天枢穴(右)"
+        "point": "天枢穴(右)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 1,
-        "point": "神阙穴"
+        "point": "神阙穴",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "上巨虚穴(左)"
+        "point": "上巨虚穴(左)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "上巨虚穴(右)"
+        "point": "上巨虚穴(右)",
+        "status": 0
       }
     ]
   },
@@ -501,27 +582,32 @@
       {
         "name": "悬停灸",
         "time": 1,
-        "point": "天枢穴(左)"
+        "point": "天枢穴(左)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "天枢穴(右)"
+        "point": "天枢穴(右)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 1,
-        "point": "神阙穴"
+        "point": "神阙穴",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "上巨虚穴(左)"
+        "point": "上巨虚穴(左)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "上巨虚穴(右)"
+        "point": "上巨虚穴(右)",
+        "status": 0
       }
     ]
   },
@@ -532,27 +618,32 @@
       {
         "name": "悬停灸",
         "time": 1,
-        "point": "天枢穴(左)"
+        "point": "天枢穴(左)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "天枢穴(右)"
+        "point": "天枢穴(右)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 1,
-        "point": "神阙穴"
+        "point": "神阙穴",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "上巨虚穴(左)"
+        "point": "上巨虚穴(左)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "上巨虚穴(右)"
+        "point": "上巨虚穴(右)",
+        "status": 0
       }
     ]
   },
@@ -563,27 +654,32 @@
       {
         "name": "悬停灸",
         "time": 1,
-        "point": "天枢穴(左)"
+        "point": "天枢穴(左)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "天枢穴(右)"
+        "point": "天枢穴(右)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 1,
-        "point": "神阙穴"
+        "point": "神阙穴",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "上巨虚穴(左)"
+        "point": "上巨虚穴(左)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "上巨虚穴(右)"
+        "point": "上巨虚穴(右)",
+        "status": 0
       }
     ]
   },
@@ -594,27 +690,32 @@
       {
         "name": "悬停灸",
         "time": 1,
-        "point": "天枢穴(左)"
+        "point": "天枢穴(左)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "天枢穴(右)"
+        "point": "天枢穴(右)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 1,
-        "point": "神阙穴"
+        "point": "神阙穴",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "上巨虚穴(左)"
+        "point": "上巨虚穴(左)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "上巨虚穴(右)"
+        "point": "上巨虚穴(右)",
+        "status": 0
       }
     ]
   },
@@ -625,27 +726,32 @@
       {
         "name": "悬停灸",
         "time": 1,
-        "point": "天枢穴(左)"
+        "point": "天枢穴(左)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "天枢穴(右)"
+        "point": "天枢穴(右)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 1,
-        "point": "神阙穴"
+        "point": "神阙穴",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "上巨虚穴(左)"
+        "point": "上巨虚穴(左)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "上巨虚穴(右)"
+        "point": "上巨虚穴(右)",
+        "status": 0
       }
     ]
   },
@@ -656,27 +762,32 @@
       {
         "name": "悬停灸",
         "time": 1,
-        "point": "天枢穴(左)"
+        "point": "天枢穴(左)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "天枢穴(右)"
+        "point": "天枢穴(右)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 1,
-        "point": "神阙穴"
+        "point": "神阙穴",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "上巨虚穴(左)"
+        "point": "上巨虚穴(左)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "上巨虚穴(右)"
+        "point": "上巨虚穴(右)",
+        "status": 0
       }
     ]
   },
@@ -687,27 +798,32 @@
       {
         "name": "悬停灸",
         "time": 1,
-        "point": "天枢穴(左)"
+        "point": "天枢穴(左)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "天枢穴(右)"
+        "point": "天枢穴(右)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 1,
-        "point": "神阙穴"
+        "point": "神阙穴",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "上巨虚穴(左)"
+        "point": "上巨虚穴(左)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "上巨虚穴(右)"
+        "point": "上巨虚穴(右)",
+        "status": 0
       }
     ]
   },
@@ -718,27 +834,32 @@
       {
         "name": "悬停灸",
         "time": 1,
-        "point": "天枢穴(左)"
+        "point": "天枢穴(左)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "天枢穴(右)"
+        "point": "天枢穴(右)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 1,
-        "point": "神阙穴"
+        "point": "神阙穴",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "上巨虚穴(左)"
+        "point": "上巨虚穴(左)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "上巨虚穴(右)"
+        "point": "上巨虚穴(右)",
+        "status": 0
       }
     ]
   },
@@ -749,27 +870,32 @@
       {
         "name": "悬停灸",
         "time": 1,
-        "point": "天枢穴(左)"
+        "point": "天枢穴(左)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "天枢穴(右)"
+        "point": "天枢穴(右)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 1,
-        "point": "神阙穴"
+        "point": "神阙穴",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "上巨虚穴(左)"
+        "point": "上巨虚穴(左)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "上巨虚穴(右)"
+        "point": "上巨虚穴(右)",
+        "status": 0
       }
     ]
   },
@@ -780,27 +906,32 @@
       {
         "name": "悬停灸",
         "time": 1,
-        "point": "天枢穴(左)"
+        "point": "天枢穴(左)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "天枢穴(右)"
+        "point": "天枢穴(右)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 1,
-        "point": "神阙穴"
+        "point": "神阙穴",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "上巨虚穴(左)"
+        "point": "上巨虚穴(左)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "上巨虚穴(右)"
+        "point": "上巨虚穴(右)",
+        "status": 0
       }
     ]
   },
@@ -811,27 +942,32 @@
       {
         "name": "悬停灸",
         "time": 1,
-        "point": "天枢穴(左)"
+        "point": "天枢穴(左)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "天枢穴(右)"
+        "point": "天枢穴(右)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 1,
-        "point": "神阙穴"
+        "point": "神阙穴",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "上巨虚穴(左)"
+        "point": "上巨虚穴(左)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "上巨虚穴(右)"
+        "point": "上巨虚穴(右)",
+        "status": 0
       }
     ]
   },
@@ -842,27 +978,32 @@
       {
         "name": "悬停灸",
         "time": 1,
-        "point": "天枢穴(左)"
+        "point": "天枢穴(左)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "天枢穴(右)"
+        "point": "天枢穴(右)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 1,
-        "point": "神阙穴"
+        "point": "神阙穴",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "上巨虚穴(左)"
+        "point": "上巨虚穴(左)",
+        "status": 0
       },
       {
         "name": "悬停灸",
         "time": 2,
-        "point": "上巨虚穴(右)"
+        "point": "上巨虚穴(右)",
+        "status": 0
       }
     ]
   }

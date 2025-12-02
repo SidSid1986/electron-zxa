@@ -146,6 +146,8 @@
 <script setup>
 import { ref, onMounted, onUnmounted, nextTick } from "vue";
 import caseData from "@/data/caseData.json";
+import { useRouter } from "vue-router";
+const router = useRouter();
 
 // dialog 状态
 const dialogVisible = ref(false);
@@ -428,6 +430,7 @@ const handleClick = (id) => {
 
 const confirmDialog = () => {
   dialogVisible.value = false;
+  router.push(`/point?id=${selectedCaseId.value}`);
 };
 const cancelDialog = () => {
   dialogVisible.value = false;
@@ -445,7 +448,7 @@ const cancelDialog = () => {
   align-items: center;
   justify-content: flex-start;
   width: 100vw;
-  height: 100vh;
+  height: 96vh;
   margin: 0;
   padding: 0;
 }
@@ -802,6 +805,10 @@ const cancelDialog = () => {
 
 .dialog-btn-content {
   margin-top: 40px;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
 }
 
 // 按钮样式优化（可选，让按钮与文字颜色协调）
