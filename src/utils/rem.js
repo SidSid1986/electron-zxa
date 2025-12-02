@@ -6,8 +6,10 @@ export function setupRemAdaptation() {
 
   function setRootFontSize() {
     // 获取当前屏幕的可视宽度和高度（排除滚动条、导航栏）
-    const currentWidth = document.documentElement.clientWidth || window.innerWidth;
-    const currentHeight = document.documentElement.clientHeight || window.innerHeight;
+    const currentWidth =
+      document.documentElement.clientWidth || window.innerWidth;
+    const currentHeight =
+      document.documentElement.clientHeight || window.innerHeight;
 
     // 关键：按「高度比例」计算根字体（优先保证纵向视觉大小）
     // 高度比例 = 当前高度 / 设计稿高度
