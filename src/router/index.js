@@ -1,8 +1,16 @@
 /*
  * @Author: Sid Li
+ * @Date: 2025-11-29 10:30:04
+ * @LastEditors: Sid Li
+ * @LastEditTime: 2025-12-03 17:06:09
+ * @FilePath: \ai\src\router\index.js
+ * @Description:
+ */
+/*
+ * @Author: Sid Li
  * @Date: 2025-09-28 16:34:05
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-02 14:41:58
+ * @LastEditTime: 2025-12-03 09:40:05
  * @FilePath: \ai\src\router\index.js
  * @Description:
  */
@@ -41,6 +49,22 @@ const routes = [
     path: "/point",
     name: "Point",
     component: () => import("@/views/point.vue"),
+  },
+  {
+    path: "/setting",
+    name: "Setting",
+    component: () => import("@/views/setting.vue"),
+  },
+
+  {
+    path: "/userConfirm",
+    name: "userConfirm",
+    component: () => import("@/views/userConfirm.vue"),
+  },
+  {
+    path: "/treat",
+    name: "Treat",
+    component: () => import("@/views/treat.vue"),
   },
 ];
 

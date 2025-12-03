@@ -14,9 +14,12 @@
               <span class="left-nav-text">定穴中</span>
             </div>
           </div>
-          <div class="content-left-img-border">
-            <div class="content-left-img"></div>
-          </div>
+          <FuXie
+            :picType="picType"
+            :picUrl="picUrl"
+            :selectedObj="selectedObj"
+            :tableData="tableData"
+          />
         </div>
       </div>
       <div class="point-content-right">
@@ -68,7 +71,25 @@
                   <div class="table-item table-item-border">
                     {{ item.point }}
                   </div>
-                  <div class="table-item">{{ item.status }}</div>
+                  <!-- 定穴状态 0 未定穴 1 正在定穴 2 已定穴 -->
+                  <div class="table-item">
+                    <span
+                      :class="
+                        item.status == 1
+                          ? 'status-red'
+                          : item.status == 0
+                          ? 'status-blue'
+                          : 'status-green'
+                      "
+                      >{{
+                        item.status == 0
+                          ? "未定穴"
+                          : item.status == 1
+                          ? "正在定穴"
+                          : "已定穴"
+                      }}</span
+                    >
+                  </div>
                 </div>
               </div>
             </div>
@@ -78,12 +99,27 @@
           </div>
 
           <div class="right-btn">
-            <el-button class="use-btn" type="primary">取消订单</el-button>
-            <el-button class="use-btn" type="primary">使用此穴位</el-button>
+            <el-button @click="handleCancel" class="use-btn" type="primary"
+              >取消订单</el-button
+            >
+            <el-button
+              class="use-btn"
+              @click="usePoint(selectedAutoIndex)"
+              type="primary"
+              >使用此穴位</el-button
+            >
           </div>
         </div>
       </div>
     </div>
+
+    <!-- dialog -->
+    <el-dialog v-model="dialogVisible" width="500" :show-close="false">
+      <div class="dialog-content">
+        <div class="dialog-title">成功</div>
+        <div class="dialog-text">定穴完成</div>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -91,15 +127,25 @@
 // 脚本部分保持不变，无需修改
 import { ref, onMounted, computed, nextTick, onUnmounted } from "vue";
 import caseData from "@/data/caseData.json";
-import { useRoute } from "vue-router";
+import { ElMessage, ElMessageBox } from "element-plus";
+import { useRoute, useRouter } from "vue-router";
+import FuXie from "@/components/FuXie.vue";
 
+import BodyPic from "@/assets/pic/per_obverse.png";
+import LegPic from "@/assets/pic/leg_obverse.png";
+
+const router = useRouter();
 const route = useRoute();
+const basicData = ref([]);
+const picType = ref(-1);
+const picUrl = ref("");
+const dialogVisible = ref(false);
 const selectedCaseId = ref("");
 const selectedCase = ref({});
 const tableData = ref([]);
 
 const selectedAutoIndex = ref(0);
-
+const selectedObj = ref({});
 const tableIsDragging = ref(false);
 const tableStartY = ref(0);
 const tableLastY = ref(0);
@@ -114,7 +160,25 @@ const getPoint = (id) => {
   selectedCase.value = caseData.find((item) => {
     return item.id * 1 === id * 1;
   });
-  console.log(selectedCase.value);
+
+  // 初始化第一个定穴状态为正在定穴
+  selectedCase.value.plan[0].status = 1;
+
+  selectedObj.value = selectedCase.value.plan[0];
+
+  picType.value = selectedCase.value.plan[0].type;
+
+  switch (selectedCase.value.plan[0].type) {
+    case 0:
+      picUrl.value = BodyPic;
+      break;
+    case 1:
+      picUrl.value = LegPic;
+      break;
+    default:
+      break;
+  }
+
   tableData.value = selectedCase.value.plan;
 
   nextTick(() => {
@@ -207,6 +271,59 @@ const handleTableWheel = (e) => {
   tableDragOffset.value = newOffset;
 };
 
+const handleCancel = () => {
+  router.push({
+    path: "/main",
+  });
+};
+
+const usePoint = (index) => {
+  // // 检查是否是当前正在定穴的穴位
+  // if (selectedCase.value.plan[index].status !== 1) {
+  //   ElMessage.error("请先定穴到当前穴位");
+  //   return;
+  // }
+
+  // 检查是否是最后一个穴位
+  if (index === selectedCase.value.plan.length - 1) {
+    console.log("finish");
+    dialogVisible.value = true;
+    setTimeout(() => {
+      dialogVisible.value = false;
+      router.push({
+        path: "/setting",
+      });
+    }, 2000);
+  } else {
+    // 改变当前穴位的状态为已使用
+    selectedCase.value.plan[index].status = 2;
+
+    // 改变下一个穴位的状态为正在定穴
+    selectedCase.value.plan[index + 1].status = 1;
+    selectedAutoIndex.value = index + 1;
+
+    picType.value = selectedCase.value.plan[index + 1].type;
+
+    selectedObj.value = selectedCase.value.plan[index + 1];
+
+    switch (picType.value) {
+      case 0:
+        picUrl.value = BodyPic;
+        break;
+      case 1:
+        picUrl.value = LegPic;
+        break;
+      default:
+        break;
+    }
+
+    console.log(picType.value);
+
+    // 更新表格数据
+    tableData.value = selectedCase.value.plan;
+  }
+};
+
 onMounted(() => {
   console.log("组件挂载了");
   selectedCaseId.value = route.query.id;
@@ -292,7 +409,7 @@ onUnmounted(() => {
           }
           .left-nav-text-box {
             height: 8vh;
-            width: 20%;
+            min-width: 25%;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -313,21 +430,6 @@ onUnmounted(() => {
               font-weight: bold;
               color: #fff;
             }
-          }
-        }
-
-        .content-left-img-border {
-          width: 100%;
-          height: calc(82vh - 40px);
-          background-color: #fff;
-          box-sizing: border-box;
-          padding: 40px;
-
-          .content-left-img {
-            height: calc(82vh - 120px);
-            background: url("@/assets/pic/per_obverse.png") no-repeat;
-            background-position: center center;
-            background-size: 100% 100%;
           }
         }
       }
@@ -502,6 +604,83 @@ onUnmounted(() => {
       }
     }
   }
+}
+
+.status-blue {
+  width: 150px;
+  height: 50px;
+  line-height: 50px;
+  background-color: #bdbdba;
+  border-radius: 40px;
+  color: #111;
+}
+.status-red {
+  color: #ffffff;
+  width: 150px;
+  height: 50px;
+  line-height: 50px;
+  background-color: #de2b1f;
+  border-radius: 40px;
+}
+
+.status-green {
+  color: #ffffff;
+  width: 150px;
+  height: 50px;
+  line-height: 50px;
+  background-color: #6c359d;
+  border-radius: 40px;
+}
+
+// Dialog 整体文字样式：居中 + 颜色 #D4BFE1
+:deep(.el-dialog__body) {
+  // 让内部所有文本居中
+  text-align: center;
+  // 移除默认内边距，自定义更美观的间距
+  padding: 30px 20px !important;
+  background-color: #d4bfe1;
+
+  // 所有直接文本节点和 div 内文字的颜色
+}
+
+.dialog-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  height: 15vh;
+  .dialog-title {
+    font-size: 40px;
+    font-weight: bold;
+    color: #511d6a;
+    margin-bottom: 40px;
+  }
+  .dialog-text {
+    font-size: 24px;
+    font-weight: 500;
+    color: #4c1c64;
+    margin-bottom: 20px;
+  }
+}
+
+.dialog-btn-content {
+  margin-top: 40px;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+}
+
+:deep(.el-dialog) {
+  --el-dialog-bg-color: #d4bfe1 !important;
+}
+
+:deep(.el-dialog__close) {
+  color: #ffffff;
+}
+
+:deep(.el-dialog__headerbtn):hover .el-dialog__close {
+  color: #ffffff !important;
 }
 
 // 隐藏所有浏览器的滚动条

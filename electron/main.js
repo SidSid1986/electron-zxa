@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-11-29 13:33:24
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-11-29 15:44:22
+ * @LastEditTime: 2025-12-03 16:30:38
  * @FilePath: \ai\electron\main.js
  * @Description:
  */
@@ -61,7 +61,7 @@ function createWindow() {
   try {
     // 创建浏览器窗口
     mainWindow = new BrowserWindow({
-      width: 1200,
+      width: 1280,
       height: 800,
       frame: false,
       icon: path.join(__dirname, "../public/home.png"),
