@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-01 08:40:17
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-01 15:00:42
+ * @LastEditTime: 2025-12-03 17:13:32
  * @FilePath: \ai\src\views\check.vue
  * @Description: 自检页面（背景旋转，文字静止）
 -->
@@ -48,7 +48,7 @@ onMounted(() => {
  */
 const startSelfCheck = () => {
   isRotating.value = true; // 开始旋转
-  const step = 100 / (totalCheckTime / progressInterval); // 每步进度增量
+  const step = 200 / (totalCheckTime / progressInterval); // 每步进度增量
 
   // 模拟进度更新
   const progressTimer = setInterval(() => {
