@@ -72,7 +72,8 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .container {
-  height: 96vh;
+  height: 100vh;
+  // height: 96vh;
   box-sizing: border-box;
   background: url("@/assets/pic/bg01.jpg") no-repeat;
   background-position: center center;

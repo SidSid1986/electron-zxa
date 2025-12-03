@@ -2,15 +2,15 @@
  * @Author: Sid Li
  * @Date: 2025-11-29 10:30:03
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-03 17:22:17
- * @FilePath: \ai\src\App.vue
+ * @LastEditTime: 2025-12-03 19:27:13
+ * @FilePath: \electron-zxa\src\App.vue
  * @Description: 
 -->
 <!-- App.vue -->
 <template>
   <div id="app">
     <!-- 自定义标题栏 -->
-    <CustomTitleBar />
+    <div v-if="!isFullScreen"><CustomTitleBar /></div>
 
     <!-- 主内容区域（需要留出标题栏高度） -->
     <div class="main-content" :class="{ fullscreen: isFullScreen }">
@@ -45,8 +45,7 @@ onUnmounted(() => {
 <style>
 /* 原有样式 */
 .main-content {
-  border: 3px solid red;
-  height: 96vh;
+  height: 100vh;
   box-sizing: border-box;
   /* transition: all 0.3s ease; */
   /* overflow: hidden ; */
@@ -54,7 +53,7 @@ onUnmounted(() => {
 }
 
 .main-content.fullscreen {
-  min-height: 100vh;
+  height: 100vh;
 }
 
 /* 全局样式，确保没有滚动条 */

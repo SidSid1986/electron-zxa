@@ -90,7 +90,8 @@ const finishCheck = () => {
 
 <style scoped lang="scss">
 .container {
-  height: 96vh;
+  // height: 96vh;
+  height: 100vh;
   box-sizing: border-box;
   background: url("@/assets/pic/bg01.jpg") no-repeat;
   background-position: center center;

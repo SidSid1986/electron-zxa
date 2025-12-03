@@ -40,7 +40,8 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   width: 100vw;
-  height: 96vh;
+  // height: 96vh;
+  height: 100vh;
   margin: 0;
   padding: 0;
 }

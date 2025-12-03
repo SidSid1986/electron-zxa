@@ -66,7 +66,8 @@ onMounted(() => {
 .container {
   display: flex;
   width: 100%;
-  height: 96vh;
+  // height: 96vh;
+  height: 100vh;
   flex-direction: column;
   justify-content: center;
   align-items: center;
