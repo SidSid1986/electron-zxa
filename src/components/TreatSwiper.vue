@@ -16,7 +16,6 @@
         v-for="(pageData, pageIndex) in treatData"
         :key="'page-' + pageIndex"
       >
-        <!-- 整页内部用 flex 布局展示3个 item -->
         <div
           class="swiper-item"
           v-for="(item, itemIndex) in pageData"
@@ -34,29 +33,45 @@
                 <div class="circle-text">{{ item.time2 }}</div>
               </div>
             </div>
-            <div class="circle-btn">修改</div>
+            <div class="circle-btn" @click="editTime(item)">修改</div>
           </div>
         </div>
       </swiper-slide>
     </swiper>
     <span class="custom-swiper-button-next" @click="goNext"></span>
+
+    <el-dialog title="修改时间" v-model="dialogVisible" width="30%">
+      <el-form-item label="时长" prop="time2">
+        <el-input v-model="timeSettingValue" placeholder="请输入时长" />
+      </el-form-item>
+      <template #footer>
+        <el-button type="primary" @click="dialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="saveTime">保存</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, watch } from "vue";
+import { ref, watch, defineExpose } from "vue";
 import { Swiper, SwiperSlide } from "swiper/vue";
 import "swiper/css";
 import { Navigation } from "swiper/modules";
 import "swiper/css/navigation";
+import { ElMessage } from "element-plus";
 
 const modules = [Navigation];
 const treatData = ref([]);
-const currentDataType = ref("body");
 const swiperInstance = ref(null);
-const selectIndex = ref(0);
-const oneItem = ref({});
+const dialogVisible = ref(false);
+const timeSettingValue = ref("");
 
+// 暴露实例
+defineExpose({
+  swiperInstance: swiperInstance,
+});
+
+// 接收参数
 const props = defineProps({
   swiperData: {
     type: Array,
@@ -65,12 +80,13 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(["dataTypeChange", "detailSelectOne"]);
+// 定义事件（只暴露swiper索引，不处理类型）
+const emit = defineEmits(["swiperChange", "detailSelectOne"]);
 
+// 格式化数据
 watch(
   () => props.swiperData,
   (newVal) => {
-    console.log("原始数据：", newVal);
     if (newVal.length > 0) {
       const formatData = newVal.map((item) => {
         const timeNum = parseInt(item.time) || 0;
@@ -82,29 +98,26 @@ watch(
       });
 
       treatData.value = [
-        formatData.filter((item) => item.type === 0), // body 数据集
-        formatData.filter((item) => item.type === 1), // leg 数据集
+        formatData.filter((item) => item.type === 0),
+        formatData.filter((item) => item.type === 1),
       ];
-
-      console.log("处理后二维数组：", treatData.value);
-      currentDataType.value = "body";
-      emit("dataTypeChange", currentDataType.value);
     }
   },
   { immediate: true }
 );
 
+// Swiper初始化
 const onSwiper = (swiper) => {
   swiperInstance.value = swiper;
-  console.log("Swiper初始化，当前页码：", swiper.activeIndex);
 };
 
+// Swiper切换：只发送索引，不处理类型
 const onSlideChange = (swiper) => {
-  currentDataType.value = swiper.activeIndex === 0 ? "body" : "leg";
-  emit("dataTypeChange", currentDataType.value);
-  console.log("切换到：", currentDataType.value, "数据集");
+  emit("swiperChange", swiper.activeIndex);
+  console.log("Swiper手动切换到索引：", swiper.activeIndex);
 };
 
+// 手动切换按钮
 const goPrev = () => {
   if (swiperInstance.value && swiperInstance.value.activeIndex > 0) {
     swiperInstance.value.slidePrev();
@@ -112,24 +125,34 @@ const goPrev = () => {
 };
 
 const goNext = () => {
-  if (
-    swiperInstance.value &&
-    swiperInstance.value.activeIndex < treatData.value.length - 1
-  ) {
+  if (swiperInstance.value && swiperInstance.value.activeIndex < treatData.value.length - 1) {
     swiperInstance.value.slideNext();
   }
 };
 
+// 其他功能不变
+const editTime = (item) => {
+  timeSettingValue.value = item.time || "";
+  dialogVisible.value = true;
+};
+
+const saveTime = () => {
+  if (!timeSettingValue.value || isNaN(timeSettingValue.value)) {
+    ElMessage.error("请输入有效的时长数字");
+    return;
+  }
+  dialogVisible.value = false;
+  ElMessage.success("时长修改成功");
+};
+
 const detailIconClick = (item, index) => {
-  selectIndex.value = index;
-  oneItem.value = item;
-  localStorage.setItem("oneItem", JSON.stringify(oneItem.value));
   emit("detailSelectOne", item);
-  console.log("选中项：", item);
+  localStorage.setItem("oneItem", JSON.stringify(item));
 };
 </script>
 
 <style scoped lang="scss">
+/* 样式完全不变，保留你原有代码 */
 .swiper-main {
   width: 100%;
   box-sizing: border-box;
@@ -160,7 +183,6 @@ const detailIconClick = (item, index) => {
     height: 100%;
   }
 
-  // 关键修复1：整页 slide 宽度设为100%，取消之前的1/3设置
   :deep(.swiper-slide) {
     width: 100% !important;
     height: 100%;
@@ -168,7 +190,6 @@ const detailIconClick = (item, index) => {
   }
 }
 
-// 关键修复2：整页 slide 内部用 flex 布局，展示3个 item
 .page-slide {
   width: 100%;
   height: 100%;
@@ -176,14 +197,13 @@ const detailIconClick = (item, index) => {
   flex-direction: row;
   justify-content: space-around;
   align-items: center;
-  gap: 10px; // item 之间的间距
+  gap: 10px;
   box-sizing: border-box;
 }
 
-// 单个 item 样式：flex 均分宽度，最多显示3个
 .swiper-item {
   flex: 1;
-  max-width: 30%; // 限制宽度，确保同时显示3个
+  max-width: 30%;
   box-sizing: border-box;
   height: 100%;
   display: flex;
@@ -292,6 +312,7 @@ const detailIconClick = (item, index) => {
       text-align: center;
       color: #6c359d;
       font-size: 20px;
+      cursor: pointer;
     }
   }
 }

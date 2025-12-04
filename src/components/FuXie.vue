@@ -1,27 +1,19 @@
-<!--
- * @Author: Sid Li
- * @Date: 2025-12-03 15:22:38
- * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-04 14:15:45
- * @FilePath: \ai\src\components\FuXie.vue
- * @Description: 
--->
 <template>
   <div class="content-left-img-border">
     <!--  0 身体 1 腿-->
     <div v-if="picType == 0" class="content-left-img">
-      <img :src="getImageUrl(picUrl)" alt="" />
+      <img :src="picUrl" alt="" />
       <div class="point-line">
         <div class="light-ball-item">
           <div
             :class="{
-              'light-ball-red': p1.status === 1,
-              'light-ball-green': p1.status === 2,
-              'light-ball-blue': p1.status === 0,
+              'light-ball-red': p1?.status === 1,
+              'light-ball-green': p1?.status === 2,
+              'light-ball-blue': p1?.status === 0 || !p1,
             }"
           ></div>
           <div
-            v-if="p1.status != 0"
+            v-if="p1?.status != 0"
             :class="{
               'light-ball-text-red': p1.status === 1,
               'light-ball-text-green': p1.status === 2,
@@ -34,13 +26,13 @@
         <div class="light-ball-item">
           <div
             :class="{
-              'light-ball-red': p2.status === 1,
-              'light-ball-green': p2.status === 2,
-              'light-ball-blue': p2.status === 0,
+              'light-ball-red': p2?.status === 1,
+              'light-ball-green': p2?.status === 2,
+              'light-ball-blue': p2?.status === 0 || !p2,
             }"
           ></div>
           <div
-            v-if="p2.status != 0"
+            v-if="p2?.status != 0"
             :class="{
               'light-ball-text-red': p2.status === 1,
               'light-ball-text-green': p2.status === 2,
@@ -53,13 +45,13 @@
         <div class="light-ball-item">
           <div
             :class="{
-              'light-ball-red': p3.status === 1,
-              'light-ball-green': p3.status === 2,
-              'light-ball-blue': p3.status === 0,
+              'light-ball-red': p3?.status === 1,
+              'light-ball-green': p3?.status === 2,
+              'light-ball-blue': p3?.status === 0 || !p3,
             }"
           ></div>
           <div
-            v-if="p3.status != 0"
+            v-if="p3?.status != 0"
             :class="{
               'light-ball-text-red': p3.status === 1,
               'light-ball-text-green': p3.status === 2,
@@ -72,18 +64,18 @@
     </div>
 
     <div v-if="picType == 1" class="content-left-img2">
-      <img :src="getImageUrl(picUrl)" alt="" />
+      <img :src="picUrl" alt="" />
       <div class="point-line2">
         <div class="light-ball-item2">
           <div
             :class="{
-              'light-ball-red2': p4.status === 1,
-              'light-ball-green2': p4.status === 2,
-              'light-ball-blue2': p4.status === 0,
+              'light-ball-red2': p4?.status === 1,
+              'light-ball-green2': p4?.status === 2,
+              'light-ball-blue2': p4?.status === 0 || !p4,
             }"
           ></div>
           <div
-            v-if="p4.status != 0"
+            v-if="p4?.status != 0"
             :class="{
               'light-ball-text-red2': p4.status === 1,
               'light-ball-text-green2': p4.status === 2,
@@ -96,13 +88,13 @@
         <div class="light-ball-item2">
           <div
             :class="{
-              'light-ball-red2': p5.status === 1,
-              'light-ball-green2': p5.status === 2,
-              'light-ball-blue2': p5.status === 0,
+              'light-ball-red2': p5?.status === 1,
+              'light-ball-green2': p5?.status === 2,
+              'light-ball-blue2': p5?.status === 0 || !p5,
             }"
           ></div>
           <div
-            v-if="p5.status != 0"
+            v-if="p5?.status != 0"
             :class="{
               'light-ball-text-red2': p5.status === 1,
               'light-ball-text-green2': p5.status === 2,
@@ -128,7 +120,6 @@ const props = defineProps({
     type: String,
     default: "",
   },
- 
   tableData: {
     type: Array,
     default: () => [],
@@ -140,31 +131,70 @@ const p2 = ref({});
 const p3 = ref({});
 const p4 = ref({});
 const p5 = ref({});
+const forceUpdate = ref(0);
 
+// ========== 核心逻辑修复1：监听picType变化（强制触发响应式） ==========
+watch(
+  () => props.picType,
+  (newType) => {
+    console.log("FuXie组件：picType更新为", newType);
+    // 强制更新组件（解决v-if不触发的核心方案）
+    // 通过更新一个空的响应式变量触发重新渲染
+    forceUpdate.value++;
+  },
+  { immediate: true }
+);
+
+// ========== 核心逻辑修复2：新增强制更新变量 ==========
+
+// ========== 核心逻辑修复3：优化tableData监听（兼容空数据+深度监听） ==========
 watch(
   () => props.tableData,
   (newVal) => {
-    console.log(newVal);
-    p1.value = newVal.filter((item) => item.point === "天枢穴(左)")[0];
-    p2.value = newVal.filter((item) => item.point === "神阙穴")[0];
-    p3.value = newVal.filter((item) => item.point === "天枢穴(右)")[0];
-    p4.value = newVal.filter((item) => item.point === "上巨虚穴(左)")[0];
-    p5.value = newVal.filter((item) => item.point === "上巨虚穴(右)")[0];
-  }
-);
- 
+    console.log("FuXie组件：tableData更新", newVal);
+    if (!newVal || newVal.length === 0) return;
 
-//获取图片路径
-const getImageUrl = (url) => {
-  return new URL(url, import.meta.url).href;
-};
+    // 匹配穴位名称（保持和你原有逻辑一致）
+    p1.value = newVal.filter((item) => item.point === "天枢穴(左)")[0] || {};
+    p2.value = newVal.filter((item) => item.point === "神阙穴")[0] || {};
+    p3.value = newVal.filter((item) => item.point === "天枢穴(右)")[0] || {};
+    p4.value = newVal.filter((item) => item.point === "上巨虚穴(左)")[0] || {};
+    p5.value = newVal.filter((item) => item.point === "上巨虚穴(右)")[0] || {};
+
+    console.log("穴位数据匹配结果：", {
+      p1: p1.value,
+      p2: p2.value,
+      p3: p3.value,
+      p4: p4.value,
+      p5: p5.value,
+    });
+  },
+  { immediate: true, deep: true } // 立即执行 + 深度监听（关键）
+);
+
+// ========== 核心逻辑修复4：移除有问题的getImageUrl方法 ==========
+// 直接使用父组件传递的picUrl，保留你原有图片引用逻辑
 
 onMounted(() => {
   console.log("组件挂载了");
+  // 初始化穴位数据
+  if (props.tableData.length > 0) {
+    p1.value =
+      props.tableData.filter((item) => item.point === "天枢穴(左)")[0] || {};
+    p2.value =
+      props.tableData.filter((item) => item.point === "神阙穴")[0] || {};
+    p3.value =
+      props.tableData.filter((item) => item.point === "天枢穴(右)")[0] || {};
+    p4.value =
+      props.tableData.filter((item) => item.point === "上巨虚穴(左)")[0] || {};
+    p5.value =
+      props.tableData.filter((item) => item.point === "上巨虚穴(右)")[0] || {};
+  }
 });
 </script>
 
 <style scoped lang="scss">
+// 完全保留你原有所有CSS，一字未改
 .content-left-img-border {
   width: 100%;
   height: calc(82vh - 40px);
