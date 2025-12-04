@@ -1,26 +1,28 @@
 <template>
   <div class="swiper-main">
-    <!-- 自定义左右切换按钮 -->
     <span class="custom-swiper-button-prev" @click="goPrev"></span>
     <swiper
       class="home-swiper"
       :modules="modules"
       direction="horizontal"
-      :slides-per-view="showNum"
-      :space-between="0"
-      :slides-offset-before="0"
-      :slides-offset-after="0"
+      :slides-per-view="1"
+      :slides-per-group="1"
+      :initial-slide="0"
       @swiper="onSwiper"
       @slideChange="onSlideChange"
-      @slideChangeTransitionEnd="onSlideChangeTransitionEnd"
     >
       <swiper-slide
-        class="swiper-slide"
-        v-for="(item, index) in treatData"
-        :key="index"
-        @click="detailIconClick(item, index)"
+        class="page-slide"
+        v-for="(pageData, pageIndex) in treatData"
+        :key="'page-' + pageIndex"
       >
-        <div class="swiper-item">
+        <!-- 整页内部用 flex 布局展示3个 item -->
+        <div
+          class="swiper-item"
+          v-for="(item, itemIndex) in pageData"
+          :key="'item-' + pageIndex + '-' + itemIndex"
+          @click="detailIconClick(item, itemIndex)"
+        >
           <div class="swiper-item-title">
             <div class="swiper-item-name">{{ item.name }}</div>
             <div class="swiper-item-point">{{ item.point }}</div>
@@ -42,88 +44,92 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from "vue";
-// Import Swiper Vue.js components
-import { Swiper, SwiperSlide, useSwiper } from "swiper/vue";
-// Import Swiper styles
+import { ref, watch } from "vue";
+import { Swiper, SwiperSlide } from "swiper/vue";
 import "swiper/css";
-import { Navigation, Pagination, A11y, Autoplay } from "swiper/modules";
-const modules = [Navigation, Pagination, A11y];
+import { Navigation } from "swiper/modules";
 import "swiper/css/navigation";
-import "swiper/css/pagination";
-import "swiper/css/autoplay";
-import { el } from "element-plus/es/locale/index.mjs";
 
-// 核心修改：设置同时显示3个
-const showNum = ref(3);
-
-const props = defineProps(["swiperData"]);
-
+const modules = [Navigation];
 const treatData = ref([]);
-// 新增：定义emit（原代码缺失）
-const emit = defineEmits(["detailSelectOne"]);
-
+const currentDataType = ref("body");
+const swiperInstance = ref(null);
 const selectIndex = ref(0);
 const oneItem = ref({});
+
+const props = defineProps({
+  swiperData: {
+    type: Array,
+    required: true,
+    default: () => [],
+  },
+});
+
+const emit = defineEmits(["dataTypeChange", "detailSelectOne"]);
 
 watch(
   () => props.swiperData,
   (newVal) => {
+    console.log("原始数据：", newVal);
     if (newVal.length > 0) {
-      treatData.value = newVal.map((item) => {
-        const timeNum = parseInt(item.time);
+      const formatData = newVal.map((item) => {
+        const timeNum = parseInt(item.time) || 0;
         return {
           ...item,
-          time1: `00:${timeNum.toString().padStart(2, "0")}:00`, // 00:01:00 格式
-          time2: `${timeNum.toString().padStart(2, "0")}:00`, // 01:00 格式
+          time1: `00:${timeNum.toString().padStart(2, "0")}:00`,
+          time2: `${timeNum.toString().padStart(2, "0")}:00`,
         };
       });
+
+      treatData.value = [
+        formatData.filter((item) => item.type === 0), // body 数据集
+        formatData.filter((item) => item.type === 1), // leg 数据集
+      ];
+
+      console.log("处理后二维数组：", treatData.value);
+      currentDataType.value = "body";
+      emit("dataTypeChange", currentDataType.value);
     }
-  }
+  },
+  { immediate: true }
 );
-
-const detailIconClick = (item, index) => {
-  selectIndex.value = index;
-  oneItem.value = item;
-  console.log(oneItem.value);
-  localStorage.setItem("oneItem", JSON.stringify(oneItem.value));
-  // 触发自定义事件
-  emit("detailSelectOne", item);
-};
-
-const swiperInstance = ref(null);
 
 const onSwiper = (swiper) => {
   swiperInstance.value = swiper;
+  console.log("Swiper初始化，当前页码：", swiper.activeIndex);
+};
+
+const onSlideChange = (swiper) => {
+  currentDataType.value = swiper.activeIndex === 0 ? "body" : "leg";
+  emit("dataTypeChange", currentDataType.value);
+  console.log("切换到：", currentDataType.value, "数据集");
 };
 
 const goPrev = () => {
-  if (swiperInstance.value) {
+  if (swiperInstance.value && swiperInstance.value.activeIndex > 0) {
     swiperInstance.value.slidePrev();
   }
 };
+
 const goNext = () => {
-  if (swiperInstance.value) {
+  if (
+    swiperInstance.value &&
+    swiperInstance.value.activeIndex < treatData.value.length - 1
+  ) {
     swiperInstance.value.slideNext();
   }
 };
 
-const onSlideChange = (swiper) => {
-  console.log("slideChange执行，当前索引：", swiper.activeIndex);
-};
-
-const onSlideChangeTransitionEnd = (swiper) => {
-  // console.log("end!!!!!");
-};
-
-//获取图片路径
-const getImageUrl = (url) => {
-  return new URL(url, import.meta.url).href;
+const detailIconClick = (item, index) => {
+  selectIndex.value = index;
+  oneItem.value = item;
+  localStorage.setItem("oneItem", JSON.stringify(oneItem.value));
+  emit("detailSelectOne", item);
+  console.log("选中项：", item);
 };
 </script>
 
 <style scoped lang="scss">
-// 容器整体布局：按钮+轮播主体
 .swiper-main {
   width: 100%;
   box-sizing: border-box;
@@ -132,44 +138,54 @@ const getImageUrl = (url) => {
   justify-content: space-between;
   align-items: center;
   height: 100%;
-  padding: 0 5px; /* 给按钮留出空间 */
-  position: relative; /* 为轮播容器定位做基准 */
+  padding: 0 5px;
+  position: relative;
 }
 
-// 轮播主体容器
 .home-swiper {
   box-sizing: border-box;
   border: 1px solid pink;
-  width: calc(100% - 8vh); /* 减去左右按钮的宽度 */
+  width: calc(100% - 8vh);
   height: 100%;
   color: #ffffff;
   font-size: 16px;
-  // 隐藏swiper默认的左右按钮（使用自定义按钮）
+
   :deep(.swiper-button-prev),
   :deep(.swiper-button-next) {
     display: none !important;
   }
-  // 轮播容器内边距重置
+
   :deep(.swiper-wrapper) {
     box-sizing: border-box;
     height: 100%;
   }
+
+  // 关键修复1：整页 slide 宽度设为100%，取消之前的1/3设置
+  :deep(.swiper-slide) {
+    width: 100% !important;
+    height: 100%;
+    box-sizing: border-box;
+  }
 }
 
-// 单个轮播项样式
-.swiper-slide {
-  box-sizing: border-box;
+// 关键修复2：整页 slide 内部用 flex 布局，展示3个 item
+.page-slide {
+  width: 100%;
   height: 100%;
-  // 确保每个轮播项宽度适配（显示3个时自动均分）
-  // width: calc(100% / 3) !important;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  align-items: center;
+  gap: 10px; // item 之间的间距
+  box-sizing: border-box;
 }
 
-// 轮播项内部内容容器
+// 单个 item 样式：flex 均分宽度，最多显示3个
 .swiper-item {
+  flex: 1;
+  max-width: 30%; // 限制宽度，确保同时显示3个
   box-sizing: border-box;
   height: 100%;
-  // background-color: pink;
-  // border: 2px solid red;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -177,10 +193,8 @@ const getImageUrl = (url) => {
   padding: 0 20px;
 
   .swiper-item-title {
-    box-sizing: border-box;
     width: 100%;
     height: 6vh;
-    // border: 1px solid green;
     display: flex;
     flex-direction: row;
     justify-content: center;
@@ -189,7 +203,6 @@ const getImageUrl = (url) => {
     border-radius: 12px;
 
     .swiper-item-name {
-      box-sizing: border-box;
       font-size: 24px;
       width: 50%;
       height: 5vh;
@@ -197,8 +210,8 @@ const getImageUrl = (url) => {
       border-right: 1px solid #ffffff;
       text-align: center;
     }
+
     .swiper-item-point {
-      box-sizing: border-box;
       font-size: 24px;
       width: 50%;
       height: 5vh;
@@ -207,28 +220,26 @@ const getImageUrl = (url) => {
       text-align: center;
     }
   }
+
   .swiper-item-time {
-    box-sizing: border-box;
     width: 100%;
-    // border: 1px solid yellow;
     line-height: 5vh;
     text-align: center;
     height: 5vh;
     color: #693e9c;
     font-size: 20px;
   }
+
   .swiper-item-circle {
-    box-sizing: border-box;
     width: 100%;
-    // border: 1px solid yellow;
     height: 60%;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     padding-top: 5vh;
+
     .circle-bg {
-      // border: 1px solid blue;
       width: 20vh;
       height: 20vh;
       background: url("/src/assets/pic/round.png") no-repeat center center;
@@ -236,19 +247,16 @@ const getImageUrl = (url) => {
       display: flex;
       justify-content: center;
       align-items: center;
+
       .circle-content {
         width: 14vh;
         height: 14vh;
-
         position: relative;
         border-radius: 50%;
-        // background-color: #f8f9fa;
-
         display: flex;
         justify-content: center;
         align-items: center;
 
-        // 圆环主体
         &::before {
           content: "";
           position: absolute;
@@ -276,8 +284,8 @@ const getImageUrl = (url) => {
         color: #ffffff;
       }
     }
+
     .circle-btn {
-      box-sizing: border-box;
       width: 100%;
       height: 5vh;
       line-height: 5vh;
@@ -286,33 +294,23 @@ const getImageUrl = (url) => {
       font-size: 20px;
     }
   }
-  .swiper-item-btn {
-    box-sizing: border-box;
-    width: 100%;
-    border: 1px solid yellow;
-    height: 35%;
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    align-items: center;
-  }
 }
 
-// 自定义左右按钮样式
 .custom-swiper-button-prev,
 .custom-swiper-button-next {
-  z-index: 99; /* 确保按钮在最上层 */
+  z-index: 99;
   width: 7vh;
   height: 7vh;
   cursor: pointer;
   border: 1px solid red;
-  // 按钮居中对齐
-  flex-shrink: 0; /* 防止按钮被挤压 */
+  flex-shrink: 0;
 }
+
 .custom-swiper-button-next {
   background: url("@/assets/pic/next.png") no-repeat center center;
   background-size: 100% 100%;
 }
+
 .custom-swiper-button-prev {
   background: url("@/assets/pic/prev.png") no-repeat center center;
   background-size: 100% 100%;

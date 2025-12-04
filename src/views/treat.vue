@@ -24,10 +24,20 @@
       </div>
       <div class="point-content-right">
         <div class="point-content-right-border">
-          <div class="tool-bar"></div>
+          <div class="tool-bar">
+            <el-button @click="usePoint(testIndex)" type="primary" size="small"
+              >test</el-button
+            >
+            <img src="@/assets/pic/temperature.png" alt="" />
+            <img src="@/assets/pic/volume.png" alt="" />
+            <img src="@/assets/pic/music.png" alt="" />
+          </div>
 
           <div class="swiper-content">
-            <TreatSwiper :swiperData="tableData" />
+            <TreatSwiper
+              @dataTypeChange="handleDataTypeChange"
+              :swiperData="tableData"
+            />
           </div>
 
           <div class="btn-content">
@@ -43,7 +53,7 @@
 
 <script setup>
 // 脚本部分保持不变，无需修改
-import { ref, onMounted, computed, nextTick, onUnmounted } from "vue";
+import { ref, onMounted, watch, computed, nextTick, onUnmounted } from "vue";
 import caseData from "@/data/caseData.json";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useRoute, useRouter } from "vue-router";
@@ -64,6 +74,23 @@ const selectedCase = ref({});
 const tableData = ref([]);
 
 const selectedObj = ref({});
+// 当前数据集类型（body/leg）
+const currentDataType = ref("body");
+const testIndex = ref(0);
+const selectedAutoIndex = ref(0);
+
+watch(
+  () => currentDataType.value,
+  (newType) => {
+    if (newType === "body") {
+      picUrl.value = BodyPic;
+      picType.value = 0;
+    } else if (newType === "leg") {
+      picUrl.value = LegPic;
+      picType.value = 1;
+    }
+  }
+);
 
 const getPoint = (id) => {
   const caseDataCopy = JSON.parse(JSON.stringify(caseData));
@@ -93,6 +120,57 @@ const getPoint = (id) => {
 
   tableData.value = selectedCase.value.plan;
   console.log(tableData.value);
+};
+
+const usePoint = (index) => {
+  //  获取计划数据和长度，避免重复取值
+  const planList = selectedCase.value.plan;
+  const planLength = planList.length;
+
+  //  边界判断：索引超出范围直接返回
+  if (index < 0 || index >= planLength) {
+    console.warn("索引超出范围", index);
+    return;
+  }
+
+  //  检查是否是最后一个穴位（核心：index === length - 1）
+  if (index === planLength - 1) {
+    // 处理最后一个穴位：仅标记状态为已使用，不修改图片相关状态
+    planList[index].status = 2;
+    console.log("finish：所有穴位处理完成，保留当前图片");
+
+    // 只更新表格数据，不改动picUrl/picType/selectedObj
+    tableData.value = [...planList];
+    return;
+  }
+
+  // 非最后一个穴位：执行正常切换逻辑
+  // 改变当前穴位的状态为已使用
+  planList[index].status = 2;
+
+  // 改变下一个穴位的状态为正在定穴
+  const nextIndex = index + 1;
+  planList[nextIndex].status = 1;
+  selectedAutoIndex.value = nextIndex;
+
+  // 获取下一个穴位的类型，切换图片
+  const nextItem = planList[nextIndex];
+  picType.value = nextItem.type;
+  selectedObj.value = nextItem;
+
+  // 切换图片（body/leg）
+  picUrl.value = picType.value === 0 ? BodyPic : LegPic;
+
+  console.log("切换到下一个穴位：", nextIndex, "类型：", picType.value);
+
+  // 更新表格数据
+  tableData.value = [...planList];
+  testIndex.value = nextIndex;
+};
+
+// 处理数据集类型变化
+const handleDataTypeChange = (newType) => {
+  currentDataType.value = newType;
 };
 
 onMounted(() => {
@@ -220,12 +298,15 @@ onUnmounted(() => {});
         .tool-bar {
           box-sizing: border-box;
           width: 100%;
-          height: 16vh;
+          height: 10vh;
           display: flex;
           align-items: center;
-          justify-content: center;
+          justify-content: flex-end;
           flex-direction: row;
           border: 1px solid red;
+          img {
+            cursor: pointer;
+          }
         }
         .swiper-content {
           box-sizing: border-box;

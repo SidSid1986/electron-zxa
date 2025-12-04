@@ -281,50 +281,58 @@ const handleCancel = () => {
 };
 
 const usePoint = (index) => {
-  // // 检查是否是当前正在定穴的穴位
-  // if (selectedCase.value.plan[index].status !== 1) {
-  //   ElMessage.error("请先定穴到当前穴位");
-  //   return;
-  // }
+  const planList = selectedCase.value.plan;
+  const planLength = planList.length;
 
-  // 检查是否是最后一个穴位
-  if (index === selectedCase.value.plan.length - 1) {
-    console.log("finish");
+  //   检查是否是最后一个穴位（已修复判断条件：length - 1）
+  if (index === planLength - 1) {
+    //  处理最后一个穴位时，同步图片为当前穴位的类型（避免图片消失）
+    planList[index].status = 2; // 标记最后一个穴位为已使用
+    picType.value = planList[index].type; // 同步最后一个穴位的类型
+    picUrl.value = picType.value === 0 ? BodyPic : LegPic; // 同步图片
+    selectedObj.value = planList[index]; // 同步选中对象
+
+    console.log("finish：最后一个穴位处理完成，保留当前图片");
     dialogVisible.value = true;
+
+    // 更新表格数据（保证状态同步）
+    tableData.value = [...planList];
+
     setTimeout(() => {
       dialogVisible.value = false;
       router.push({
         path: "/setting",
       });
     }, 2000);
-  } else {
-    // 改变当前穴位的状态为已使用
-    selectedCase.value.plan[index].status = 2;
-
-    // 改变下一个穴位的状态为正在定穴
-    selectedCase.value.plan[index + 1].status = 1;
-    selectedAutoIndex.value = index + 1;
-
-    picType.value = selectedCase.value.plan[index + 1].type;
-
-    selectedObj.value = selectedCase.value.plan[index + 1];
-
-    switch (picType.value) {
-      case 0:
-        picUrl.value = BodyPic;
-        break;
-      case 1:
-        picUrl.value = LegPic;
-        break;
-      default:
-        break;
-    }
-
-    console.log(picType.value);
-
-    // 更新表格数据
-    tableData.value = selectedCase.value.plan;
+    return; // 终止函数，不执行else逻辑
   }
+
+  // 非最后一个穴位
+  // 改变当前穴位的状态为已使用
+  planList[index].status = 2;
+
+  // 改变下一个穴位的状态为正在定穴
+  planList[index + 1].status = 1;
+  selectedAutoIndex.value = index + 1;
+
+  picType.value = planList[index + 1].type;
+  selectedObj.value = planList[index + 1];
+
+  switch (picType.value) {
+    case 0:
+      picUrl.value = BodyPic;
+      break;
+    case 1:
+      picUrl.value = LegPic;
+      break;
+    default:
+      break;
+  }
+
+  console.log(picType.value);
+
+  // 更新表格数据
+  tableData.value = [...planList];
 };
 
 onMounted(() => {

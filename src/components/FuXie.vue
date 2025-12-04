@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-03 15:22:38
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-03 16:22:39
+ * @LastEditTime: 2025-12-04 14:15:45
  * @FilePath: \ai\src\components\FuXie.vue
  * @Description: 
 -->
@@ -128,10 +128,7 @@ const props = defineProps({
     type: String,
     default: "",
   },
-  selectedObj: {
-    type: Object,
-    default: () => {},
-  },
+ 
   tableData: {
     type: Array,
     default: () => [],
@@ -147,6 +144,7 @@ const p5 = ref({});
 watch(
   () => props.tableData,
   (newVal) => {
+    console.log(newVal);
     p1.value = newVal.filter((item) => item.point === "天枢穴(左)")[0];
     p2.value = newVal.filter((item) => item.point === "神阙穴")[0];
     p3.value = newVal.filter((item) => item.point === "天枢穴(右)")[0];
@@ -154,13 +152,7 @@ watch(
     p5.value = newVal.filter((item) => item.point === "上巨虚穴(右)")[0];
   }
 );
-
-watch(
-  () => props.selectedObj,
-  (newVal) => {
-    console.log(newVal);
-  }
-);
+ 
 
 //获取图片路径
 const getImageUrl = (url) => {
