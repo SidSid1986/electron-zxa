@@ -157,7 +157,9 @@ const tableContainerHeight = ref(0);
 const tableMaxOffset = ref(0);
 
 const getPoint = (id) => {
-  selectedCase.value = caseData.find((item) => {
+  const caseDataCopy = JSON.parse(JSON.stringify(caseData));
+
+  selectedCase.value = caseDataCopy.find((item) => {
     return item.id * 1 === id * 1;
   });
 
@@ -272,6 +274,7 @@ const handleTableWheel = (e) => {
 };
 
 const handleCancel = () => {
+  localStorage.removeItem("selectedCaseId");
   router.push({
     path: "/main",
   });
@@ -357,6 +360,7 @@ onUnmounted(() => {
   height: 100vh;
   margin: 0;
   padding: 0;
+  padding-top: 4vh;
   .point-nav {
     box-sizing: border-box;
     width: 100%;

@@ -239,12 +239,6 @@ const handleStartClick = () => {
   dialogVisible.value = true;
 };
 
-const handleStartConfirm = () => {
-  dialogVisible.value = false;
-  // 确认开始，执行开始逻辑
-  console.log("开始执行计划");
-};
-
 // 组件挂载初始化
 onMounted(() => {
   // 延迟获取DOM高度（确保渲染完成）
@@ -430,6 +424,7 @@ const handleClick = (id) => {
 
 const confirmDialog = () => {
   dialogVisible.value = false;
+  localStorage.setItem("selectedCaseId", selectedCaseId.value);
   router.push(`/point?id=${selectedCaseId.value}`);
 };
 const cancelDialog = () => {
@@ -452,6 +447,7 @@ const cancelDialog = () => {
   height: 100vh;
   margin: 0;
   padding: 0;
+  padding-top: 4vh;
 }
 
 .main-top {

@@ -72,6 +72,7 @@ onMounted(() => {
   justify-content: center;
   align-items: center;
   box-sizing: border-box;
+  padding-top: 4vh;
 
   .loading-wrapper {
     display: flex;

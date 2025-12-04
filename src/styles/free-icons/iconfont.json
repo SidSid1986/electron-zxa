@@ -6,6 +6,20 @@
   "description": "",
   "glyphs": [
     {
+      "icon_id": "5203254",
+      "name": "后退",
+      "font_class": "houtui",
+      "unicode": "e624",
+      "unicode_decimal": 58916
+    },
+    {
+      "icon_id": "5203279",
+      "name": "前进",
+      "font_class": "qianjin",
+      "unicode": "e62d",
+      "unicode_decimal": 58925
+    },
+    {
       "icon_id": "27072305",
       "name": "窗口最小化",
       "font_class": "chuangkouzuixiaohua",

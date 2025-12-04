@@ -44,6 +44,7 @@ onMounted(() => {
   height: 100vh;
   margin: 0;
   padding: 0;
+  padding-top: 4vh;
 }
 
 .message-content {
@@ -72,8 +73,7 @@ onMounted(() => {
   color: #fdb300;
   height: 3vh;
   line-height: 3vh;
-
-  width: 15vw;
+  min-width: 15vw;
   text-align: center;
 }
 .message-button {

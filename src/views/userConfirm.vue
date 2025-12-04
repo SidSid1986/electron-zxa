@@ -43,6 +43,7 @@ onMounted(() => {
   height: 100vh;
   margin: 0;
   padding: 0;
+  padding-top: 4vh;
 }
 
 .message-content {

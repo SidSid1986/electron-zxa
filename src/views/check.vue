@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-01 08:40:17
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-03 17:13:32
+ * @LastEditTime: 2025-12-04 08:47:48
  * @FilePath: \ai\src\views\check.vue
  * @Description: 自检页面（背景旋转，文字静止）
 -->
@@ -100,6 +100,7 @@ const finishCheck = () => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  padding-top: 4vh;
 
   .home-content {
     width: 500px;
