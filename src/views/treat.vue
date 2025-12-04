@@ -32,9 +32,11 @@
             <img src="@/assets/pic/music.png" alt="" />
           </div>
           <div class="swiper-content">
+            <!-- 核心修改：添加updateSwiperData事件监听 -->
             <TreatSwiper
               ref="treatSwiperRef"
               @swiperChange="handleSwiperChange"
+              @updateSwiperData="handleUpdateSwiperData"
               :swiperData="tableData"
             />
           </div>
@@ -123,7 +125,6 @@ const usePoint = () => {
 
   // 3. 最后一个穴位
   if (nextIndex >= planLength) {
-    ElMessage.success("所有穴位处理完成！");
     tableData.value = JSON.parse(JSON.stringify(planList));
     return;
   }
@@ -167,6 +168,33 @@ const handleSwiperChange = (swiperIndex) => {
     testIndex.value = planList.indexOf(currentItem);
   }
 };
+
+// 新增：处理子组件的时长更新事件（核心！）
+const handleUpdateSwiperData = (newSwiperData) => {
+  // 1. 更新父组件的tableData（传给子组件的数据源）
+  tableData.value = JSON.parse(JSON.stringify(newSwiperData));
+
+  // 2. 同步更新selectedCase.value.plan（保证自动切换逻辑的数据一致性）
+  if (selectedCase.value.plan) {
+    selectedCase.value.plan = JSON.parse(JSON.stringify(newSwiperData));
+  }
+
+  // 3. 如果当前选中的是修改的穴位，同步更新selectedObj的time1/time2
+  const updatedItem = newSwiperData.find(
+    (item) =>
+      item.name === selectedObj.value.name &&
+      item.point === selectedObj.value.point
+  );
+  if (updatedItem) {
+    const timeNum = parseInt(updatedItem.time) || 0;
+    selectedObj.value.time = updatedItem.time;
+    selectedObj.value.time1 = `00:${timeNum.toString().padStart(2, "0")}:00`;
+    selectedObj.value.time2 = `${timeNum.toString().padStart(2, "0")}:00`;
+  }
+
+  ElMessage.success("时长已更新");
+};
+
 // 监听Swiper实例
 watch(
   () => treatSwiperRef.value,
@@ -186,7 +214,7 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-/* 样式完全不变，保留你原有代码 */
+/* 原有样式保持不变 */
 .container {
   box-sizing: border-box;
   background: url("@/assets/pic/backgroundImage.png") no-repeat;

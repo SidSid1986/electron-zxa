@@ -1,4 +1,5 @@
 <template>
+  <!-- 模板部分不变 -->
   <div class="swiper-main">
     <span class="custom-swiper-button-prev" @click="goPrev"></span>
     <swiper
@@ -39,16 +40,6 @@
       </swiper-slide>
     </swiper>
     <span class="custom-swiper-button-next" @click="goNext"></span>
-
-    <el-dialog title="修改时间" v-model="dialogVisible" width="30%">
-      <el-form-item label="时长" prop="time2">
-        <el-input v-model="timeSettingValue" placeholder="请输入时长" />
-      </el-form-item>
-      <template #footer>
-        <el-button type="primary" @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="saveTime">保存</el-button>
-      </template>
-    </el-dialog>
   </div>
 </template>
 
@@ -58,13 +49,12 @@ import { Swiper, SwiperSlide } from "swiper/vue";
 import "swiper/css";
 import { Navigation } from "swiper/modules";
 import "swiper/css/navigation";
-import { ElMessage } from "element-plus";
+
+import { ElMessage, ElMessageBox } from "element-plus";
 
 const modules = [Navigation];
 const treatData = ref([]);
 const swiperInstance = ref(null);
-const dialogVisible = ref(false);
-const timeSettingValue = ref("");
 
 // 暴露实例
 defineExpose({
@@ -80,28 +70,35 @@ const props = defineProps({
   },
 });
 
-// 定义事件（只暴露swiper索引，不处理类型）
-const emit = defineEmits(["swiperChange", "detailSelectOne"]);
+// 新增：定义更新数据的事件，通知父组件修改swiperData
+const emit = defineEmits([
+  "swiperChange",
+  "detailSelectOne",
+  "updateSwiperData",
+]);
 
-// 格式化数据
+// 格式化数据（封装为函数，方便复用）
+const formatSwiperData = (data) => {
+  if (data.length === 0) return [];
+  return data.map((item) => {
+    const timeNum = parseInt(item.time) || 0;
+    return {
+      ...item,
+      time1: `00:${timeNum.toString().padStart(2, "0")}:00`,
+      time2: `${timeNum.toString().padStart(2, "0")}:00`,
+    };
+  });
+};
+
+// 监听swiperData变化，重新格式化
 watch(
   () => props.swiperData,
   (newVal) => {
-    if (newVal.length > 0) {
-      const formatData = newVal.map((item) => {
-        const timeNum = parseInt(item.time) || 0;
-        return {
-          ...item,
-          time1: `00:${timeNum.toString().padStart(2, "0")}:00`,
-          time2: `${timeNum.toString().padStart(2, "0")}:00`,
-        };
-      });
-
-      treatData.value = [
-        formatData.filter((item) => item.type === 0),
-        formatData.filter((item) => item.type === 1),
-      ];
-    }
+    const formattedData = formatSwiperData(newVal);
+    treatData.value = [
+      formattedData.filter((item) => item.type === 0),
+      formattedData.filter((item) => item.type === 1),
+    ];
   },
   { immediate: true }
 );
@@ -125,24 +122,40 @@ const goPrev = () => {
 };
 
 const goNext = () => {
-  if (swiperInstance.value && swiperInstance.value.activeIndex < treatData.value.length - 1) {
+  if (
+    swiperInstance.value &&
+    swiperInstance.value.activeIndex < treatData.value.length - 1
+  ) {
     swiperInstance.value.slideNext();
   }
 };
 
-// 其他功能不变
+// 修改时长核心逻辑
 const editTime = (item) => {
-  timeSettingValue.value = item.time || "";
-  dialogVisible.value = true;
-};
+  ElMessageBox.prompt("请输入时长（单位：分钟）", "修改时间", {
+    confirmButtonText: "确认",
+    cancelButtonText: "取消",
+    inputPattern: /^\d+$/,
+    inputErrorMessage: "请输入有效的时长数字",
+    // 初始化输入框值为当前时长
+    inputValue: item.time || "0",
+  }).then(({ value }) => {
+    const newTime = value.trim();
+    // 1. 找到父组件swiperData中对应的项，生成新的数组（不可变更新）
+    const newSwiperData = props.swiperData.map((dataItem) => {
+      // 假设item有唯一标识（如id），如果没有则用name+point组合匹配
+      if (dataItem.name === item.name && dataItem.point === item.point) {
+        return {
+          ...dataItem,
+          time: newTime, // 更新原始time值
+        };
+      }
+      return dataItem;
+    });
 
-const saveTime = () => {
-  if (!timeSettingValue.value || isNaN(timeSettingValue.value)) {
-    ElMessage.error("请输入有效的时长数字");
-    return;
-  }
-  dialogVisible.value = false;
-  ElMessage.success("时长修改成功");
+    // 2. 通知父组件更新swiperData（核心：子组件不能直接改props）
+    emit("updateSwiperData", newSwiperData);
+  });
 };
 
 const detailIconClick = (item, index) => {
@@ -151,8 +164,9 @@ const detailIconClick = (item, index) => {
 };
 </script>
 
+<!-- 样式部分不变，保留你已调整的样式 -->
 <style scoped lang="scss">
-/* 样式完全不变，保留你原有代码 */
+/* 原有样式 */
 .swiper-main {
   width: 100%;
   box-sizing: border-box;
@@ -335,5 +349,99 @@ const detailIconClick = (item, index) => {
 .custom-swiper-button-prev {
   background: url("@/assets/pic/prev.png") no-repeat center center;
   background-size: 100% 100%;
+}
+</style>
+
+<style lang="scss">
+// 你已调整的ElMessage/ElMessageBox样式
+.custom-message {
+  &.el-message--success {
+    background-color: rgba(105, 62, 156, 0.1) !important;
+    border-left-color: #693e9c !important;
+
+    .el-message__content {
+      color: #693e9c !important;
+    }
+
+    .el-icon-success {
+      color: #693e9c !important;
+    }
+  }
+
+  &.el-message--info {
+    background-color: rgba(105, 62, 156, 0.08) !important;
+    border-left-color: #693e9c !important;
+
+    .el-message__content {
+      color: #693e9c !important;
+    }
+
+    .el-icon-info {
+      color: #693e9c !important;
+    }
+  }
+}
+
+.el-message-box {
+  .el-message-box__title {
+    color: #693e9c !important;
+    font-weight: 600;
+  }
+
+  .el-message-box__btns .el-button--primary {
+    background-color: #693e9c !important;
+    border-color: #693e9c !important;
+
+    &:hover {
+      background-color: #7c4eb5 !important;
+      border-color: #7c4eb5 !important;
+    }
+  }
+
+  .el-message-box__btns .el-button--default {
+    background-color: #ffffff !important;
+    border-color: #693e9c !important;
+    color: #693e9c !important;
+
+    &:hover {
+      background-color: rgba(105, 62, 156, 0.05) !important;
+      border-color: #7c4eb5 !important;
+      color: #7c4eb5 !important;
+    }
+  }
+
+  .el-message-box__input {
+    .el-input__wrapper {
+      border: 1px solid #693e9c !important;
+      box-shadow: 0 0 0 1px rgba(105, 62, 156, 0.1) !important;
+
+      &:hover {
+        border-color: #7c4eb5 !important;
+        box-shadow: 0 0 0 1px rgba(124, 78, 181, 0.2) !important;
+      }
+
+      &.is-focus {
+        border-color: #693e9c !important;
+        box-shadow: 0 0 0 2px rgba(105, 62, 156, 0.2) !important;
+      }
+    }
+
+    .el-input__inner {
+      color: #693e9c !important;
+      font-size: 16px !important;
+      padding: 8px 12px !important;
+
+      &::placeholder {
+        color: rgba(105, 62, 156, 0.5) !important;
+        font-size: 15px !important;
+      }
+    }
+
+    .el-input__error {
+      color: #693e9c !important;
+      margin-top: 4px;
+      font-size: 14px !important;
+    }
+  }
 }
 </style>
