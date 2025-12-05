@@ -1,5 +1,4 @@
 <template>
-  <!-- 模板部分不变 -->
   <div class="swiper-main">
     <span class="custom-swiper-button-prev" @click="goPrev"></span>
     <swiper
@@ -20,7 +19,7 @@
         <div
           class="swiper-item"
           v-for="(item, itemIndex) in pageData"
-          :key="'item-' + pageIndex + '-' + itemIndex"
+          :key="item.renderKey"
           @click="detailIconClick(item, itemIndex)"
         >
           <div class="swiper-item-title">
@@ -31,7 +30,32 @@
           <div class="swiper-item-circle">
             <div class="circle-bg">
               <div class="circle-content">
-                <div class="circle-text">{{ item.time2 }}</div>
+                <div class="circle-text">
+                  <Countdown
+                    v-if="item.hasValidTime"
+                    :ref="(el) => setCountdownRef(el, item.uniqueKey)"
+                    :time="item.useTime"
+                    :key="item.renderKey"
+                    :auto-start="false"
+                    :emit-events="true"
+                    :transform="transformSlotProps"
+                    @end="handleCountdownEnd(item)"
+                    @start="handleCountdownStart(item)"
+                    @progress="
+                      (data) => handleCountdownProgress(data, item.uniqueKey)
+                    "
+                    tag="span"
+                  >
+                    <template v-slot="{ minutes, seconds }">
+                      {{
+                        item.isActive
+                          ? `${minutes}:${seconds}`
+                          : `${item.time2}`
+                      }}
+                    </template>
+                  </Countdown>
+                  <span v-else>00:00</span>
+                </div>
               </div>
             </div>
             <div class="circle-btn" @click="editTime(item)">修改</div>
@@ -44,83 +68,355 @@
 </template>
 
 <script setup>
-import { ref, watch, defineExpose } from "vue";
+import {
+  ref,
+  watch,
+  defineExpose,
+  onUnmounted,
+  onMounted,
+  nextTick,
+} from "vue";
 import { Swiper, SwiperSlide } from "swiper/vue";
 import "swiper/css";
 import { Navigation } from "swiper/modules";
 import "swiper/css/navigation";
-
+import Countdown from "@chenfengyuan/vue-countdown";
 import { ElMessage, ElMessageBox } from "element-plus";
 
+// 基础配置
 const modules = [Navigation];
 const treatData = ref([]);
 const swiperInstance = ref(null);
+const countdownRefs = ref({});
+const activeKey = ref("");
+const isComponentMounted = ref(false);
+// 记录剩余时间、渲染key
+const remainingTimeMap = ref({});
+const renderKeyMap = ref({});
 
-// 暴露实例
-defineExpose({
-  swiperInstance: swiperInstance,
+onMounted(() => {
+  isComponentMounted.value = true;
 });
 
-// 接收参数
+// Props定义（核心新增isTreating）
 const props = defineProps({
   swiperData: {
     type: Array,
     required: true,
     default: () => [],
   },
+  activeIndex: {
+    type: Number,
+    default: -1,
+  },
+  isTreating: { // 核心开关：是否允许启动倒计时
+    type: Boolean,
+    default: false,
+  },
 });
 
-// 新增：定义更新数据的事件，通知父组件修改swiperData
 const emit = defineEmits([
   "swiperChange",
   "detailSelectOne",
   "updateSwiperData",
+  "countdownEnd",
 ]);
 
-// 格式化数据（封装为函数，方便复用）
-const formatSwiperData = (data) => {
-  if (data.length === 0) return [];
-  return data.map((item) => {
+// 生成唯一标识
+const getUniqueKey = (item) => `${item.name}-${item.point}`;
+
+// 绑定Countdown实例
+const setCountdownRef = (el, key) => {
+  if (el) {
+    countdownRefs.value[key] = el;
+    if (remainingTimeMap.value[key] === undefined)
+      remainingTimeMap.value[key] = 0;
+    if (!renderKeyMap.value[key]) renderKeyMap.value[key] = 1;
+  } else {
+    if (countdownRefs.value[key]) {
+      countdownRefs.value[key].abort();
+      delete countdownRefs.value[key];
+    }
+  }
+};
+
+// 格式化slot props
+const transformSlotProps = (props) => {
+  const formatted = {};
+  Object.entries(props).forEach(([key, value]) => {
+    if (["minutes", "seconds"].includes(key)) {
+      formatted[key] = value < 10 ? `0${value}` : String(value);
+    } else {
+      formatted[key] = value;
+    }
+  });
+  return formatted;
+};
+
+// 格式化数据
+const formatData = (data, activeIndex) => {
+  return data.map((item, index) => {
     const timeNum = parseInt(item.time) || 0;
+    const uniqueKey = getUniqueKey(item);
+    const hasValidTime = timeNum > 0;
+    const totalTimeMs = hasValidTime ? timeNum * 60 * 1000 : 0;
+
     return {
       ...item,
-      time1: `00:${timeNum.toString().padStart(2, "0")}:00`,
-      time2: `${timeNum.toString().padStart(2, "0")}:00`,
+      uniqueKey,
+      time1: hasValidTime
+        ? `00:${timeNum.toString().padStart(2, "0")}:00`
+        : "00:00:00",
+      time2: hasValidTime
+        ? `${timeNum.toString().padStart(2, "0")}:00`
+        : "00:00",
+      countdownTime: totalTimeMs,
+      useTime: remainingTimeMap.value[uniqueKey] || totalTimeMs,
+      renderKey: renderKeyMap.value[uniqueKey] || 1,
+      isActive: index === activeIndex,
+      status: "idle",
+      hasValidTime,
     };
   });
 };
 
-// 监听swiperData变化，重新格式化
+// 处理progress事件
+const handleCountdownProgress = (data, uniqueKey) => {
+  remainingTimeMap.value[uniqueKey] = data.totalMilliseconds;
+};
+
+// 启动倒计时（核心拦截：非治疗中/索引无效直接返回）
+const startCountdown = (targetIndex) => {
+  // 双重拦截：治疗未开始 或 索引无效 → 不启动
+  if (!props.isTreating || targetIndex === -1) return;
+  if (!isComponentMounted.value) return;
+
+  const allItems = treatData.value.flat();
+  const index = typeof targetIndex === "number" ? targetIndex : props.activeIndex;
+  const targetItem = allItems[index];
+
+  if (!targetItem || !targetItem.hasValidTime || targetItem.status === "ended") {
+    if (targetItem) {
+      if (targetItem.status === "ended") {
+        ElMessage.info(`${targetItem.name} 已完成，无需重复启动`);
+      } else {
+        ElMessage.warning(`${targetItem.name} 时长为0，无法启动倒计时`);
+      }
+    }
+    return;
+  }
+
+  // 停止当前激活的倒计时
+  if (activeKey.value && countdownRefs.value[activeKey.value]) {
+    countdownRefs.value[activeKey.value].abort();
+  }
+
+  // 启动新倒计时
+  nextTick(() => {
+    const instance = countdownRefs.value[targetItem.uniqueKey];
+    if (instance) {
+      if (remainingTimeMap.value[targetItem.uniqueKey] === 0) {
+        remainingTimeMap.value[targetItem.uniqueKey] = targetItem.countdownTime;
+      }
+      instance.start();
+      targetItem.status = "running";
+      activeKey.value = targetItem.uniqueKey;
+
+      // 更新激活状态
+      allItems.forEach((item) => {
+        item.isActive = item.uniqueKey === targetItem.uniqueKey;
+        if (!item.isActive) item.status = "idle";
+      });
+    }
+  });
+};
+
+// 暂停倒计时
+const pauseCountdown = () => {
+  if (!activeKey.value || !countdownRefs.value[activeKey.value]) {
+    ElMessage.warning("暂无运行中的倒计时");
+    return;
+  }
+
+  const instance = countdownRefs.value[activeKey.value];
+  const targetItem = treatData.value
+    .flat()
+    .find((item) => item.uniqueKey === activeKey.value);
+  
+  if (targetItem && instance && targetItem.status === "running") {
+    const currentRemaining = remainingTimeMap.value[activeKey.value];
+    
+    instance.abort();
+    targetItem.status = "paused";
+
+    const remainingMinutes = Math.floor(currentRemaining / 60000);
+    const remainingSeconds = Math.floor((currentRemaining % 60000) / 1000);
+    ElMessage.info(`倒计时已暂停，剩余${remainingMinutes}分${remainingSeconds}秒`);
+  } else {
+    ElMessage.warning("当前无运行中的倒计时可暂停");
+  }
+};
+
+// 继续倒计时
+const resumeCountdown = () => {
+  if (!activeKey.value || !countdownRefs.value[activeKey.value] || !props.isTreating) {
+    ElMessage.warning("暂无暂停的倒计时可继续");
+    return;
+  }
+
+  const targetItem = treatData.value
+    .flat()
+    .find((item) => item.uniqueKey === activeKey.value);
+  const currentRemaining = remainingTimeMap.value[activeKey.value];
+  
+  if (targetItem) {
+    if (targetItem.status === "paused") {
+      if (currentRemaining > 100) {
+        targetItem.useTime = currentRemaining;
+        renderKeyMap.value[activeKey.value] += 1;
+        targetItem.renderKey = renderKeyMap.value[activeKey.value];
+        
+        nextTick(() => {
+          const newInstance = countdownRefs.value[activeKey.value];
+          if (newInstance) {
+            newInstance.start();
+            targetItem.status = "running";
+
+            const remainingMinutes = Math.floor(currentRemaining / 60000);
+            const remainingSeconds = Math.floor((currentRemaining % 60000) / 1000);
+            ElMessage.info(`倒计时已继续，剩余${remainingMinutes}分${remainingSeconds}秒`);
+          }
+        });
+      } else {
+        ElMessage.warning("剩余时长不足1秒，无法继续");
+        remainingTimeMap.value[activeKey.value] = 0;
+      }
+    } else if (targetItem.status === "running") {
+      ElMessage.info("倒计时正在运行中");
+    } else {
+      ElMessage.warning("无法继续，倒计时已结束或未启动");
+    }
+  }
+};
+
+// 停止所有倒计时
+const stopCountdown = () => {
+  // 终止所有Countdown实例
+  Object.keys(countdownRefs.value).forEach(key => {
+    if (countdownRefs.value[key]) {
+      countdownRefs.value[key].abort();
+    }
+  });
+  
+  // 重置所有状态
+  if (activeKey.value) {
+    remainingTimeMap.value[activeKey.value] = 0;
+    activeKey.value = "";
+  }
+  
+  treatData.value.flat().forEach((item) => {
+    item.status = "idle";
+    item.isActive = false;
+    renderKeyMap.value[item.uniqueKey] = 1;
+    remainingTimeMap.value[item.uniqueKey] = 0;
+    item.useTime = item.countdownTime;
+    item.renderKey = 1;
+  });
+  
+  ElMessage.info("倒计时已重置");
+};
+
+// 倒计时启动事件
+const handleCountdownStart = (item) => {
+  item.status = "running";
+};
+
+// 倒计时结束事件
+const handleCountdownEnd = (item) => {
+  if (item.status !== "running") return;
+  item.status = "ended";
+  item.isActive = false;
+  remainingTimeMap.value[item.uniqueKey] = 0;
+  activeKey.value = "";
+  emit("countdownEnd", item);
+  ElMessage.success(`${item.name} 倒计时已结束`);
+};
+
+// 监听swiperData变化（新增治疗状态判断）
 watch(
   () => props.swiperData,
   (newVal) => {
-    const formattedData = formatSwiperData(newVal);
+    if (!newVal.length) return;
+    const formatted = formatData(newVal, props.activeIndex);
     treatData.value = [
-      formattedData.filter((item) => item.type === 0),
-      formattedData.filter((item) => item.type === 1),
+      formatted.filter((item) => item.type === 0),
+      formatted.filter((item) => item.type === 1),
     ];
+
+    // 仅治疗中且索引有效时才启动
+    if (isComponentMounted.value && props.isTreating && props.activeIndex > -1) {
+      nextTick(() => {
+        const targetItem = treatData.value.flat()[props.activeIndex];
+        if (targetItem && targetItem.hasValidTime) {
+          startCountdown(props.activeIndex);
+        }
+      });
+    }
+  },
+  { immediate: true, deep: true }
+);
+
+// 监听activeIndex变化（新增治疗状态判断）
+watch(
+  () => props.activeIndex,
+  (newIndex) => {
+    // 仅治疗中且索引有效时才启动
+    if (isComponentMounted.value && props.isTreating && newIndex > -1) {
+      nextTick(() => {
+        const targetItem = treatData.value.flat()[newIndex];
+        if (targetItem && targetItem.hasValidTime) {
+          startCountdown(newIndex);
+        }
+      });
+    } else if (newIndex === -1) {
+      // 索引为-1时停止当前倒计时
+      if (activeKey.value && countdownRefs.value[activeKey.value]) {
+        countdownRefs.value[activeKey.value].abort();
+      }
+    }
   },
   { immediate: true }
 );
 
-// Swiper初始化
+// 监听治疗状态变化
+watch(
+  () => props.isTreating,
+  (newVal) => {
+    if (!newVal) {
+      // 关闭治疗状态时停止所有倒计时
+      stopCountdown();
+    }
+  }
+);
+
+// Swiper实例回调
 const onSwiper = (swiper) => {
   swiperInstance.value = swiper;
 };
 
-// Swiper切换：只发送索引，不处理类型
+// Swiper滑动事件
 const onSlideChange = (swiper) => {
   emit("swiperChange", swiper.activeIndex);
-  console.log("Swiper手动切换到索引：", swiper.activeIndex);
 };
 
-// 手动切换按钮
+// 上一页
 const goPrev = () => {
   if (swiperInstance.value && swiperInstance.value.activeIndex > 0) {
     swiperInstance.value.slidePrev();
   }
 };
 
+// 下一页
 const goNext = () => {
   if (
     swiperInstance.value &&
@@ -130,43 +426,87 @@ const goNext = () => {
   }
 };
 
-// 修改时长核心逻辑
+// 修改时长
 const editTime = (item) => {
-  ElMessageBox.prompt("请输入时长（单位：分钟）", "修改时间", {
-    confirmButtonText: "确认",
-    cancelButtonText: "取消",
+  ElMessageBox.prompt("请输入时长（单位：分钟）", "修改倒计时时长", {
     inputPattern: /^\d+$/,
-    inputErrorMessage: "请输入有效的时长数字",
-    // 初始化输入框值为当前时长
+    inputErrorMessage: "请输入有效的正整数",
     inputValue: item.time || "0",
-  }).then(({ value }) => {
-    const newTime = value.trim();
-    // 1. 找到父组件swiperData中对应的项，生成新的数组（不可变更新）
-    const newSwiperData = props.swiperData.map((dataItem) => {
-      // 假设item有唯一标识（如id），如果没有则用name+point组合匹配
-      if (dataItem.name === item.name && dataItem.point === item.point) {
-        return {
-          ...dataItem,
-          time: newTime, // 更新原始time值
-        };
-      }
-      return dataItem;
-    });
+  })
+    .then(({ value }) => {
+      const newTime = parseInt(value.trim()) || 0;
+      const newTimeMs = newTime * 60 * 1000;
 
-    // 2. 通知父组件更新swiperData（核心：子组件不能直接改props）
-    emit("updateSwiperData", newSwiperData);
-  });
+      // 通知父组件更新数据
+      const newSwiperData = props.swiperData.map((d) =>
+        d.name === item.name && d.point === item.point
+          ? { ...d, time: newTime }
+          : d
+      );
+      emit("updateSwiperData", newSwiperData);
+
+      // 更新本地数据
+      item.time = newTime;
+      item.countdownTime = newTimeMs;
+      item.time1 =
+        newTime > 0
+          ? `00:${newTime.toString().padStart(2, "0")}:00`
+          : "00:00:00";
+      item.hasValidTime = newTime > 0;
+      remainingTimeMap.value[item.uniqueKey] = newTimeMs;
+      renderKeyMap.value[item.uniqueKey] += 1;
+      item.renderKey = renderKeyMap.value[item.uniqueKey];
+      item.useTime = newTimeMs;
+
+      // 重启倒计时
+      const instance = countdownRefs.value[item.uniqueKey];
+      if (instance) {
+        if (item.isActive && newTime > 0 && props.isTreating) {
+          instance.abort();
+          nextTick(() => {
+            const newInstance = countdownRefs.value[item.uniqueKey];
+            newInstance.start();
+          });
+          item.status = "running";
+        } else if (newTime === 0) {
+          instance.abort();
+          item.status = "idle";
+        }
+      }
+
+      ElMessage.success(`已将${item.name}时长修改为 ${newTime} 分钟`);
+    })
+    .catch(() => {
+      ElMessage.info("已取消修改时长");
+    });
 };
 
-const detailIconClick = (item, index) => {
+// 点击item回调
+const detailIconClick = (item) => {
   emit("detailSelectOne", item);
   localStorage.setItem("oneItem", JSON.stringify(item));
 };
+
+// 暴露给父组件的方法
+defineExpose({
+  startCountdown,
+  pauseCountdown,
+  resumeCountdown,
+  stopCountdown,
+  treatData,
+  swiperInstance,
+});
+
+// 组件卸载清理
+onUnmounted(() => {
+  stopCountdown();
+  countdownRefs.value = {};
+  remainingTimeMap.value = {};
+  renderKeyMap.value = {};
+});
 </script>
 
-<!-- 样式部分不变，保留你已调整的样式 -->
 <style scoped lang="scss">
-/* 原有样式 */
 .swiper-main {
   width: 100%;
   box-sizing: border-box;
@@ -181,7 +521,6 @@ const detailIconClick = (item, index) => {
 
 .home-swiper {
   box-sizing: border-box;
-  border: 1px solid pink;
   width: calc(100% - 8vh);
   height: 100%;
   color: #ffffff;
@@ -224,7 +563,6 @@ const detailIconClick = (item, index) => {
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  padding: 0 20px;
 
   .swiper-item-title {
     width: 100%;
@@ -237,21 +575,21 @@ const detailIconClick = (item, index) => {
     border-radius: 12px;
 
     .swiper-item-name {
-      font-size: 24px;
+      font-size: 20px;
       width: 50%;
       height: 5vh;
       line-height: 5vh;
-      border-right: 1px solid #ffffff;
+      border-right: 2px solid #ffffff;
       text-align: center;
     }
 
     .swiper-item-point {
-      font-size: 24px;
-      width: 50%;
-      height: 5vh;
-      line-height: 5vh;
-      border-left: 1px solid #ffffff;
+      font-size: 20px;
+      width: 32%;
+      margin: 0 auto;
       text-align: center;
+      word-wrap: break-word;
+      white-space: normal;
     }
   }
 
@@ -337,7 +675,6 @@ const detailIconClick = (item, index) => {
   width: 7vh;
   height: 7vh;
   cursor: pointer;
-  border: 1px solid red;
   flex-shrink: 0;
 }
 
@@ -353,7 +690,7 @@ const detailIconClick = (item, index) => {
 </style>
 
 <style lang="scss">
-// 你已调整的ElMessage/ElMessageBox样式
+// 全局样式（消息提示美化）
 .custom-message {
   &.el-message--success {
     background-color: rgba(105, 62, 156, 0.1) !important;

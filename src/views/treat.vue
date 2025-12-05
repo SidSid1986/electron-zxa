@@ -8,9 +8,22 @@
         <div class="point-content-left-border">
           <div class="content-left-nav">
             <div class="left-nav-title">灸疗方案</div>
-            <div class="left-nav-text-box">
+            <!-- 治疗中：未结束 + 非暂停状态 -->
+            <div v-if="!isTreatmentEnded && !isPsuse" class="left-nav-text-box">
               <span class="point-ball"></span>
-              <span class="left-nav-text">治疗中</span>
+              <span class="left-nav-text">治疗中 </span>
+            </div>
+
+            <!-- 暂停中：未结束 + 暂停状态 -->
+            <div v-if="!isTreatmentEnded && isPsuse" class="left-nav-text-box">
+              <span class="point-ball-red"></span>
+              <span class="left-nav-text">暂停中 </span>
+            </div>
+
+            <!-- 可选补充：治疗结束状态（如果需要） -->
+            <div v-if="isTreatmentEnded" class="left-nav-text-box">
+              <span class="point-ball-gray"></span>
+              <span class="left-nav-text">已结束 </span>
             </div>
           </div>
           <FuXie
@@ -24,26 +37,61 @@
       <div class="point-content-right">
         <div class="point-content-right-border">
           <div class="tool-bar">
-            <el-button @click="usePoint()" type="primary" size="small"
-              >test</el-button
-            >
             <img src="@/assets/pic/temperature.png" alt="" />
             <img src="@/assets/pic/volume.png" alt="" />
             <img src="@/assets/pic/music.png" alt="" />
           </div>
           <div class="swiper-content">
-            <!-- 核心修改：添加updateSwiperData事件监听 -->
             <TreatSwiper
               ref="treatSwiperRef"
               @swiperChange="handleSwiperChange"
               @updateSwiperData="handleUpdateSwiperData"
               :swiperData="tableData"
+              :activeIndex="testIndex"
+              :isTreating="isTreating"
+              @countdownEnd="countdownEnd"
             />
           </div>
           <div class="btn-content">
-            <el-button type="primary" size="small">暂停</el-button>
-            <el-button type="primary" size="small">继续</el-button>
-            <el-button type="primary" size="small">结束</el-button>
+            <!-- 暂停/继续按钮：治疗未结束时显示 -->
+            <el-button
+              v-if="!isPsuse && hasTreatmentStarted && !isTreatmentEnded"
+              class="end-btn"
+              @click="pauseTreat"
+              type="primary"
+              >暂停</el-button
+            >
+            <el-button
+              v-if="isPsuse && hasTreatmentStarted && !isTreatmentEnded"
+              class="end-btn"
+              @click="continueTreat"
+              type="primary"
+              >继续</el-button
+            >
+            <!-- 结束按钮：仅在治疗未结束时显示（核心修改） -->
+            <el-button
+              v-if="hasTreatmentStarted && !isTreatmentEnded"
+              class="end-btn"
+              @click="endTreat"
+              type="primary"
+              >结束</el-button
+            >
+            <!-- 返回定穴按钮：仅在治疗结束后显示 -->
+            <el-button
+              v-if="hasTreatmentStarted && isTreatmentEnded"
+              class="end-btn"
+              @click="backPoint"
+              type="primary"
+              >返回定穴</el-button
+            >
+            <!-- 重新启动按钮：仅在治疗结束后显示 -->
+            <el-button
+              v-if="hasTreatmentStarted && isTreatmentEnded"
+              class="end-btn"
+              @click="restartTreat"
+              type="primary"
+              >重新启动</el-button
+            >
           </div>
         </div>
       </div>
@@ -52,16 +100,25 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch, nextTick } from "vue";
+import { ref, onMounted, watch, nextTick, computed } from "vue";
 import caseData from "@/data/caseData.json";
-import { ElMessage } from "element-plus";
+import { ElMessage, ElMessageBox } from "element-plus";
 import { useRoute, useRouter } from "vue-router";
 import FuXie from "@/components/FuXie.vue";
 import TreatSwiper from "@/components/TreatSwiper.vue";
+import { lo } from "element-plus/es/locale/index.mjs";
 
 // 图片路径
 const BodyPic = "/src/assets/pic/per_obverse.png";
 const LegPic = "/src/assets/pic/leg_obverse.png";
+
+const router = useRouter();
+
+// 核心状态
+const isTreating = ref(false); // 是否正在治疗（控制倒计时启动）
+const isPsuse = ref(true); // 默认暂停，确保初始能看到继续按钮
+const hasTreatmentStarted = ref(false); // 标记治疗是否已开始（控制按钮显示）
+const isTreatmentEnded = ref(false); // 标记治疗是否被手动结束
 
 // 响应式变量
 const picType = ref(-1);
@@ -70,11 +127,16 @@ const selectedCaseId = ref("");
 const selectedCase = ref({});
 const tableData = ref([]);
 const selectedObj = ref({});
-const testIndex = ref(0); // 唯一数据源
+const testIndex = ref(-1);
 const treatSwiperRef = ref(null);
 const swiperInstance = ref(null);
 
-// 初始化数据
+// 计算属性：判断是否还有未完成的穴位
+const hasUnfinishedPoints = computed(() => {
+  const planList = selectedCase.value.plan || [];
+  return planList.some((item) => item.status !== 2);
+});
+
 const getPoint = (id) => {
   const caseDataCopy = JSON.parse(JSON.stringify(caseData));
   selectedCase.value = caseDataCopy.find((item) => item.id * 1 === id * 1);
@@ -91,21 +153,33 @@ const getPoint = (id) => {
   // 初始化第一个穴位
   const planList = selectedCase.value.plan;
   planList[0].status = 1;
+  planList[0].isActive = true;
+
   selectedObj.value = planList[0];
   picType.value = planList[0].type;
   picUrl.value = planList[0].type === 0 ? BodyPic : LegPic;
 
   tableData.value = JSON.parse(JSON.stringify(planList));
 
-  // 初始化Swiper到对应页面
+  // 标记治疗已开始
+  hasTreatmentStarted.value = true;
+  isTreating.value = true;
+  isPsuse.value = false; // 初始为未暂停
+  isTreatmentEnded.value = false; // 重置结束标记
+  testIndex.value = 0;
+
+  // 初始化Swiper
   nextTick(() => {
     if (swiperInstance.value) {
       swiperInstance.value.slideTo(planList[0].type);
     }
+    if (treatSwiperRef.value) {
+      treatSwiperRef.value.startCountdown(0);
+    }
   });
 };
 
-// 核心：自动切换穴位（test按钮）
+// 自动切换穴位
 const usePoint = () => {
   const planList = selectedCase.value.plan || [];
   const planLength = planList.length;
@@ -118,6 +192,7 @@ const usePoint = () => {
   // 1. 标记当前穴位为已完成
   if (testIndex.value < planLength) {
     planList[testIndex.value].status = 2;
+    planList[testIndex.value].isActive = false;
   }
 
   // 2. 计算下一个索引
@@ -126,11 +201,25 @@ const usePoint = () => {
   // 3. 最后一个穴位
   if (nextIndex >= planLength) {
     tableData.value = JSON.parse(JSON.stringify(planList));
+    isTreating.value = false;
+    isPsuse.value = true; // 标记为暂停状态，显示继续按钮
+    isTreatmentEnded.value = true; // 标记为治疗完成
+    ElMessage.info("已执行完所有穴位，结束治疗");
+    testIndex.value = -1;
     return;
   }
 
-  // 4. 更新状态（唯一数据源）
-  planList[nextIndex].status = 1;
+  // 4. 更新状态
+  planList.forEach((item, idx) => {
+    if (idx === nextIndex) {
+      item.status = 1;
+      item.isActive = true;
+    } else if (item.status !== 2) {
+      item.status = 0;
+      item.isActive = false;
+    }
+  });
+
   selectedObj.value = planList[nextIndex];
   picType.value = planList[nextIndex].type;
   picUrl.value = planList[nextIndex].type === 0 ? BodyPic : LegPic;
@@ -142,11 +231,72 @@ const usePoint = () => {
     }
   });
 
-  // 6. 更新唯一数据源
+  // 6. 更新数据源
   testIndex.value = nextIndex;
   tableData.value = JSON.parse(JSON.stringify(planList));
 
   console.log(`自动切换到索引${nextIndex}，type=${planList[nextIndex].type}`);
+};
+
+// 处理倒计时结束事件
+const countdownEnd = (item) => {
+  const planList = selectedCase.value.plan || [];
+  const planLength = planList.length;
+
+  // 前置判断：已结束所有治疗
+  if (testIndex.value >= planLength || !isTreating.value) {
+    if (treatSwiperRef.value) {
+      treatSwiperRef.value.stopCountdown();
+    }
+    ElMessageBox.alert(
+      "<strong><i style='font-size: 24px; color: #6c359d; text-align: center; display: block;font-weight: bold;font-style: normal;'>治疗结束</i></strong>",
+      "提醒",
+      {
+        dangerouslyUseHTMLString: true,
+        confirmButtonText: "确定",
+      }
+    ).then(() => {
+      testIndex.value = -1;
+      isTreating.value = false;
+      isPsuse.value = true; // 保持暂停状态，显示继续按钮
+      isTreatmentEnded.value = true; // 标记为治疗完成
+      planList.forEach((item) => {
+        item.isActive = false;
+      });
+      tableData.value = JSON.parse(JSON.stringify(planList));
+    });
+    return;
+  }
+
+  // 调用切换逻辑
+  usePoint();
+
+  // 再次判断：最后一个穴位
+  if (testIndex.value >= planLength) {
+    if (treatSwiperRef.value) {
+      treatSwiperRef.value.stopCountdown();
+    }
+    isTreating.value = false;
+    isPsuse.value = true; // 保持暂停状态
+    isTreatmentEnded.value = true; // 标记为治疗完成
+    ElMessageBox.alert(
+      "<strong><i style='font-size: 24px; color: #6c359d; text-align: center; display: block;font-weight: bold;font-style: normal;'>治疗结束</i></strong>",
+      "提醒",
+      {
+        dangerouslyUseHTMLString: true,
+        confirmButtonText: "确定",
+      }
+    );
+    return;
+  }
+
+  // 非最后一个穴位，正常启动
+  setTimeout(() => {
+    if (treatSwiperRef.value && isTreating.value) {
+      treatSwiperRef.value.startCountdown(testIndex.value);
+      console.log(`自动启动第${testIndex.value}个穴位的倒计时`);
+    }
+  }, 50);
 };
 
 // 处理手动切换Swiper
@@ -154,13 +304,12 @@ const handleSwiperChange = (swiperIndex) => {
   const planList = selectedCase.value.plan || [];
   if (planList.length === 0) return;
 
-  // 核心修复：根据Swiper索引（0=body，1=leg）直接更新picType
-  const targetType = swiperIndex; // Swiper索引0对应type=0，索引1对应type=1
+  const targetType = swiperIndex;
   picType.value = targetType;
   picUrl.value = targetType === 0 ? BodyPic : LegPic;
   console.log(`手动切换Swiper到索引${swiperIndex}，同步picType=${targetType}`);
 
-  // 同步testIndex（可选：找到当前type下的第一个治疗中穴位）
+  // 同步testIndex
   const currentItem = planList.find(
     (item) => item.type === targetType && item.status === 1
   );
@@ -169,17 +318,13 @@ const handleSwiperChange = (swiperIndex) => {
   }
 };
 
-// 新增：处理子组件的时长更新事件（核心！）
+// 处理时长更新事件
 const handleUpdateSwiperData = (newSwiperData) => {
-  // 1. 更新父组件的tableData（传给子组件的数据源）
   tableData.value = JSON.parse(JSON.stringify(newSwiperData));
-
-  // 2. 同步更新selectedCase.value.plan（保证自动切换逻辑的数据一致性）
   if (selectedCase.value.plan) {
     selectedCase.value.plan = JSON.parse(JSON.stringify(newSwiperData));
   }
 
-  // 3. 如果当前选中的是修改的穴位，同步更新selectedObj的time1/time2
   const updatedItem = newSwiperData.find(
     (item) =>
       item.name === selectedObj.value.name &&
@@ -195,6 +340,146 @@ const handleUpdateSwiperData = (newSwiperData) => {
   ElMessage.success("时长已更新");
 };
 
+// 暂停当前倒计时
+const pauseTreat = () => {
+  isPsuse.value = true;
+  if (treatSwiperRef.value) {
+    treatSwiperRef.value.pauseCountdown();
+    ElMessage.info("治疗已暂停");
+  }
+};
+
+// 恢复继续当前倒计时
+const continueTreat = () => {
+  // 如果所有穴位都已完成，提示用户
+  if (!hasUnfinishedPoints.value) {
+    ElMessage.info("所有穴位已治疗完成，无法继续");
+    return;
+  }
+
+  isPsuse.value = false;
+  isTreating.value = true; // 重新开启治疗状态
+  const planList = selectedCase.value.plan || [];
+  const planLength = planList.length;
+
+  if (testIndex.value >= planLength) {
+    // 找到第一个未完成的穴位重新启动
+    const firstUnfinished = planList.findIndex((item) => item.status !== 2);
+    if (firstUnfinished > -1) {
+      testIndex.value = firstUnfinished;
+      planList[firstUnfinished].status = 1;
+      planList[firstUnfinished].isActive = true;
+      tableData.value = JSON.parse(JSON.stringify(planList));
+
+      if (treatSwiperRef.value) {
+        treatSwiperRef.value.startCountdown(firstUnfinished);
+      }
+    }
+    return;
+  }
+
+  if (treatSwiperRef.value) {
+    treatSwiperRef.value.resumeCountdown();
+    ElMessage.info("治疗已继续");
+  }
+};
+
+// 结束当前治疗（核心修复）
+const endTreat = () => {
+  isPsuse.value = true;
+  ElMessageBox.confirm("确定要结束当前治疗吗？", "提示", {
+    confirmButtonText: "确定",
+    cancelButtonText: "取消",
+    type: "warning",
+  })
+    .then(() => {
+      // 1. 关闭治疗开关，但保持hasTreatmentStarted=true（按钮仍显示）
+      isTreating.value = false;
+      isTreatmentEnded.value = true; // 标记为手动结束
+
+      // 2. 彻底停止子组件所有倒计时
+      if (treatSwiperRef.value) {
+        treatSwiperRef.value.stopCountdown();
+        treatSwiperRef.value.treatData.forEach((page) => {
+          page.forEach((item) => {
+            item.status = "idle";
+            item.isActive = false;
+          });
+        });
+      }
+
+      // 3. 重置治疗计划数据
+      const planList = selectedCase.value.plan || [];
+      planList.forEach((item) => {
+        if (item.status !== 2) {
+          item.status = 0;
+          item.isActive = false;
+        }
+      });
+
+      // 4. 重置索引，但保持hasTreatmentStarted=true
+      testIndex.value = -1;
+      tableData.value = JSON.parse(JSON.stringify(planList));
+
+      ElMessage.success("治疗已结束");
+    })
+    .catch(() => {
+      isPsuse.value = false;
+      ElMessage.info("已取消结束操作");
+    });
+};
+
+// 重新启动治疗（核心实现）
+const restartTreat = () => {
+  ElMessageBox.confirm("确定要重新启动整个灸疗方案吗？", "提示", {
+    confirmButtonText: "确定",
+    cancelButtonText: "取消",
+    type: "warning",
+  })
+    .then(() => {
+      // 1. 重置所有治疗状态
+      isTreatmentEnded.value = false;
+      isPsuse.value = false;
+      isTreating.value = true;
+
+      // 2. 重置所有穴位状态（清空完成标记）
+      const planList = selectedCase.value.plan || [];
+      planList.forEach((item, idx) => {
+        item.status = idx === 0 ? 1 : 0; // 第一个穴位设为治疗中，其余为未开始
+        item.isActive = idx === 0;
+      });
+
+      // 3. 重置选中的穴位和图片
+      selectedObj.value = planList[0];
+      picType.value = planList[0].type;
+      picUrl.value = planList[0].type === 0 ? BodyPic : LegPic;
+
+      // 4. 重置索引并更新数据
+      testIndex.value = 0;
+      tableData.value = JSON.parse(JSON.stringify(planList));
+
+      // 5. 重启Swiper和倒计时
+      nextTick(() => {
+        if (swiperInstance.value) {
+          swiperInstance.value.slideTo(planList[0].type);
+        }
+        if (treatSwiperRef.value) {
+          treatSwiperRef.value.startCountdown(0);
+        }
+      });
+
+      ElMessage.success("灸疗方案已重新启动");
+    })
+    .catch(() => {
+      ElMessage.info("已取消重新启动操作");
+    });
+};
+
+// 返回定穴
+const backPoint = () => {
+  router.push(`/point?id=${localStorage.getItem("selectedCaseId")}`);
+};
+
 // 监听Swiper实例
 watch(
   () => treatSwiperRef.value,
@@ -208,13 +493,13 @@ watch(
 
 // 初始化
 onMounted(() => {
-  selectedCaseId.value = localStorage.getItem("selectedCaseId") || 1; // 兜底默认值
+  selectedCaseId.value = localStorage.getItem("selectedCaseId") || 1;
   getPoint(selectedCaseId.value);
 });
 </script>
 
 <style scoped lang="scss">
-/* 原有样式保持不变 */
+// 样式部分保持不变
 .container {
   box-sizing: border-box;
   background: url("@/assets/pic/backgroundImage.png") no-repeat;
@@ -301,6 +586,14 @@ onMounted(() => {
               margin-right: 10px;
             }
 
+            .point-ball-red {
+              width: 20px;
+              height: 20px;
+              border-radius: 50%;
+              background-color: #e53935;
+              margin-right: 10px;
+            }
+
             .left-nav-text {
               height: 3vh;
               line-height: 3vh;
@@ -340,10 +633,10 @@ onMounted(() => {
           align-items: center;
           justify-content: flex-end;
           flex-direction: row;
-          border: 1px solid red;
 
           img {
             cursor: pointer;
+            margin-left: 20px;
           }
         }
 
@@ -364,7 +657,7 @@ onMounted(() => {
           align-items: center;
           justify-content: center;
           flex-direction: row;
-          border: 1px solid red;
+          gap: 20px;
         }
       }
     }
@@ -457,5 +750,22 @@ onMounted(() => {
   padding: 0;
   font-family: "Microsoft YaHei", sans-serif;
   box-sizing: border-box !important;
+}
+
+:deep(.end-btn) {
+  width: 150px;
+  height: 60px;
+  font-size: 24px;
+  font-weight: bold;
+  border-radius: 20px;
+  --el-button-text-color: #fff;
+  --el-button-bg-color: #af7dc4;
+  --el-button-border-color: #af7dc4;
+  --el-button-hover-text-color: #fff;
+  --el-button-hover-bg-color: #9a6cb8;
+  --el-button-hover-border-color: #9a6cb8;
+  --el-button-active-text-color: #fff;
+  --el-button-active-bg-color: #8a5ca0;
+  --el-button-active-border-color: #8a5ca0;
 }
 </style>
