@@ -64,7 +64,7 @@
             </div>
           </div>
 
-          <!-- 控制按钮 -->
+          <!-- 控制按钮 + 新增音量控制滑块 -->
           <div class="control-panel">
             <button
               class="control-btn"
@@ -105,6 +105,28 @@
                 <path d="M10 4L20 12L10 20V4Z" fill="#693e9c" />
               </svg>
             </button>
+            
+            <!-- 新增：音量控制滑块 -->
+            <div class="volume-control-wrapper">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                class="volume-icon"
+              >
+                <path d="M3 9V15H7L12 20V4L7 9H3Z" fill="#693e9c" />
+              </svg>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                v-model="musicVolume"
+                class="volume-slider"
+                @input="handleVolumeChange"
+              />
+            </div>
           </div>
 
           <!-- 歌曲列表（修复高度变形） -->
@@ -173,65 +195,113 @@
 <script setup>
 import { ref, reactive, onMounted, onUnmounted, watch, defineEmits } from "vue";
 
-//  定义要传递给父组件的事件
-const emit = defineEmits(["update:playing", "update:currentSong"]);
+const emit = defineEmits(["update:playing", "update:currentSong", "update:volume"]);
 
 // 弹窗显示状态
 const visible = ref(false);
 const audioInitiated = ref(false);
 
-//  动态获取assets/music下的所有MP3文件
-const getMusicList = () => {
-  try {
-    const musicFiles = import.meta.glob("@/assets/music/*.mp3", {
-      eager: true,
-    });
-    return Object.keys(musicFiles).map((filePath) => {
-      const fileName = filePath.split("/").pop();
-      const songName = fileName.replace(".mp3", "");
-      const songUrl = new URL(filePath, import.meta.url).href;
-      return {
-        name: songName,
-        url: songUrl,
-      };
-    });
-  } catch (e) {
-    console.error("获取音乐列表失败:", e);
-    return [];
-  }
-};
+// 音量（0-100）
+const musicVolume = ref(50);
 
-// 动态生成歌曲列表
-const songList = reactive(getMusicList());
+// 判断是否Electron
+const isElectron = window.electronAPI ? true : false;
+const isDev = import.meta.env.DEV;
 
-// 当前播放状态
+// 歌曲列表（初始为空，onMounted 时加载）
+const songList = reactive([]);
+
+// 当前播放
 const currentSongIndex = ref(0);
-const currentSong = ref(songList[0] || { name: "暂无音乐", url: "" });
+const currentSong = ref({ name: "暂无音乐", url: "" });
 const isPlaying = ref(false);
 const currentTime = ref(0);
 const duration = ref(0);
 const progressPercent = ref(0);
 
-// 音频实例（延迟初始化）
+// audio 实例（延迟创建）
 let audio = null;
 
-// 初始化音频实例
+// 异步加载歌单（开发/生产/ electron 三种情况）
+async function loadMusicList() {
+  try {
+    if (isDev) {
+      // 开发模式逻辑不变（原本就正常）
+      const musicFiles = import.meta.glob("/public/music/*.mp3", { eager: true });
+      console.debug("import.meta.glob result keys:", Object.keys(musicFiles));
+      const arr = Object.entries(musicFiles).map(([filePath, mod]) => {
+        const fileName = filePath.split("/").pop();
+        const songName = fileName.replace(".mp3", "");
+        const songUrl = `/music/${fileName}`;
+        return { name: songName, url: songUrl };
+      });
+      songList.splice(0, songList.length, ...arr);
+    } else if (isElectron) {
+      // 关键修复：直接使用主进程返回的 name 和 url
+      try {
+        const musicItems = await window.electronAPI.getMusicFiles();
+        console.debug("electronAPI.getMusicFiles ->", musicItems);
+        if (Array.isArray(musicItems) && musicItems.length) {
+          // 无需解析 URL，直接使用主进程处理好的 name
+          songList.splice(0, songList.length, ...musicItems);
+        } else {
+          songList.splice(0, songList.length);
+        }
+      } catch (e) {
+        console.error("调用 electronAPI.getMusicFiles 失败:", e);
+        songList.splice(0, songList.length);
+      }
+    } else {
+      // 纯 Web 环境逻辑不变
+      const musicFiles = import.meta.glob("/public/music/*.mp3", { eager: true });
+      const arr = Object.entries(musicFiles).map(([filePath, mod]) => {
+        const fileName = filePath.split("/").pop();
+        const songName = fileName.replace(".mp3", "");
+        const songUrl = `/music/${fileName}`;
+        return { name: songName, url: songUrl };
+      });
+      songList.splice(0, songList.length, ...arr);
+    }
+
+    if (songList.length) {
+      currentSongIndex.value = 0;
+      currentSong.value = songList[0];
+      console.debug("已加载歌单，当前歌曲:", currentSong.value);
+    } else {
+      currentSongIndex.value = -1;
+      currentSong.value = { name: "暂无音乐", url: "" };
+      console.debug("未找到音乐文件，songList 为空");
+    }
+  } catch (err) {
+    console.error("加载音乐列表出错:", err);
+    songList.splice(0, songList.length);
+    currentSongIndex.value = -1;
+    currentSong.value = { name: "暂无音乐", url: "" };
+  }
+}
+// 初始化 audio 实例（只在有有效 URL 时创建/设置 src）
 const initAudioInstance = () => {
   if (audio || !songList.length) return;
+  if (!currentSong.value || !currentSong.value.url) {
+    console.debug("initAudioInstance: 当前歌曲没有有效 url，跳过创建 audio");
+    return;
+  }
 
   audio = new Audio();
   audio.src = currentSong.value.url;
+  console.debug("audio created with src:", audio.src);
   audio.autoplay = false;
   audio.preload = "metadata";
+  audio.volume = musicVolume.value / 100;
 
-  // 绑定音频事件
+  // 绑定事件
   audio.addEventListener("loadedmetadata", () => {
-    duration.value = audio.duration;
+    duration.value = audio.duration || 0;
   });
 
   audio.addEventListener("timeupdate", () => {
     currentTime.value = audio.currentTime;
-    progressPercent.value = (audio.currentTime / audio.duration) * 100 || 0;
+    progressPercent.value = (audio.currentTime / (audio.duration || 1)) * 100 || 0;
   });
 
   audio.addEventListener("ended", () => {
@@ -240,139 +310,161 @@ const initAudioInstance = () => {
 
   audio.addEventListener("error", (e) => {
     console.error("音频播放错误:", e);
+    console.error("当前音频路径:", audio && audio.src);
   });
 
   audioInitiated.value = true;
 };
 
-// 初始化音频并播放
-const initAudioAndPlay = () => {
+// 初始化并播放（谨慎处理 src）
+const initAudioAndPlay = async () => {
   if (!songList.length) return;
 
+  // 若未初始化且 currentSong 有 URL，则创建 audio
   if (!audioInitiated.value) {
     initAudioInstance();
+  } else {
+    // 如果 audio 已存在但 src 与 currentSong 不一致，更新 src
+    if (audio && currentSong.value && currentSong.value.url && audio.src !== currentSong.value.url) {
+      audio.src = currentSong.value.url;
+    }
+  }
+
+  if (!audio) {
+    // 如果仍然没有 audio（例如 currentSong.url 为空），提示并返回
+    console.error("initAudioAndPlay: audio 未被创建，请检查 currentSong.url:", currentSong.value);
+    alert("无法播放：当前没有可用的音频源。");
+    return;
   }
 
   if (isPlaying.value) {
     audio.pause();
+    isPlaying.value = false;
   } else {
-    audio
-      .play()
-      .then(() => {})
-      .catch((err) => {
-        console.error("播放失败:", err);
-        alert("播放失败：请刷新页面后重试，或检查音频文件路径是否正确");
-      });
+    try {
+      await audio.play();
+      isPlaying.value = true;
+    } catch (err) {
+      console.error("播放失败:", err, "audio.src=", audio.src);
+      alert("播放失败：请检查音频文件是否有效或浏览器是否支持该音频格式。");
+      isPlaying.value = false;
+    }
   }
-  isPlaying.value = !isPlaying.value;
 
-  //  向父组件发送播放状态更新
   emit("update:playing", isPlaying.value);
   emit("update:currentSong", currentSong.value);
 };
 
-// 播放指定歌曲
+// 播放指定歌曲（index）
 const playSong = (index) => {
   if (!songList.length) return;
-
-  if (!audioInitiated.value) {
-    initAudioInstance();
-  }
+  if (index < 0 || index >= songList.length) return;
 
   currentSongIndex.value = index;
   currentSong.value = songList[index];
 
+  // 如果 audio 不存在但 currentSong 有 url，则创建
+  if (!audioInitiated.value && currentSong.value.url) {
+    initAudioInstance();
+  }
+
   if (audio) {
-    audio.src = currentSong.value.url;
+    audio.src = currentSong.value.url || "";
     audio.currentTime = 0;
+    // 保证切歌后维持之前音量
+    audio.volume = musicVolume.value / 100;
 
     if (isPlaying.value) {
       audio.play().catch((err) => {
-        console.error("播放失败:", err);
+        console.error("播放失败:", err, "audio.src=", audio.src);
+        alert("播放失败：请检查音频文件路径是否正确，路径：" + audio.src);
       });
     }
   }
 
-  //  ：向父组件发送当前歌曲更新
   emit("update:currentSong", currentSong.value);
 };
 
-// 上一曲
+// 上一曲 / 下一曲
 const prevSong = () => {
   if (!songList.length) return;
-
-  const newIndex =
-    (currentSongIndex.value - 1 + songList.length) % songList.length;
+  const newIndex = (currentSongIndex.value - 1 + songList.length) % songList.length;
   playSong(newIndex);
 };
-
-// 下一曲
 const nextSong = () => {
   if (!songList.length) return;
-
   const newIndex = (currentSongIndex.value + 1) % songList.length;
   playSong(newIndex);
 };
 
 // 格式化时间
 const formatTime = (seconds) => {
-  if (!seconds || isNaN(seconds)) return "00:00";
+  if (!seconds || isNaN(seconds) || seconds === Infinity) return "00:00";
   const min = Math.floor(seconds / 60);
   const sec = Math.floor(seconds % 60);
-  return `${min.toString().padStart(2, "0")}:${sec
-    .toString()
-    .padStart(2, "0")}`;
+  return `${min.toString().padStart(2, "0")}:${sec.toString().padStart(2, "0")}`;
 };
 
-// 点击进度条调整播放位置
+// 进度条点击
 const handleProgressClick = (e) => {
   if (!audio || !songList.length) return;
-
   const rect = e.currentTarget.getBoundingClientRect();
   const clickX = e.clientX - rect.left;
   const percent = clickX / rect.width;
-  audio.currentTime = percent * audio.duration;
+  audio.currentTime = percent * (audio.duration || 0);
 };
 
-// 打开播放器
+// 音量相关
+const handleVolumeChange = () => {
+  if (audio) audio.volume = musicVolume.value / 100;
+  emit("update:volume", musicVolume.value);
+};
+
+const setMusicVolume = (volume) => {
+  if (volume < 0) volume = 0;
+  if (volume > 100) volume = 100;
+  musicVolume.value = volume;
+  if (audio) audio.volume = volume / 100;
+  emit("update:volume", volume);
+};
+
+// open / close 不暂停播放（后台播放）
 const openPlayer = () => {
   visible.value = true;
-  //  打开时同步状态给父组件
   emit("update:playing", isPlaying.value);
   emit("update:currentSong", currentSong.value);
+  emit("update:volume", musicVolume.value);
 };
-
-//  关闭播放器时不暂停音乐（后台播放）
 const closePlayer = () => {
   visible.value = false;
-  // 移除暂停逻辑，保留播放状态
-  // 同步最新状态给父组件
   emit("update:playing", isPlaying.value);
+  emit("update:volume", musicVolume.value);
 };
 
-// 监听播放状态变化，实时同步给父组件
-watch(isPlaying, (newVal) => {
-  emit("update:playing", newVal);
-});
+// 监听变化
+watch(isPlaying, (nv) => emit("update:playing", nv));
+watch(musicVolume, (nv) => emit("update:volume", nv));
 
-// 组件卸载时清理资源（页面关闭才暂停）
 onUnmounted(() => {
   if (audio) {
-    audio.pause();
-    isPlaying.value = false;
-    emit("update:playing", false);
-    audio.removeEventListener("loadedmetadata", () => {});
-    audio.removeEventListener("timeupdate", () => {});
-    audio.removeEventListener("ended", () => {});
+    try {
+      audio.pause();
+      audio.src = "";
+      audio.removeEventListener("loadedmetadata", () => {});
+      audio.removeEventListener("timeupdate", () => {});
+      audio.removeEventListener("ended", () => {});
+    } catch (e) {
+      console.error("cleanup audio error:", e);
+    }
+    audio = null;
   }
   audioInitiated.value = false;
 });
 
-// 监听弹窗关闭状态（仅隐藏，不暂停）
 watch(visible, (newVal) => {
-  if (!newVal && audio) {
-    // 关闭弹窗时不暂停音乐
+  if (!newVal) {
     emit("update:playing", isPlaying.value);
+    emit("update:volume", musicVolume.value);
   }
 });
 
@@ -383,13 +475,20 @@ defineExpose({
   playSong,
   prevSong,
   nextSong,
-  // 🔥 暴露播放状态，方便父组件获取
+  setMusicVolume,
   isPlaying,
+  musicVolume,
+  currentSong,
+});
+
+// 在组件挂载时加载歌单
+onMounted(() => {
+  loadMusicList();
 });
 </script>
 
 <style scoped lang="scss">
-/* 样式部分保持不变，无需修改 */
+/* 样式部分保持不变，和原代码一致 */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -599,6 +698,39 @@ defineExpose({
     gap: 24px;
     margin-bottom: 20px;
     width: 100%;
+
+    // 新增：音量控制容器样式
+    .volume-control-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      width: 80px;
+      
+      .volume-icon {
+        flex-shrink: 0;
+      }
+      
+      .volume-slider {
+        width: 100%;
+        height: 4px;
+        -webkit-appearance: none;
+        appearance: none;
+        background-color: #f0e0f7;
+        border-radius: 2px;
+        outline: none;
+        
+        &::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          appearance: none;
+          width: 10px;
+          height: 10px;
+          border-radius: 50%;
+          background-color: #693e9c;
+          cursor: pointer;
+          box-shadow: 0 0 0 1px #ffffff;
+        }
+      }
+    }
 
     .control-btn {
       width: 40px;

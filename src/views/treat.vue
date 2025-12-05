@@ -69,6 +69,7 @@
 
             <VolumeModal
               ref="volumeModalRef"
+              :initial-volume="currentVolume"
               @update:volume="handleVolumeUpdate"
             />
 
@@ -76,6 +77,7 @@
               ref="musicPlayerRef"
               @update:playing="handlePlayingUpdate"
               @update:currentSong="handleCurrentSongUpdate"
+              @update:volume="handleMusicVolumeUpdate"
             />
           </div>
           <div class="swiper-content">
@@ -146,6 +148,8 @@ import TreatSwiper from "@/components/TreatSwiper.vue";
 import TemperatureModal from "@/components/TemperatureModal.vue";
 import VolumeModal from "@/components/VolumeModal.vue";
 import MusicPlayer from "@/components/MusicPlayer.vue";
+import BodyPic from "@/assets/pic/per_obverse.png";
+import LegPic from "@/assets/pic/leg_obverse.png";
 
 // 组件引用
 const tempModalRef = ref(null);
@@ -154,13 +158,21 @@ const musicPlayerRef = ref(null);
 
 // 状态管理
 const currentTemp = ref(23);
-const currentVolume = ref(50);
+const currentVolume = ref(50); // 全局音量（同步到音乐播放器）
 const isMusicPlaying = ref(false);
 const currentPlayingSong = ref({ name: "暂无音乐", url: "" });
 
-// 图片路径
-const BodyPic = "/src/assets/pic/per_obverse.png";
-const LegPic = "/src/assets/pic/leg_obverse.png";
+// 判断是否为Electron环境（仅在父组件做一次判断）
+const isElectronEnv = ref(false);
+try {
+  isElectronEnv.value = !!window.process?.type === 'renderer';
+} catch (e) {
+  isElectronEnv.value = false;
+}
+
+// // 图片路径
+// const BodyPic = "/src/assets/pic/per_obverse.png";
+// const LegPic = "/src/assets/pic/leg_obverse.png";
 
 const router = useRouter();
 
@@ -537,12 +549,12 @@ const openTempModal = () => {
   }
 };
 
-// 打开音量弹窗
+// 打开音量弹窗（传递音乐播放器当前音量）
 const openVolumeModal = () => {
+  // 优先获取音乐播放器的当前音量，没有则用全局音量
+  const initVol = musicPlayerRef.value?.musicVolume || currentVolume.value;
   if (volumeModalRef.value) {
-    volumeModalRef.value.openModal();
-    // 同步当前音量到弹窗
-    volumeModalRef.value.volume = currentVolume.value;
+    volumeModalRef.value.openModal(initVol);
   }
 };
 
@@ -559,15 +571,32 @@ const handleTempUpdate = (temp) => {
   console.log("当前温度:", temp + "°C");
 };
 
-// 音量更新处理
+// 音量更新处理（核心：同步到音乐播放器+Electron系统音量）
 const handleVolumeUpdate = (volume) => {
   currentVolume.value = volume;
   console.log("当前音量:", volume + "%");
 
-  // 同步音量到音乐播放器（如果有播放）
-  if (musicPlayerRef.value && musicPlayerRef.value.isPlaying) {
-    // 这里需要在音乐播放器组件中暴露音频音量控制，后续可扩展
-    // musicPlayerRef.value.setVolume(volume / 100);
+  // 1. Electron环境：控制系统音量（loudness）
+  if (isElectronEnv.value) {
+    import("@/utils/volume").then(({ setVol }) => {
+      setVol(volume);
+    }).catch(err => {
+      console.warn("Electron系统音量控制失败:", err);
+    });
+  }
+
+  // 2. 同步音量到音乐播放器（无论什么环境）
+  if (musicPlayerRef.value) {
+    musicPlayerRef.value.setMusicVolume(volume);
+  }
+};
+
+// 同步音乐播放器的音量变化到全局
+const handleMusicVolumeUpdate = (volume) => {
+  currentVolume.value = volume;
+  // 同步到音量弹窗（如果弹窗打开）
+  if (volumeModalRef.value?.visible) {
+    volumeModalRef.value.volume = volume;
   }
 };
 

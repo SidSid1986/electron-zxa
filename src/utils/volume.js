@@ -1,39 +1,68 @@
-/*
- * @Author: Sid Li
- * @Date: 2025-12-05 17:29:56
- * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-05 17:29:59
- * @FilePath: \ai\src\utils\volume.js
- * @Description: 
+/**
+ * 音量控制工具类 - 纯 ES6 模块化
+ * 全自动环境识别，无需手动配置
  */
-const loudness = window.require("loudness");
 
-// 设置音量为特定值
-function setVol(a = 45) {
-  loudness.setVolume(a);
-  dismuted();
-}
-// 获取当前音量
-function getVol() {
-  return loudness.getVolume();
-}
-// 设置和取消静音
-async function setmuted(a = true) {
-  if (a) {
-    // console.log(a, "取消静音");
-    //   取消静音
-    await loudness.setMuted(false);
-    return false;
-  } else {
-    // console.log(a, "设置静音");
-    //   设置静音
-    await loudness.setMuted(true);
-    return true;
+// ======================== 1. 全自动 Electron 环境识别 ========================
+export const isElectron = (() => {
+  if (typeof window === 'undefined') return false;
+  
+  // 多重检测，确保识别准确
+  const checkList = [
+    window.process?.type === 'renderer', // Electron 渲染进程标识
+    !!window.electronAPI, // 自定义暴露的 Electron API
+    navigator.userAgent?.includes('Electron'), // UA 包含 Electron
+    !!window.require && typeof window.require === 'function' // Electron 特有 require
+  ];
+  
+  return checkList.some(Boolean);
+})();
+
+// ======================== 2. 仅 Electron 加载 loudness ========================
+let loudness = null;
+if (isElectron) {
+  try {
+    // Electron 渲染进程安全加载 loudness
+    loudness = window.require('loudness');
+    console.log('✅ Electron 环境 - loudness 加载成功');
+  } catch (error) {
+    console.error('❌ Electron 环境 - loudness 加载失败:', error);
+    loudness = null;
   }
 }
 
-module.exports = {
-  setVol,
-  getVol,
-  setmuted,
-};
+// ======================== 3. 模拟状态（网页环境用） ========================
+const mockVolumeState = { volume: 50, muted: false };
+
+// ======================== 4. 核心方法（全自动适配） ========================
+/**
+ * 设置音量（自动分环境）
+ * @param {number} val - 音量值 0-100
+ */
+export function setVol(val = 45) {
+  const validVal = Math.max(0, Math.min(100, Number(val)));
+  
+  if (isElectron && loudness) {
+    // Electron：真正控制系统音量
+    loudness.setVolume(validVal);
+    loudness.setMuted(false); // 调音量自动取消静音
+  } else {
+    // 网页：仅更新模拟状态（实际播放器音量由组件控制）
+    mockVolumeState.volume = validVal;
+    mockVolumeState.muted = false;
+  }
+}
+
+/**
+ * 获取音量（自动分环境）
+ * @returns {Promise<number>} 音量值 0-100
+ */
+export async function getVol() {
+  if (isElectron && loudness) {
+    // Electron：获取系统真实音量
+    return await loudness.getVolume();
+  } else {
+    // 网页：返回模拟值
+    return Promise.resolve(mockVolumeState.volume);
+  }
+}

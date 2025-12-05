@@ -2,8 +2,8 @@
  * @Author: Sid Li
  * @Date: 2025-11-29 13:33:24
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-05 17:24:22
- * @FilePath: \ai\electron\main.js
+ * @LastEditTime: 2025-12-05 23:52:18
+ * @FilePath: \electron-zxa\electron\main.js
  * @Description: 基于loudness库的跨平台音量控制主进程代码
  */
 const { app, BrowserWindow, Menu, ipcMain } = require("electron");
@@ -12,7 +12,7 @@ const os = require("os");
 const fs = require("fs");
 const { exec } = require('child_process'); // 用于系统命令执行
 const loudness = require('loudness'); // 跨平台音量控制库
-
+const { pathToFileURL } = require('url');
 // 创建日志目录
 const logDir = path.join(app.getPath("userData"), "logs");
 if (!fs.existsSync(logDir)) {
@@ -33,6 +33,74 @@ log(`应用启动，环境：${isDev ? "开发" : "生产"}，系统：${process
 
 // 保持对窗口对象的全局引用
 let mainWindow;
+
+// ===================== 新增：音乐文件处理函数 =====================
+/**
+ * 获取音乐文件列表（适配开发/生产环境）
+ * @returns {Array} 音乐文件的绝对路径列表
+ */
+// ===================== 音乐文件处理函数（修改后） =====================
+function getMusicFiles() {
+  try {
+    const candidates = [];
+
+    if (app.isPackaged) {
+      candidates.push(path.join(process.resourcesPath, 'app.asar.unpacked', 'public', 'music'));
+      candidates.push(path.join(process.resourcesPath, 'public', 'music'));
+      candidates.push(path.join(__dirname, '../public/music'));
+    } else {
+      candidates.push(path.join(app.getAppPath(), 'public/music'));
+    }
+
+    log(`getMusicFiles: 尝试候选目录: ${JSON.stringify(candidates)}`);
+
+    let musicDir = null;
+    for (const c of candidates) {
+      if (fs.existsSync(c) && fs.statSync(c).isDirectory()) {
+        musicDir = c;
+        break;
+      }
+    }
+
+    if (!musicDir) {
+      log(`音乐目录未找到，候选目录均不存在`);
+      return [];
+    }
+
+    log(`读取音乐目录：${musicDir}`);
+
+    // 关键修复1：用 fs.readdirSync 的 withFileTypes 模式，避免编码丢失
+    const files = fs.readdirSync(musicDir, { withFileTypes: true })
+      .filter(dirent => dirent.isFile() && dirent.name.toLowerCase().endsWith('.mp3') && !dirent.name.startsWith('.'))
+      .map(dirent => dirent.name); // 直接获取原始文件名（避免路径拼接导致的编码问题）
+
+    const result = [];
+    for (const fileName of files) {
+      try {
+        // 关键修复2：用 path.join 拼接路径，避免手动处理分隔符导致的编码问题
+        const fullPath = path.join(musicDir, fileName);
+        // 关键修复3：正确处理中文文件名的 URL 转换
+        const fileUrl = new URL(`file:///${fullPath.replace(/\\/g, '/')}`).href;
+        // 直接用原始 fileName，不再从 URL 解析（避免 URL 编码导致的乱码）
+        result.push({
+          name: fileName.replace('.mp3', ''), // 原始中文文件名
+          url: fileUrl
+        });
+      } catch (e) {
+        log(`处理文件 ${fileName} 失败: ${e.message}`);
+      }
+    }
+
+    log(`找到 ${result.length} 个音乐文件:`, result.map(item => item.name));
+    // 返回包含 name 和 url 的对象，而非纯 URL 数组
+    return result;
+  } catch (error) {
+    log(`读取音乐文件失败: ${error.message}`);
+    log(error.stack);
+    return [];
+  }
+}
+// ===================== 新增结束 =====================
 
 // 定期发送内存使用信息
 function sendMemoryUsage() {
@@ -244,6 +312,14 @@ function createWindow() {
       log(`设置系统音量: ${Math.round(value * 100)}%`);
       await setSystemVolume(value);
     });
+
+    // ===================== 新增：音乐文件IPC监听 =====================
+    // 处理渲染进程获取音乐文件的请求
+    ipcMain.handle("get-music-files", () => {
+      log("接收到获取音乐文件请求");
+      return getMusicFiles();
+    });
+    // ===================== 新增结束 =====================
 
     // 窗口关闭时触发
     mainWindow.on("closed", () => {

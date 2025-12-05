@@ -34,8 +34,11 @@
     ],
     "extraResources": [
       {
-        "from": "public/",
-        "to": "public/"
+        "from": "public/music",
+        "to": "public/music",
+        "filter": [
+          "**/*.mp3"
+        ]
       }
     ],
     "asar": true,
@@ -43,11 +46,12 @@
       "**/*.node",
       "**/*.dll",
       "dist/**/*",
-      "node_modules/element-plus/**/*"
+      "node_modules/element-plus/**/*",
+      "public/music/**"
     ],
     "mac": {
       "category": "public.app-category.utilities",
-      "icon": "public/home.ico",
+      "icon": "public/home.png",
       "target": [
         "dmg",
         "zip"
@@ -77,9 +81,12 @@
       "target": [
         "AppImage",
         "deb",
-        "rpm"
+        "rpm",
+        "zip"
       ],
-      "icon": "public/home.ico"
+      "icon": "public/home.png",
+      "category": "Utility",
+      "artifactName": "${productName}-${version}-linux-x64.${ext}"
     },
     "nsis": {
       "oneClick": false,
