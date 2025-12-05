@@ -106,6 +106,7 @@
     "element-plus": "^2.9.0",
     "fabric": "^4.6.0",
     "html2canvas": "^1.4.1",
+    "loudness": "^0.4.2",
     "pinia": "^3.0.3",
     "pinia-plugin-persistedstate": "^4.2.0",
     "react": "^19.2.0",

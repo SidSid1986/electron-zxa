@@ -2,19 +2,16 @@
  * @Author: Sid Li
  * @Date: 2025-11-29 13:33:24
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-05 16:51:31
+ * @LastEditTime: 2025-12-05 17:24:22
  * @FilePath: \ai\electron\main.js
- * @Description: 支持跨平台音量控制的主进程代码
+ * @Description: 基于loudness库的跨平台音量控制主进程代码
  */
 const { app, BrowserWindow, Menu, ipcMain } = require("electron");
 const path = require("path");
 const os = require("os");
 const fs = require("fs");
-const { exec } = require('child_process'); // 用于Linux系统音量控制
-
-// 引入系统音量控制相关模块
-const { systemPreferences } = require("electron"); // macOS系统音量控制
-// const windowsAudio = process.platform === "win32" ? require("electron-windows-audio") : null; // Windows系统音量控制
+const { exec } = require('child_process'); // 用于系统命令执行
+const loudness = require('loudness'); // 跨平台音量控制库
 
 // 创建日志目录
 const logDir = path.join(app.getPath("userData"), "logs");
@@ -60,64 +57,53 @@ function sendMemoryUsage() {
   }
 }
 
-// 系统音量控制函数 - 跨平台实现
+// 系统音量控制函数 - 基于loudness库的跨平台实现
 async function getSystemVolume() {
   try {
-    if (process.platform === "darwin") {
-      // macOS系统
-      const volume = systemPreferences.getMediaVolume();
-      return volume;
-    } else if (process.platform === "win32" && windowsAudio) {
-      // Windows系统
-      const volume = await windowsAudio.getVolume();
-      return volume / 100;
-    } else if (process.platform === "linux") {
-      // Linux系统 - 使用pactl命令
-      return new Promise((resolve) => {
-        exec('pactl get-sink-volume @DEFAULT_SINK@', (error, stdout) => {
-          if (error) {
-            log(`Linux获取音量错误: ${error.message}`);
-            resolve(0.5);
-            return;
-          }
-          
-          // 解析输出，格式类似 "Volume: front-left: 65536 / 100%"
-          const match = stdout.match(/Volume:.*?(\d+)%/);
-          if (match && match[1]) {
-            resolve(parseInt(match[1]) / 100);
-          } else {
-            resolve(0.5);
-          }
-        });
-      });
+    if (process.platform === "win32" || process.platform === "linux") {
+      // 使用loudness库获取音量（返回0-100之间的数值）
+      const volume = await loudness.getVolume();
+      return volume / 100; // 转换为0-1范围
     }
     return 0.5; // 默认值
   } catch (error) {
     log(`获取系统音量失败: ${error.message}`);
+    // 失败时尝试检查Linux系统依赖
+    if (process.platform === "linux") {
+      checkLinuxDependencies();
+    }
     return 0.5;
   }
 }
 
 async function setSystemVolume(value) {
   try {
-    if (process.platform === "darwin") {
-      // macOS系统
-      systemPreferences.setMediaVolume(value);
-    } else if (process.platform === "win32" && windowsAudio) {
-      // Windows系统
-      await windowsAudio.setVolume(value * 100);
-    } else if (process.platform === "linux") {
-      // Linux系统 - 使用pactl命令
-      const volumePercent = Math.round(value * 100);
-      exec(`pactl set-sink-volume @DEFAULT_SINK@ ${volumePercent}%`, (error) => {
-        if (error) {
-          log(`Linux设置音量错误: ${error.message}`);
-        }
-      });
+    if (process.platform === "win32" || process.platform === "linux") {
+      // 将0-1范围转换为0-100
+      const volume = Math.round(value * 100);
+      // 确保音量在有效范围内
+      const clampedVolume = Math.max(0, Math.min(100, volume));
+      await loudness.setVolume(clampedVolume);
     }
   } catch (error) {
     log(`设置系统音量失败: ${error.message}`);
+    // 失败时尝试检查Linux系统依赖
+    if (process.platform === "linux") {
+      checkLinuxDependencies();
+    }
   }
+}
+
+// 检查Linux系统依赖
+function checkLinuxDependencies() {
+  exec('which pactl', (error) => {
+    if (error) {
+      log("警告: Linux系统未检测到pactl工具，音量控制可能无法正常工作");
+      log("请安装pulseaudio-utils: sudo apt-get install pulseaudio-utils (Ubuntu/Debian)");
+      log("或: sudo dnf install pulseaudio-utils (Fedora/RHEL)");
+      log("或: sudo pacman -S pulseaudio-utils (Arch Linux)");
+    }
+  });
 }
 
 function createWindow() {
@@ -281,11 +267,19 @@ function createWindow() {
   }
 }
 
+// 检查系统依赖
+function checkSystemDependencies() {
+  if (process.platform === "linux") {
+    checkLinuxDependencies();
+  }
+}
+
 // Electron 初始化完成后创建窗口
 app
   .whenReady()
   .then(() => {
     log("Electron 准备就绪");
+    checkSystemDependencies(); // 检查系统依赖
     createWindow();
   })
   .catch((error) => {
@@ -317,7 +311,7 @@ process.on("unhandledRejection", (reason, promise) => {
   log(`未处理的Promise拒绝: ${reason}`);
 });
 
-// 设置应用图标（macOS Dock图标）
+// 设置应用图标（macOS Dock图标）- 不影响Windows/Linux
 if (process.platform === "darwin") {
   try {
     app.dock.setIcon(path.join(__dirname, "../public/home.png"));
