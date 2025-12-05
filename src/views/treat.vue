@@ -39,7 +39,18 @@
           <div class="tool-bar">
             <img src="@/assets/pic/temperature.png" alt="" />
             <img src="@/assets/pic/volume.png" alt="" />
-            <img src="@/assets/pic/music.png" alt="" />
+            <img
+              src="@/assets/pic/music.png"
+              @click="openMusicPlayer"
+              alt="音乐"
+              class="music-icon"
+              :class="{ rotating: isMusicPlaying }"
+            />
+            <MusicPlayer
+              ref="musicPlayerRef"
+              @update:playing="handlePlayingUpdate"
+              @update:currentSong="handleCurrentSongUpdate"
+            />
           </div>
           <div class="swiper-content">
             <TreatSwiper
@@ -106,7 +117,12 @@ import { ElMessage, ElMessageBox } from "element-plus";
 import { useRoute, useRouter } from "vue-router";
 import FuXie from "@/components/FuXie.vue";
 import TreatSwiper from "@/components/TreatSwiper.vue";
-import { lo } from "element-plus/es/locale/index.mjs";
+import MusicPlayer from "@/components/MusicPlayer.vue";
+
+const musicPlayerRef = ref(null);
+// 父组件维护的播放状态
+const isMusicPlaying = ref(false);
+const currentPlayingSong = ref({ name: "暂无音乐", url: "" });
 
 // 图片路径
 const BodyPic = "/src/assets/pic/per_obverse.png";
@@ -480,6 +496,26 @@ const backPoint = () => {
   router.push(`/point?id=${localStorage.getItem("selectedCaseId")}`);
 };
 
+// 接收子组件的播放状态更新
+const handlePlayingUpdate = (playingState) => {
+  isMusicPlaying.value = playingState;
+};
+
+// 接收子组件的当前歌曲更新
+const handleCurrentSongUpdate = (song) => {
+  currentPlayingSong.value = song;
+};
+
+// 打开音乐播放器
+const openMusicPlayer = () => {
+  if (
+    musicPlayerRef.value &&
+    typeof musicPlayerRef.value.openPlayer === "function"
+  ) {
+    musicPlayerRef.value.openPlayer();
+  }
+};
+
 // 监听Swiper实例
 watch(
   () => treatSwiperRef.value,
@@ -668,6 +704,30 @@ onMounted(() => {
         }
       }
     }
+  }
+}
+
+/* 音乐图标样式 + 旋转动画 */
+.music-icon {
+  cursor: pointer;
+  /* 保持图标比例 */
+  object-fit: contain;
+  /* 初始状态不旋转 */
+  transition: transform 0.3s ease;
+}
+
+/*   播放中时旋转 */
+.music-icon.rotating {
+  animation: rotate 3s linear infinite;
+}
+
+/* 旋转动画 */
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
   }
 }
 
