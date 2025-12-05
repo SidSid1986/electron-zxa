@@ -37,15 +37,41 @@
       <div class="point-content-right">
         <div class="point-content-right-border">
           <div class="tool-bar">
-            <img src="@/assets/pic/temperature.png" alt="" />
-            <img src="@/assets/pic/volume.png" alt="" />
+            <!-- 温度图标 -->
+            <img
+              src="@/assets/pic/temperature.png"
+              alt="温度"
+              class="control-icon"
+              @click="openTempModal"
+            />
+
+            <!-- 音量图标 -->
+            <img
+              src="@/assets/pic/volume.png"
+              alt="音量"
+              class="control-icon"
+              @click="openVolumeModal"
+            />
+
+            <!-- 音乐图标 -->
             <img
               src="@/assets/pic/music.png"
-              @click="openMusicPlayer"
               alt="音乐"
-              class="music-icon"
+              class="control-icon music-icon"
               :class="{ rotating: isMusicPlaying }"
+              @click="openMusicPlayer"
             />
+            <!-- 引入三个组件 -->
+            <TemperatureModal
+              ref="tempModalRef"
+              @update:temperature="handleTempUpdate"
+            />
+
+            <VolumeModal
+              ref="volumeModalRef"
+              @update:volume="handleVolumeUpdate"
+            />
+
             <MusicPlayer
               ref="musicPlayerRef"
               @update:playing="handlePlayingUpdate"
@@ -117,10 +143,18 @@ import { ElMessage, ElMessageBox } from "element-plus";
 import { useRoute, useRouter } from "vue-router";
 import FuXie from "@/components/FuXie.vue";
 import TreatSwiper from "@/components/TreatSwiper.vue";
+import TemperatureModal from "@/components/TemperatureModal.vue";
+import VolumeModal from "@/components/VolumeModal.vue";
 import MusicPlayer from "@/components/MusicPlayer.vue";
 
+// 组件引用
+const tempModalRef = ref(null);
+const volumeModalRef = ref(null);
 const musicPlayerRef = ref(null);
-// 父组件维护的播放状态
+
+// 状态管理
+const currentTemp = ref(23);
+const currentVolume = ref(50);
 const isMusicPlaying = ref(false);
 const currentPlayingSong = ref({ name: "暂无音乐", url: "" });
 
@@ -496,24 +530,55 @@ const backPoint = () => {
   router.push(`/point?id=${localStorage.getItem("selectedCaseId")}`);
 };
 
+// 打开温度弹窗
+const openTempModal = () => {
+  if (tempModalRef.value) {
+    tempModalRef.value.openModal();
+  }
+};
+
+// 打开音量弹窗
+const openVolumeModal = () => {
+  if (volumeModalRef.value) {
+    volumeModalRef.value.openModal();
+    // 同步当前音量到弹窗
+    volumeModalRef.value.volume = currentVolume.value;
+  }
+};
+
+// 打开音乐播放器
+const openMusicPlayer = () => {
+  if (musicPlayerRef.value) {
+    musicPlayerRef.value.openPlayer();
+  }
+};
+
+// 温度更新处理
+const handleTempUpdate = (temp) => {
+  currentTemp.value = temp;
+  console.log("当前温度:", temp + "°C");
+};
+
+// 音量更新处理
+const handleVolumeUpdate = (volume) => {
+  currentVolume.value = volume;
+  console.log("当前音量:", volume + "%");
+
+  // 同步音量到音乐播放器（如果有播放）
+  if (musicPlayerRef.value && musicPlayerRef.value.isPlaying) {
+    // 这里需要在音乐播放器组件中暴露音频音量控制，后续可扩展
+    // musicPlayerRef.value.setVolume(volume / 100);
+  }
+};
+
 // 接收子组件的播放状态更新
 const handlePlayingUpdate = (playingState) => {
   isMusicPlaying.value = playingState;
 };
 
-// 接收子组件的当前歌曲更新
+// 当前歌曲更新
 const handleCurrentSongUpdate = (song) => {
   currentPlayingSong.value = song;
-};
-
-// 打开音乐播放器
-const openMusicPlayer = () => {
-  if (
-    musicPlayerRef.value &&
-    typeof musicPlayerRef.value.openPlayer === "function"
-  ) {
-    musicPlayerRef.value.openPlayer();
-  }
 };
 
 // 监听Swiper实例

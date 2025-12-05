@@ -2,14 +2,19 @@
  * @Author: Sid Li
  * @Date: 2025-11-29 13:33:24
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-03 16:30:38
+ * @LastEditTime: 2025-12-05 16:51:31
  * @FilePath: \ai\electron\main.js
- * @Description:
+ * @Description: 支持跨平台音量控制的主进程代码
  */
 const { app, BrowserWindow, Menu, ipcMain } = require("electron");
 const path = require("path");
 const os = require("os");
 const fs = require("fs");
+const { exec } = require('child_process'); // 用于Linux系统音量控制
+
+// 引入系统音量控制相关模块
+const { systemPreferences } = require("electron"); // macOS系统音量控制
+// const windowsAudio = process.platform === "win32" ? require("electron-windows-audio") : null; // Windows系统音量控制
 
 // 创建日志目录
 const logDir = path.join(app.getPath("userData"), "logs");
@@ -27,7 +32,7 @@ function log(message) {
 
 // 开发环境标识
 const isDev = process.env.NODE_ENV === "development";
-log(`应用启动，环境：${isDev ? "开发" : "生产"}`);
+log(`应用启动，环境：${isDev ? "开发" : "生产"}，系统：${process.platform}`);
 
 // 保持对窗口对象的全局引用
 let mainWindow;
@@ -55,6 +60,66 @@ function sendMemoryUsage() {
   }
 }
 
+// 系统音量控制函数 - 跨平台实现
+async function getSystemVolume() {
+  try {
+    if (process.platform === "darwin") {
+      // macOS系统
+      const volume = systemPreferences.getMediaVolume();
+      return volume;
+    } else if (process.platform === "win32" && windowsAudio) {
+      // Windows系统
+      const volume = await windowsAudio.getVolume();
+      return volume / 100;
+    } else if (process.platform === "linux") {
+      // Linux系统 - 使用pactl命令
+      return new Promise((resolve) => {
+        exec('pactl get-sink-volume @DEFAULT_SINK@', (error, stdout) => {
+          if (error) {
+            log(`Linux获取音量错误: ${error.message}`);
+            resolve(0.5);
+            return;
+          }
+          
+          // 解析输出，格式类似 "Volume: front-left: 65536 / 100%"
+          const match = stdout.match(/Volume:.*?(\d+)%/);
+          if (match && match[1]) {
+            resolve(parseInt(match[1]) / 100);
+          } else {
+            resolve(0.5);
+          }
+        });
+      });
+    }
+    return 0.5; // 默认值
+  } catch (error) {
+    log(`获取系统音量失败: ${error.message}`);
+    return 0.5;
+  }
+}
+
+async function setSystemVolume(value) {
+  try {
+    if (process.platform === "darwin") {
+      // macOS系统
+      systemPreferences.setMediaVolume(value);
+    } else if (process.platform === "win32" && windowsAudio) {
+      // Windows系统
+      await windowsAudio.setVolume(value * 100);
+    } else if (process.platform === "linux") {
+      // Linux系统 - 使用pactl命令
+      const volumePercent = Math.round(value * 100);
+      exec(`pactl set-sink-volume @DEFAULT_SINK@ ${volumePercent}%`, (error) => {
+        if (error) {
+          log(`Linux设置音量错误: ${error.message}`);
+        }
+      });
+    }
+  } catch (error) {
+    log(`设置系统音量失败: ${error.message}`);
+  }
+}
+
 function createWindow() {
   log("开始创建窗口");
 
@@ -72,11 +137,10 @@ function createWindow() {
         contextIsolation: true,
         sandbox: false,
         preload: path.join(__dirname, "preload.js"),
-        // 修复安全警告
-        webSecurity: true, // 始终启用 webSecurity
-        allowRunningInsecureContent: false, // 禁用不安全内容
+        // 安全配置
+        webSecurity: true,
+        allowRunningInsecureContent: false,
         devTools: isDev,
-        // 添加额外的安全配置
         contextIsolation: true,
         nodeIntegrationInWorker: false,
         nodeIntegrationInSubFrames: false,
@@ -181,6 +245,18 @@ function createWindow() {
 
     ipcMain.on("window-close", () => {
       mainWindow.close();
+    });
+
+    // 音量控制IPC监听
+    ipcMain.handle("get-system-volume", async () => {
+      const volume = await getSystemVolume();
+      log(`获取系统音量: ${Math.round(volume * 100)}%`);
+      return volume;
+    });
+
+    ipcMain.handle("set-system-volume", async (event, value) => {
+      log(`设置系统音量: ${Math.round(value * 100)}%`);
+      await setSystemVolume(value);
     });
 
     // 窗口关闭时触发

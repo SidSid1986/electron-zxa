@@ -41,18 +41,6 @@
               <span>最大</span>
             </div>
           </div>
-          
-          <!-- 音量控制模式切换 -->
-          <div class="control-mode">
-            <label>
-              <input 
-                type="checkbox" 
-                v-model="controlSystemVolume" 
-                @change="handleModeChange"
-              >
-              控制系统音量
-            </label>
-          </div>
         </div>
       </div>
     </div>
@@ -64,7 +52,6 @@ import { ref, defineEmits, watch, onMounted } from "vue";
 
 // 定义事件
 const emit = defineEmits(['update:volume', 'volume-changed']);
-
 // 接收音频元素引用
 const props = defineProps({
   audioElement: {
@@ -76,7 +63,6 @@ const props = defineProps({
 // 状态管理
 const visible = ref(false);
 const volume = ref(50);
-const controlSystemVolume = ref(false); // 控制模式：false=网页音量，true=系统音量
 const isElectron = ref(false);
 
 // 检查是否在Electron环境
@@ -85,39 +71,23 @@ onMounted(() => {
   isElectron.value = window && window.process && window.process.type;
   
   // 初始化音量
-  if (isElectron.value) {
-    // 在Electron环境默认获取系统音量
-    getSystemVolume();
-    controlSystemVolume.value = true;
-  } else if (props.audioElement) {
-    // 非Electron环境从音频元素获取初始音量
+  if (props.audioElement) {
+    // 从音频元素获取初始音量
     volume.value = Math.round(props.audioElement.volume * 100);
+  } else if (isElectron.value) {
+    // 在Electron环境获取系统音量
+    getElectronSystemVolume();
   }
 });
 
 // 打开弹窗
 const openModal = () => {
   visible.value = true;
-  // 打开时更新当前音量
-  if (controlSystemVolume.value && isElectron.value) {
-    getSystemVolume();
-  } else if (props.audioElement) {
-    volume.value = Math.round(props.audioElement.volume * 100);
-  }
 };
 
 // 关闭弹窗
 const closeModal = () => {
   visible.value = false;
-};
-
-// 切换控制模式
-const handleModeChange = () => {
-  if (controlSystemVolume.value && isElectron.value) {
-    getSystemVolume(); // 切换到系统音量时获取当前系统音量
-  } else if (props.audioElement) {
-    volume.value = Math.round(props.audioElement.volume * 100); // 切换到网页音量时获取当前音量
-  }
 };
 
 // 处理音量变化
@@ -128,37 +98,36 @@ const handleVolumeChange = () => {
   emit('update:volume', volume.value);
   emit('volume-changed', volumeValue);
   
-  if (controlSystemVolume.value && isElectron.value) {
-    // 控制系统音量
-    setSystemVolume(volumeValue);
-  } else if (props.audioElement) {
-    // 控制网页音频元素音量
+  // 控制音频元素音量
+  if (props.audioElement) {
     props.audioElement.volume = volumeValue;
     props.audioElement.muted = volumeValue === 0;
   }
+  
+  // 如果是Electron环境，控制系统音量
+  if (isElectron.value) {
+    setElectronSystemVolume(volume.value);
+  }
 };
 
-// 获取系统音量
-const getSystemVolume = async () => {
-  if (!isElectron.value) return;
-  
+// Electron: 获取系统音量
+const getElectronSystemVolume = () => {
   try {
-    // 通过Electron的ipcRenderer调用主进程方法
+    // Electron主进程通信
     const { ipcRenderer } = require('electron');
-    const systemVolume = await ipcRenderer.invoke('get-system-volume');
-    volume.value = Math.round(systemVolume * 100);
+    ipcRenderer.invoke('get-system-volume').then(value => {
+      volume.value = Math.round(value * 100);
+    });
   } catch (error) {
     console.error('获取系统音量失败:', error);
   }
 };
 
-// 设置系统音量
-const setSystemVolume = async (value) => {
-  if (!isElectron.value) return;
-  
+// Electron: 设置系统音量
+const setElectronSystemVolume = (value) => {
   try {
     const { ipcRenderer } = require('electron');
-    await ipcRenderer.invoke('set-system-volume', value);
+    ipcRenderer.invoke('set-system-volume', value / 100);
   } catch (error) {
     console.error('设置系统音量失败:', error);
   }
@@ -210,7 +179,7 @@ defineExpose({
   .modal-container {
     position: relative;
     width: 20vw;
-    height: 24vh; /* 稍微增加高度以容纳模式切换 */
+    height: 20vh;
     background-color: #ffffff;
     border-radius: 16px;
     box-shadow: 0 10px 40px rgba(105, 62, 156, 0.25);
@@ -276,7 +245,7 @@ defineExpose({
 }
 
 .modal-body {
-  height: 24vh;
+  height: 20vh;
   padding: 16px;
   display: flex;
   flex-direction: column;
@@ -351,15 +320,6 @@ defineExpose({
       font-size: 20px;
       color: #8a5ca0;
     }
-  }
-
-  .control-mode {
-    margin-top: 1vh;
-    font-size: 14px;
-    color: #693e9c;
-    display: flex;
-    align-items: center;
-    gap: 8px;
   }
 }
 </style>
