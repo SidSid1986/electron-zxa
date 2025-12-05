@@ -10,7 +10,7 @@ import ElementPlus from "unplugin-element-plus/vite";
 
 export default ({ mode }) => {
   const env = loadEnv(mode, process.cwd());
-  
+
   return defineConfig({
     resolve: {
       alias: [
@@ -44,10 +44,7 @@ export default ({ mode }) => {
     },
 
     optimizeDeps: {
-      include: [
-        "element-plus",
-        "@element-plus/icons-vue",
-      ],
+      include: ["element-plus", "@element-plus/icons-vue"],
     },
     plugins: [
       vue(),
@@ -62,7 +59,7 @@ export default ({ mode }) => {
       // 自动导入Element Plus API，减少代码体积
       AutoImport({
         resolvers: [ElementPlusResolver()],
-        imports: ['vue', 'vue-router', 'pinia'],
+        imports: ["vue", "vue-router", "pinia"],
         dts: false, // 关闭类型生成，减小体积
       }),
       // 自动导入组件，实现按需加载
@@ -91,11 +88,12 @@ export default ({ mode }) => {
       assetsDir: "assets",
       outDir: "dist",
       minify: "terser", // 使用terser压缩，效果更好
-      terserOptions: { // 新增：代码压缩配置
+      terserOptions: {
+        // 新增：代码压缩配置
         compress: {
           drop_console: true, // 移除console
           drop_debugger: true, // 移除debugger
-          pure_funcs: ['console.log', 'console.debug'],
+          pure_funcs: ["console.log", "console.debug"],
         },
       },
       rollupOptions: {
@@ -105,9 +103,9 @@ export default ({ mode }) => {
           entryFileNames: "assets/[name].[hash].js",
           // 新增：代码分割，减小首屏加载体积
           manualChunks: {
-            vue: ['vue', 'vue-router', 'pinia'],
-            elementPlus: ['element-plus'],
-            utils: ['axios', 'crypto-js', 'decimal.js'],
+            vue: ["vue", "vue-router", "pinia"],
+            elementPlus: ["element-plus"],
+            utils: ["axios", "crypto-js"],
           },
         },
       },
