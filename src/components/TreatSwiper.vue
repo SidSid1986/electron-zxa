@@ -30,6 +30,7 @@
           <div class="swiper-item-circle">
             <div class="circle-bg">
               <div class="circle-content">
+                <div v-if="item.isActive" class="light-border"></div>
                 <div class="circle-text">
                   <Countdown
                     v-if="item.hasValidTime"
@@ -109,7 +110,8 @@ const props = defineProps({
     type: Number,
     default: -1,
   },
-  isTreating: { // 核心开关：是否允许启动倒计时
+  isTreating: {
+    // 核心开关：是否允许启动倒计时
     type: Boolean,
     default: false,
   },
@@ -192,10 +194,15 @@ const startCountdown = (targetIndex) => {
   if (!isComponentMounted.value) return;
 
   const allItems = treatData.value.flat();
-  const index = typeof targetIndex === "number" ? targetIndex : props.activeIndex;
+  const index =
+    typeof targetIndex === "number" ? targetIndex : props.activeIndex;
   const targetItem = allItems[index];
 
-  if (!targetItem || !targetItem.hasValidTime || targetItem.status === "ended") {
+  if (
+    !targetItem ||
+    !targetItem.hasValidTime ||
+    targetItem.status === "ended"
+  ) {
     if (targetItem) {
       if (targetItem.status === "ended") {
         ElMessage.info(`${targetItem.name} 已完成，无需重复启动`);
@@ -242,16 +249,16 @@ const pauseCountdown = () => {
   const targetItem = treatData.value
     .flat()
     .find((item) => item.uniqueKey === activeKey.value);
-  
+
   if (targetItem && instance && targetItem.status === "running") {
     const currentRemaining = remainingTimeMap.value[activeKey.value];
-    
+
     instance.abort();
     targetItem.status = "paused";
 
     const remainingMinutes = Math.floor(currentRemaining / 60000);
     const remainingSeconds = Math.floor((currentRemaining % 60000) / 1000);
-    ElMessage.info(`倒计时已暂停，剩余${remainingMinutes}分${remainingSeconds}秒`);
+    // ElMessage.info(`倒计时已暂停，剩余${remainingMinutes}分${remainingSeconds}秒`);
   } else {
     ElMessage.warning("当前无运行中的倒计时可暂停");
   }
@@ -259,7 +266,11 @@ const pauseCountdown = () => {
 
 // 继续倒计时
 const resumeCountdown = () => {
-  if (!activeKey.value || !countdownRefs.value[activeKey.value] || !props.isTreating) {
+  if (
+    !activeKey.value ||
+    !countdownRefs.value[activeKey.value] ||
+    !props.isTreating
+  ) {
     ElMessage.warning("暂无暂停的倒计时可继续");
     return;
   }
@@ -268,14 +279,14 @@ const resumeCountdown = () => {
     .flat()
     .find((item) => item.uniqueKey === activeKey.value);
   const currentRemaining = remainingTimeMap.value[activeKey.value];
-  
+
   if (targetItem) {
     if (targetItem.status === "paused") {
       if (currentRemaining > 100) {
         targetItem.useTime = currentRemaining;
         renderKeyMap.value[activeKey.value] += 1;
         targetItem.renderKey = renderKeyMap.value[activeKey.value];
-        
+
         nextTick(() => {
           const newInstance = countdownRefs.value[activeKey.value];
           if (newInstance) {
@@ -283,8 +294,10 @@ const resumeCountdown = () => {
             targetItem.status = "running";
 
             const remainingMinutes = Math.floor(currentRemaining / 60000);
-            const remainingSeconds = Math.floor((currentRemaining % 60000) / 1000);
-            ElMessage.info(`倒计时已继续，剩余${remainingMinutes}分${remainingSeconds}秒`);
+            const remainingSeconds = Math.floor(
+              (currentRemaining % 60000) / 1000
+            );
+            // ElMessage.info(`倒计时已继续，剩余${remainingMinutes}分${remainingSeconds}秒`);
           }
         });
       } else {
@@ -302,18 +315,18 @@ const resumeCountdown = () => {
 // 停止所有倒计时
 const stopCountdown = () => {
   // 终止所有Countdown实例
-  Object.keys(countdownRefs.value).forEach(key => {
+  Object.keys(countdownRefs.value).forEach((key) => {
     if (countdownRefs.value[key]) {
       countdownRefs.value[key].abort();
     }
   });
-  
+
   // 重置所有状态
   if (activeKey.value) {
     remainingTimeMap.value[activeKey.value] = 0;
     activeKey.value = "";
   }
-  
+
   treatData.value.flat().forEach((item) => {
     item.status = "idle";
     item.isActive = false;
@@ -322,7 +335,7 @@ const stopCountdown = () => {
     item.useTime = item.countdownTime;
     item.renderKey = 1;
   });
-  
+
   ElMessage.info("倒计时已重置");
 };
 
@@ -354,7 +367,11 @@ watch(
     ];
 
     // 仅治疗中且索引有效时才启动
-    if (isComponentMounted.value && props.isTreating && props.activeIndex > -1) {
+    if (
+      isComponentMounted.value &&
+      props.isTreating &&
+      props.activeIndex > -1
+    ) {
       nextTick(() => {
         const targetItem = treatData.value.flat()[props.activeIndex];
         if (targetItem && targetItem.hasValidTime) {
@@ -628,6 +645,37 @@ onUnmounted(() => {
         display: flex;
         justify-content: center;
         align-items: center;
+        // border: 1px solid red;
+        position: relative;
+
+        .light-border {
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          border-radius: 50%;
+          border: 4px solid #58c08d;
+          width: 8vh;
+          height: 8vh;
+          margin: auto;
+          animation: blink 1.5s infinite ease-in-out;
+        }
+
+        @keyframes blink {
+          0% {
+            opacity: 0.6;
+            transform: scale(1);
+          }
+          50% {
+            opacity: 1;
+            transform: scale(1.1);
+          }
+          100% {
+            opacity: 0.6;
+            transform: scale(1);
+          }
+        }
 
         &::before {
           content: "";

@@ -593,6 +593,13 @@ onMounted(() => {
               background-color: #e53935;
               margin-right: 10px;
             }
+            .point-ball-gray {
+              width: 20px;
+              height: 20px;
+              border-radius: 50%;
+              background-color: #c0c4cc;
+              margin-right: 10px;
+            }
 
             .left-nav-text {
               height: 3vh;
@@ -767,5 +774,24 @@ onMounted(() => {
   --el-button-active-text-color: #fff;
   --el-button-active-bg-color: #8a5ca0;
   --el-button-active-border-color: #8a5ca0;
+}
+</style>
+
+<style>
+/* 全局修改 ElMessage 的默认位置 */
+.el-message {
+  /* 将默认的 top 值改为 5vh，你可以根据实际需要调整 */
+  top: 5vh !important;
+  /* 可选：如果需要调整水平居中，确保 left 属性正确 */
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* 兼容不同主题/类型的 Message（如成功、错误、警告等） */
+.el-message--success,
+.el-message--error,
+.el-message--warning,
+.el-message--info {
+  top: 5vh !important;
 }
 </style>
