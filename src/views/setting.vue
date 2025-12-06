@@ -48,8 +48,8 @@ onMounted(() => {
 }
 
 .message-content {
-  width: 30vw;
-  height: 25vh;
+  width: 34vw;
+  height: 32vh;
   background-color: rgba(255, 255, 255, 0.8);
   border-radius: 12px;
   padding: 40px;
@@ -62,19 +62,21 @@ onMounted(() => {
 }
 
 .message-title {
-  font-size: 24px;
+  font-size: 40px;
   font-weight: bold;
   color: #fdb300;
   height: 5vh;
   line-height: 5vh;
+  margin-bottom: 2vh;
 }
 .message-text {
-  font-size: 16px;
+  font-size: 24px;
   color: #fdb300;
   height: 3vh;
   line-height: 3vh;
-  min-width: 15vw;
+  min-width: 20vw;
   text-align: center;
+  margin-bottom: 1vh;
 }
 .message-button {
   height: 5vh;

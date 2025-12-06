@@ -100,7 +100,6 @@
       "artifactName": "${productName}-${version}-linux-x64.${ext}",
       "executableName": "ZiXiaoAi",
       "maintainer": "Your Name <your.email@example.com>"
-
     },
     "nsis": {
       "oneClick": true,

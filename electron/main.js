@@ -2,17 +2,17 @@
  * @Author: Sid Li
  * @Date: 2025-11-29 13:33:24
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-05 23:52:18
- * @FilePath: \electron-zxa\electron\main.js
+ * @LastEditTime: 2025-12-06 10:22:39
+ * @FilePath: \ai\electron\main.js
  * @Description: 基于loudness库的跨平台音量控制主进程代码
  */
 const { app, BrowserWindow, Menu, ipcMain } = require("electron");
 const path = require("path");
 const os = require("os");
 const fs = require("fs");
-const { exec } = require('child_process'); // 用于系统命令执行
-const loudness = require('loudness'); // 跨平台音量控制库
-const { pathToFileURL } = require('url');
+const { exec } = require("child_process"); // 用于系统命令执行
+const loudness = require("loudness"); // 跨平台音量控制库
+const { pathToFileURL } = require("url");
 // 创建日志目录
 const logDir = path.join(app.getPath("userData"), "logs");
 if (!fs.existsSync(logDir)) {
@@ -45,11 +45,13 @@ function getMusicFiles() {
     const candidates = [];
 
     if (app.isPackaged) {
-      candidates.push(path.join(process.resourcesPath, 'app.asar.unpacked', 'public', 'music'));
-      candidates.push(path.join(process.resourcesPath, 'public', 'music'));
-      candidates.push(path.join(__dirname, '../public/music'));
+      candidates.push(
+        path.join(process.resourcesPath, "app.asar.unpacked", "public", "music")
+      );
+      candidates.push(path.join(process.resourcesPath, "public", "music"));
+      candidates.push(path.join(__dirname, "../public/music"));
     } else {
-      candidates.push(path.join(app.getAppPath(), 'public/music'));
+      candidates.push(path.join(app.getAppPath(), "public/music"));
     }
 
     log(`getMusicFiles: 尝试候选目录: ${JSON.stringify(candidates)}`);
@@ -70,9 +72,15 @@ function getMusicFiles() {
     log(`读取音乐目录：${musicDir}`);
 
     // 关键修复1：用 fs.readdirSync 的 withFileTypes 模式，避免编码丢失
-    const files = fs.readdirSync(musicDir, { withFileTypes: true })
-      .filter(dirent => dirent.isFile() && dirent.name.toLowerCase().endsWith('.mp3') && !dirent.name.startsWith('.'))
-      .map(dirent => dirent.name); // 直接获取原始文件名（避免路径拼接导致的编码问题）
+    const files = fs
+      .readdirSync(musicDir, { withFileTypes: true })
+      .filter(
+        (dirent) =>
+          dirent.isFile() &&
+          dirent.name.toLowerCase().endsWith(".mp3") &&
+          !dirent.name.startsWith(".")
+      )
+      .map((dirent) => dirent.name); // 直接获取原始文件名（避免路径拼接导致的编码问题）
 
     const result = [];
     for (const fileName of files) {
@@ -80,18 +88,21 @@ function getMusicFiles() {
         // 关键修复2：用 path.join 拼接路径，避免手动处理分隔符导致的编码问题
         const fullPath = path.join(musicDir, fileName);
         // 关键修复3：正确处理中文文件名的 URL 转换
-        const fileUrl = new URL(`file:///${fullPath.replace(/\\/g, '/')}`).href;
+        const fileUrl = new URL(`file:///${fullPath.replace(/\\/g, "/")}`).href;
         // 直接用原始 fileName，不再从 URL 解析（避免 URL 编码导致的乱码）
         result.push({
-          name: fileName.replace('.mp3', ''), // 原始中文文件名
-          url: fileUrl
+          name: fileName.replace(".mp3", ""), // 原始中文文件名
+          url: fileUrl,
         });
       } catch (e) {
         log(`处理文件 ${fileName} 失败: ${e.message}`);
       }
     }
 
-    log(`找到 ${result.length} 个音乐文件:`, result.map(item => item.name));
+    log(
+      `找到 ${result.length} 个音乐文件:`,
+      result.map((item) => item.name)
+    );
     // 返回包含 name 和 url 的对象，而非纯 URL 数组
     return result;
   } catch (error) {
@@ -164,10 +175,12 @@ async function setSystemVolume(value) {
 
 // 检查Linux系统依赖
 function checkLinuxDependencies() {
-  exec('which pactl', (error) => {
+  exec("which pactl", (error) => {
     if (error) {
       log("警告: Linux系统未检测到pactl工具，音量控制可能无法正常工作");
-      log("请安装pulseaudio-utils: sudo apt-get install pulseaudio-utils (Ubuntu/Debian)");
+      log(
+        "请安装pulseaudio-utils: sudo apt-get install pulseaudio-utils (Ubuntu/Debian)"
+      );
       log("或: sudo dnf install pulseaudio-utils (Fedora/RHEL)");
       log("或: sudo pacman -S pulseaudio-utils (Arch Linux)");
     }
@@ -183,7 +196,9 @@ function createWindow() {
       width: 1280,
       height: 800,
       frame: false,
-      icon: path.join(__dirname, "../public/home.png"),
+      icon: app.isPackaged
+        ? path.join(process.resourcesPath, "public/home.ico") // 生产环境
+        : path.join(__dirname, "../public/home.ico"), // 开发环境
       trafficLightPosition: { x: 10, y: 10 },
       show: false, // 先隐藏，加载完成后再显示
       webPreferences: {

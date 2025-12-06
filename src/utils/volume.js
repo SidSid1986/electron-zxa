@@ -1,20 +1,28 @@
+/*
+ * @Author: Sid Li
+ * @Date: 2025-12-06 08:28:51
+ * @LastEditors: Sid Li
+ * @LastEditTime: 2025-12-06 08:29:13
+ * @FilePath: \ai\src\utils\volume.js
+ * @Description: 
+ */
 /**
- * 音量控制工具类 - 纯 ES6 模块化
- * 全自动环境识别，无需手动配置
+ * 音量控制工具类
+ *
  */
 
-// ======================== 1. 全自动 Electron 环境识别 ========================
+//  1.  自动 Electron 环境识别
 export const isElectron = (() => {
-  if (typeof window === 'undefined') return false;
-  
+  if (typeof window === "undefined") return false;
+
   // 多重检测，确保识别准确
   const checkList = [
-    window.process?.type === 'renderer', // Electron 渲染进程标识
+    window.process?.type === "renderer", // Electron 渲染进程标识
     !!window.electronAPI, // 自定义暴露的 Electron API
-    navigator.userAgent?.includes('Electron'), // UA 包含 Electron
-    !!window.require && typeof window.require === 'function' // Electron 特有 require
+    navigator.userAgent?.includes("Electron"), // UA 包含 Electron
+    !!window.require && typeof window.require === "function", // Electron 特有 require
   ];
-  
+
   return checkList.some(Boolean);
 })();
 
@@ -23,10 +31,10 @@ let loudness = null;
 if (isElectron) {
   try {
     // Electron 渲染进程安全加载 loudness
-    loudness = window.require('loudness');
-    console.log('✅ Electron 环境 - loudness 加载成功');
+    loudness = window.require("loudness");
+    console.log("✅ Electron 环境 - loudness 加载成功");
   } catch (error) {
-    console.error('❌ Electron 环境 - loudness 加载失败:', error);
+    console.error("❌ Electron 环境 - loudness 加载失败:", error);
     loudness = null;
   }
 }
@@ -41,7 +49,7 @@ const mockVolumeState = { volume: 50, muted: false };
  */
 export function setVol(val = 45) {
   const validVal = Math.max(0, Math.min(100, Number(val)));
-  
+
   if (isElectron && loudness) {
     // Electron：真正控制系统音量
     loudness.setVolume(validVal);

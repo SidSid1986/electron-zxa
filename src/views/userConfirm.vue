@@ -61,19 +61,21 @@ onMounted(() => {
 }
 
 .message-title {
-  font-size: 24px;
+  font-size: 40px;
   font-weight: bold;
   color: #540e72;
   height: 5vh;
   line-height: 5vh;
+
+  margin-bottom: 2vh;
 }
 .message-text {
-  font-size: 16px;
+  width: 25vw;
+
+  font-size: 32px;
   color: #540e72;
   height: 3vh;
   line-height: 3vh;
-
-  width: 15vw;
   text-align: center;
 }
 .message-button {

@@ -573,7 +573,7 @@ onUnmounted(() => {
 
 .swiper-item {
   flex: 1;
-  max-width: 30%;
+  max-width: 32%;
   box-sizing: border-box;
   height: 100%;
   display: flex;
@@ -602,7 +602,7 @@ onUnmounted(() => {
 
     .swiper-item-point {
       font-size: 20px;
-      width: 32%;
+      width: 50%;
       margin: 0 auto;
       text-align: center;
       word-wrap: break-word;

@@ -165,7 +165,7 @@ const currentPlayingSong = ref({ name: "暂无音乐", url: "" });
 // 判断是否为Electron环境（仅在父组件做一次判断）
 const isElectronEnv = ref(false);
 try {
-  isElectronEnv.value = !!window.process?.type === 'renderer';
+  isElectronEnv.value = !!window.process?.type === "renderer";
 } catch (e) {
   isElectronEnv.value = false;
 }
@@ -446,12 +446,13 @@ const continueTreat = () => {
   }
 };
 
-// 结束当前治疗（核心修复）
+// 结束当前治疗
 const endTreat = () => {
   isPsuse.value = true;
   ElMessageBox.confirm("确定要结束当前治疗吗？", "提示", {
     confirmButtonText: "确定",
     cancelButtonText: "取消",
+    customClass: "treat-confirm",
     type: "warning",
   })
     .then(() => {
@@ -491,11 +492,12 @@ const endTreat = () => {
     });
 };
 
-// 重新启动治疗（核心实现）
+// 重新启动治疗
 const restartTreat = () => {
   ElMessageBox.confirm("确定要重新启动整个灸疗方案吗？", "提示", {
     confirmButtonText: "确定",
     cancelButtonText: "取消",
+    customClass: "treat-confirm",
     type: "warning",
   })
     .then(() => {
@@ -504,7 +506,7 @@ const restartTreat = () => {
       isPsuse.value = false;
       isTreating.value = true;
 
-      // 2. 重置所有穴位状态（清空完成标记）
+      // 2. 重置所有穴位状态
       const planList = selectedCase.value.plan || [];
       planList.forEach((item, idx) => {
         item.status = idx === 0 ? 1 : 0; // 第一个穴位设为治疗中，其余为未开始
@@ -571,18 +573,20 @@ const handleTempUpdate = (temp) => {
   console.log("当前温度:", temp + "°C");
 };
 
-// 音量更新处理（核心：同步到音乐播放器+Electron系统音量）
+// 音量更新处理（ 同步到音乐播放器+Electron系统音量）
 const handleVolumeUpdate = (volume) => {
   currentVolume.value = volume;
   console.log("当前音量:", volume + "%");
 
   // 1. Electron环境：控制系统音量（loudness）
   if (isElectronEnv.value) {
-    import("@/utils/volume").then(({ setVol }) => {
-      setVol(volume);
-    }).catch(err => {
-      console.warn("Electron系统音量控制失败:", err);
-    });
+    import("@/utils/volume")
+      .then(({ setVol }) => {
+        setVol(volume);
+      })
+      .catch((err) => {
+        console.warn("Electron系统音量控制失败:", err);
+      });
   }
 
   // 2. 同步音量到音乐播放器（无论什么环境）
@@ -932,7 +936,6 @@ onMounted(() => {
 </style>
 
 <style>
-/* 全局修改 ElMessage 的默认位置 */
 .el-message {
   /* 将默认的 top 值改为 5vh，你可以根据实际需要调整 */
   top: 5vh !important;
@@ -941,11 +944,64 @@ onMounted(() => {
   transform: translateX(-50%);
 }
 
-/* 兼容不同主题/类型的 Message（如成功、错误、警告等） */
 .el-message--success,
 .el-message--error,
 .el-message--warning,
 .el-message--info {
   top: 5vh !important;
+}
+
+.treat-confirm {
+  font-size: 20px !important;
+
+  .el-message-box__container {
+    /* border: 1px solid red; */
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    height: 10vh;
+  }
+
+  .el-message-box__title {
+    font-size: 24px !important;
+    font-weight: bold;
+    margin-bottom: 15px !important;
+  }
+
+  .el-message-box__message {
+    font-size: 22px !important;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .el-message-box__btns {
+    margin-top: 10px !important;
+  }
+
+  .el-message-box__btns .el-button {
+    padding: 18px 36px !important;
+    font-size: 20px !important;
+    border-radius: 8px !important;
+    min-width: 120px !important;
+    height: auto !important;
+  }
+
+  .el-message-box__btns .el-button--primary {
+    background-color: #9a6cb8 !important;
+    border-color: #9a6cb8 !important;
+    color: #fff !important;
+  }
+
+  .el-message-box__btns .el-button--primary:hover {
+    background-color: #885ca8 !important;
+    border-color: #885ca8 !important;
+  }
+
+  .el-message-box__btns .el-button--default {
+    font-size: 20px !important;
+    border-color: #ddd !important;
+  }
 }
 </style>

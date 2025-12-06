@@ -2,20 +2,11 @@
  * @Author: Sid Li
  * @Date: 2025-11-29 10:30:04
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-03 17:06:09
- * @FilePath: \ai\src\router\index.js
- * @Description:
- */
-/*
- * @Author: Sid Li
- * @Date: 2025-09-28 16:34:05
- * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-03 09:40:05
+ * @LastEditTime: 2025-12-06 14:02:00
  * @FilePath: \ai\src\router\index.js
  * @Description:
  */
 import { createWebHashHistory, createRouter } from "vue-router";
-import { encrypt, decrypt } from "@/utils/crypto";
 
 // 路由配置
 const routes = [
@@ -68,10 +59,14 @@ const routes = [
   },
 ];
 
-// 创建路由实例
+// 在router/index.js的createRouter中添加
 const router = createRouter({
-  history: createWebHashHistory(),
+  history: createWebHashHistory(), // 若不想改history模式，保留hash也可
   routes,
+  // 跳转时重置滚动条，避免额外重绘
+  scrollBehavior(to, from, savedPosition) {
+    return savedPosition || { top: 0, left: 0 };
+  },
 });
 
 // 路由守卫逻辑

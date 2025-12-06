@@ -4,7 +4,8 @@
     <!-- 图标和标题 -->
     <div class="title-section">
       <img src="/home.png" alt="图标" class="window-icon" />
-      <span class="window-title">紫小艾 - {{ memoryUsage.used }}MB</span>
+      <!-- <span class="window-title">紫小艾 - {{ memoryUsage.used }}MB</span> -->
+      <span class="window-title">紫小艾</span>
     </div>
 
     <!-- 窗口控制按钮 -->
