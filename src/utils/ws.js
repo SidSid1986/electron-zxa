@@ -1,130 +1,132 @@
-/**
- * Vue3 专用 WebSocket 封装
- * 内置URL和端口配置，外部使用无需传入
- */
 class WebSocketClient {
   /**
-   * 构造函数
-   * @param {object} options - 配置项（无需传入host/port/path）
+   * 构造函数（改为单例模式，确保全局只有一个WS实例）
+   * @param {object} options - 配置项
    */
   constructor(options = {}) {
-    this.host = "192.168.3.29"; // 服务器地址
-    this.port = "6789"; // 端口号
-    this.path = "/ws"; // 接口路径
-    this.url = this._buildUrl();
+    // 单例判断：如果已有实例，直接返回
+    if (WebSocketClient.instance) {
+      return WebSocketClient.instance;
+    }
 
-    // 重连配置
-    this.reconnectInterval = options.reconnectInterval || 3000;
-    this.maxReconnectAttempts = options.maxReconnectAttempts || 10;
-    this.reconnectAttempts = 0;
+    // ========== 基础配置 ==========
+    // this.baseUrl = "192.168.1.100"; // 你的服务器IP
+    // this.port = 8080; // 你的服务器端口
+    // this.fullUrl = `ws://${this.baseUrl}:${this.port}`;
 
-    // 状态管理（适配Vue3响应式）
-    this.ws = null;
-    this.isConnected = false;
-    this.reconnectTimer = null;
-    this.messageQueue = []; // 离线消息队列
+    this.baseUrl = "ws.postman-echo.com/raw";
+    this.port = ""; // 空字符串即可
+    this.fullUrl = `wss://${this.baseUrl}`;
 
-    // 回调函数
-    this.callbacks = {
-      message: null,
-      error: null,
-      close: null,
-      open: null,
-    };
+    // ========== 重连配置 ==========
+    this.reconnectInterval = options.reconnectInterval || 3000; // 重连间隔
+    this.maxReconnectAttempts = options.maxReconnectAttempts || 10; // 最大重连次数
+    this.reconnectAttempts = 0; // 当前重连次数
+    this.reconnectTimer = null; // 重连定时器
+
+    // ========== 状态管理 ==========
+    this.socket = null;
+    this.isConnected = false; // 连接状态
+    this.isReconnecting = false; // 是否正在重连
+
+    // ========== 回调存储 ==========
+    this.messageCallbacks = []; // 改为数组，支持多页面注册回调
+    this.errorCallbacks = [];
+    this.openCallbacks = [];
+    this.closeCallbacks = [];
+
+    // 保存单例
+    WebSocketClient.instance = this;
   }
 
   /**
-   * 构建连接URL
-   * @private
-   */
-  _buildUrl() {
-    const portStr = this.port ? `:${this.port}` : "";
-    return `ws://${this.host}${portStr}${this.path}`;
-  }
-
-  /**
-   * 建立连接
+   * 初始化WS连接（核心：增强自动重连逻辑）
    */
   connect() {
-    if (this.ws) {
-      this.ws.close();
+    // 关闭已有连接
+    if (this.socket) {
+      this.socket.close();
     }
 
     try {
-      this.ws = new WebSocket(this.url);
+      this.socket = new WebSocket(this.fullUrl);
 
       // 连接成功
-      this.ws.onopen = () => {
+      this.socket.onopen = () => {
         this.isConnected = true;
-        this.reconnectAttempts = 0;
-        console.log("[WebSocket] 连接成功");
-
-        // 发送离线消息队列中的消息
-        this._flushMessageQueue();
-
-        if (this.callbacks.open) {
-          this.callbacks.open();
-        }
+        this.reconnectAttempts = 0; // 重置重连次数
+        this.isReconnecting = false;
+        console.log(`WebSocket已连接到: ${this.fullUrl}`);
+        // 触发所有连接成功回调
+        this.openCallbacks.forEach((callback) => callback());
       };
 
       // 接收消息
-      this.ws.onmessage = (event) => {
+      this.socket.onmessage = (event) => {
+        let data = event.data;
+        // 自动解析JSON
         try {
-          const data = JSON.parse(event.data);
-          if (this.callbacks.message) {
-            this.callbacks.message(data);
+          if (
+            typeof data === "string" &&
+            (data.startsWith("{") || data.startsWith("["))
+          ) {
+            data = JSON.parse(data);
           }
-        } catch (e) {
-          if (this.callbacks.message) {
-            this.callbacks.message(event.data);
-          }
-        }
+        } catch (e) {}
+        // 触发所有消息回调
+        this.messageCallbacks.forEach((callback) => callback(data));
       };
 
       // 连接错误
-      this.ws.onerror = (error) => {
-        console.error("[WebSocket] 错误:", error);
+      this.socket.onerror = (error) => {
         this.isConnected = false;
-        if (this.callbacks.error) {
-          this.callbacks.error(error);
-        }
-        this._scheduleReconnect();
+        console.error("WebSocket错误:", error);
+        this.errorCallbacks.forEach((callback) => callback(error));
+        // 自动重连
+        this.attemptReconnect();
       };
 
       // 连接关闭
-      this.ws.onclose = (event) => {
-        console.log("[WebSocket] 连接关闭:", event.code, event.reason);
+      this.socket.onclose = (event) => {
         this.isConnected = false;
-        if (this.callbacks.close) {
-          this.callbacks.close(event);
-        }
+        console.log(`WebSocket已关闭: ${event.code} - ${event.reason}`);
+        this.closeCallbacks.forEach((callback) => callback(event));
+        // 非手动关闭（event.code !== 1000）且未达最大重连次数，自动重连
         if (
           event.code !== 1000 &&
+          !this.isReconnecting &&
           this.reconnectAttempts < this.maxReconnectAttempts
         ) {
-          this._scheduleReconnect();
+          this.attemptReconnect();
         }
       };
     } catch (error) {
-      console.error("[WebSocket] 创建连接失败:", error);
-      this._scheduleReconnect();
+      console.error("创建WebSocket连接失败:", error);
+      this.attemptReconnect();
     }
   }
 
   /**
-   * 调度重连
-   * @private
+   * 尝试重连（增强版）
    */
-  _scheduleReconnect() {
+  attemptReconnect() {
+    // 已达最大重连次数，停止重连
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-      console.error("[WebSocket] 达到最大重连次数");
+      console.error("已达到最大重连次数，停止重连");
+      this.isReconnecting = false;
       return;
     }
 
+    this.isReconnecting = true;
     this.reconnectAttempts++;
     console.log(
-      `[WebSocket] ${this.reconnectInterval}ms后进行第${this.reconnectAttempts}次重连`
+      `尝试重连(${this.reconnectAttempts}/${this.maxReconnectAttempts})...`
     );
+
+    // 清除原有定时器，避免重复重连
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+    }
 
     this.reconnectTimer = setTimeout(() => {
       this.connect();
@@ -132,105 +134,134 @@ class WebSocketClient {
   }
 
   /**
-   * 发送消息（支持离线队列）
+   * 发送数据（新增：发送前校验连接状态）
    * @param {any} data - 要发送的数据
-   * @returns {boolean}
+   * @returns {boolean} - 发送是否成功
    */
   send(data) {
-    // 未连接时加入消息队列
-    if (!this.isConnected || !this.ws) {
-      console.warn("[WebSocket] 未连接，消息已加入队列");
-      this.messageQueue.push(data);
+    // 发送前校验：未连接则直接返回失败
+    if (!this.isConnected || !this.socket) {
+      console.error("WebSocket未连接，无法发送数据");
       return false;
     }
 
     try {
-      const sendData =
-        typeof data === "object" ? JSON.stringify(data) : String(data);
-      this.ws.send(sendData);
-      console.log("[WebSocket] 发送消息:", sendData);
+      let sendData;
+      switch (typeof data) {
+        case "object":
+          sendData = data === null ? "null" : JSON.stringify(data);
+          break;
+        case "string":
+          sendData = data;
+          break;
+        case "number":
+        case "boolean":
+          sendData = String(data);
+          break;
+        case "undefined":
+          sendData = "undefined";
+          break;
+        default:
+          sendData = String(data);
+          break;
+      }
+
+      this.socket.send(sendData);
+      console.log("发送数据:", data);
       return true;
     } catch (error) {
-      console.error("[WebSocket] 发送失败:", error);
-      this.messageQueue.push(data);
+      console.error("发送数据失败:", error);
       return false;
     }
   }
 
   /**
-   * 刷新消息队列
-   * @private
+   * 手动关闭连接（标记为手动关闭，避免重连）
    */
-  _flushMessageQueue() {
-    if (this.messageQueue.length === 0) return;
-
-    console.log(`[WebSocket] 发送队列中的${this.messageQueue.length}条消息`);
-    while (this.messageQueue.length > 0) {
-      const msg = this.messageQueue.shift();
-      this.send(msg);
-    }
-  }
-
-  /**
-   * 关闭连接
-   * @param {number} code - 关闭码
-   * @param {string} reason - 关闭原因
-   */
-  close(code = 1000, reason = "手动关闭") {
+  disconnect() {
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer);
     }
-
-    if (this.ws) {
-      this.ws.close(code, reason);
+    if (this.socket) {
+      this.socket.close(1000, "手动关闭连接"); // 1000表示正常关闭
+      this.socket = null;
     }
-
     this.isConnected = false;
-    this.messageQueue = [];
+    this.isReconnecting = false;
   }
 
   /**
-   * 注册回调
-   * @param {object} handlers - 回调函数集合
+   * 注册回调（支持多页面注册）
    */
-  on(handlers) {
-    Object.keys(handlers).forEach((key) => {
-      if (this.callbacks.hasOwnProperty(key)) {
-        this.callbacks[key] = handlers[key];
-      }
-    });
+  onMessage(callback) {
+    if (
+      typeof callback === "function" &&
+      !this.messageCallbacks.includes(callback)
+    ) {
+      this.messageCallbacks.push(callback);
+    }
+  }
+
+  onOpen(callback) {
+    if (
+      typeof callback === "function" &&
+      !this.openCallbacks.includes(callback)
+    ) {
+      this.openCallbacks.push(callback);
+    }
+  }
+
+  onError(callback) {
+    if (
+      typeof callback === "function" &&
+      !this.errorCallbacks.includes(callback)
+    ) {
+      this.errorCallbacks.push(callback);
+    }
+  }
+
+  onClose(callback) {
+    if (
+      typeof callback === "function" &&
+      !this.closeCallbacks.includes(callback)
+    ) {
+      this.closeCallbacks.push(callback);
+    }
   }
 
   /**
-   * 获取连接状态
-   * @returns {boolean}
+   * 移除回调（页面卸载时调用，避免内存泄漏）
+   */
+  offMessage(callback) {
+    this.messageCallbacks = this.messageCallbacks.filter(
+      (cb) => cb !== callback
+    );
+  }
+
+  offOpen(callback) {
+    this.openCallbacks = this.openCallbacks.filter((cb) => cb !== callback);
+  }
+
+  offError(callback) {
+    this.errorCallbacks = this.errorCallbacks.filter((cb) => cb !== callback);
+  }
+
+  offClose(callback) {
+    this.closeCallbacks = this.closeCallbacks.filter((cb) => cb !== callback);
+  }
+
+  /**
+   * 获取当前连接状态
    */
   getStatus() {
     return this.isConnected;
   }
 }
 
-// 创建全局实例（可选，方便整个项目使用同一连接）
-let globalWsClient = null;
+// 创建全局单例实例
+const wsClient = new WebSocketClient({
+  reconnectInterval: 3000,
+  maxReconnectAttempts: 10,
+});
 
-/**
- * 初始化全局WebSocket实例（无需传入URL/端口）
- * @param {object} options - 配置项（仅重连相关）
- * @returns {WebSocketClient}
- */
-export function initWebSocket(options = {}) {
-  if (!globalWsClient) {
-    globalWsClient = new WebSocketClient(options);
-  }
-  return globalWsClient;
-}
-
-/**
- * 获取全局WebSocket实例
- * @returns {WebSocketClient|null}
- */
-export function getWebSocketInstance() {
-  return globalWsClient;
-}
-
-export default WebSocketClient;
+export default wsClient;

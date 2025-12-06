@@ -1,11 +1,3 @@
-/*
- * @Author: Sid Li
- * @Date: 2025-11-29 10:30:03
- * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-06 17:01:40
- * @FilePath: \ai\src\main.js
- * @Description:
- */
 import { createApp } from "vue";
 import App from "./App.vue";
 import ElementPlus from "element-plus";
@@ -16,12 +8,26 @@ import "@/styles/free-icons/iconfont.css";
 import router from "@/router/index.js";
 import store from "@/store";
 import { setupRemAdaptation } from "@/utils/rem";
-import XPack_WebSocketDefault from "@/utils/ws.js";
 
-//  ：先执行REM适配，再挂载Vue避免重绘
+// 引入改造后的WebSocket单例实例
+import wsClient from "@/utils/ws"; // 确保路径和你的ws.js一致
+
+// ：先执行REM适配，再挂载Vue避免重绘
 // 兼容Electron/浏览器环境，确保document存在
 if (typeof document !== "undefined") {
   setupRemAdaptation(); // 直接执行，无需等DOMContentLoaded
+}
+
+// 项目启动即连接WebSocket（兼容Electron/浏览器）
+// 确保WebSocket在应用启动时就建立连接
+if (typeof window !== "undefined") {
+  // 启动WS连接
+  wsClient.connect();
+  
+  // 页面关闭/刷新时断开WS（避免无效连接）
+  window.addEventListener("beforeunload", () => {
+    wsClient.disconnect();
+  });
 }
 
 //  确保DOM完全就绪后再挂载避免挂载时DOM未渲染
@@ -30,6 +36,9 @@ function bootstrapApp() {
   app.use(store);
   app.use(ElementPlus);
   app.use(router);
+
+  // 全局注册WebSocket实例（Vue3推荐的provide/inject方式）
+  app.provide('$ws', wsClient);
 
   // 注册图标组件
   for (const [key, component] of Object.entries(ElementPlusIconsVue)) {

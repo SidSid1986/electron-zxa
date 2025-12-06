@@ -15,14 +15,23 @@
             <div class="home-right-btn">
               <el-button
                 class="connect"
-                :class="['custom-btn']"
+                :class="['custom-btn', isDeviceConnected ? 'connected-btn' : '']"
                 @click="connectDevice"
                 round
-                :disabled="isSending"
+                :disabled="isSending || isDeviceConnected"
               >
-                {{ isSending ? "发送中..." : "连接设备" }}
+                {{
+                  isSending
+                    ? "发送中..."
+                    : isDeviceConnected
+                    ? "已连接设备"
+                    : "连接设备"
+                }}
               </el-button>
             </div>
+
+            <!-- 显示返回的消息/状态 -->
+            <div class="response-msg" v-if="msg">{{ msg }}</div>
           </div>
         </div>
       </div>
@@ -31,107 +40,128 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from "vue";
-import WebSocketClient from "@/utils/ws";
+import { ref, inject, onMounted, onUnmounted } from "vue";
+import { useRouter } from "vue-router";
 
-import { useRoute, useRouter } from "vue-router";
-
+// 核心修改1：注入全局WS实例（不再直接导入wsClient）
+const $ws = inject('$ws');
 const router = useRouter();
 
-// 仅保留发送状态（防止重复点击）
+const msg = ref("");
 const isSending = ref(false);
-let wsClient = null;
+// 核心修改2：变量名语义化，区分「设备连接」和「WS连接」
+const isDeviceConnected = ref(false); 
 
-// 初始化WebSocket连接
-const initWebSocket = () => {
-  // 创建实例
-  wsClient = new WebSocketClient({
-    reconnectInterval: 3000,
-    maxReconnectAttempts: 10,
-  });
-
-  // 核心：只监听消息返回，不做任何判断
-  wsClient.on({
-    open: () => {
-      console.log("WebSocket已连接，可发送指令");
-    },
-    // 核心功能：获取返回值（你可以在这里处理返回的消息）
-    message: (data) => {
-      console.log("=== 收到设备返回值 ===");
-      console.log("原始返回数据:", data);
-      console.log("返回数据详情：", JSON.stringify(data, null, 2));
-
-      if (data.result.status == 0) {
-        console.log("连接成功");
-        router.push("/check");
-      }
-
-      // 取消发送中状态
-      isSending.value = false;
-    },
-    error: (error) => {
-      console.error("WebSocket错误:", error);
-      isSending.value = false;
-    },
-    close: () => {
-      console.log("WebSocket连接关闭");
-      isSending.value = false;
-    },
-  });
-
-  // 建立连接
-  wsClient.connect();
+// 核心修改3：单独定义回调函数（方便卸载）
+const handleWsMessage = (data) => {
+  console.log("收到服务器返回数据:", data);
+  handleDeviceResponse(data);
 };
 
-// 发送指令（核心方法）
-const sendCommand = (data) => {
-  try {
-    const success = wsClient.send(data);
-    console.log(success);
-    if (success) {
-      console.log("指令发送成功:", data);
-      return true;
-    } else {
-      console.error("指令发送失败");
-      isSending.value = false;
-      return false;
-    }
-  } catch (error) {
-    console.error("发送指令异常:", error);
-    isSending.value = false;
-    return false;
+const handleWsOpen = () => {
+  console.log("WebSocket连接成功");
+  msg.value = "WebSocket已连接到服务器，请点击【连接设备】按钮";
+  isDeviceConnected.value = false; // WS连接≠设备连接
+};
+
+const handleWsError = (error) => {
+  console.error("WebSocket错误:", error);
+  msg.value = `连接错误: ${error.message || "网络异常"}`;
+  isSending.value = false;
+  isDeviceConnected.value = false;
+};
+
+const handleWsClose = () => {
+  console.log("WebSocket连接关闭");
+  msg.value = "设备连接已断开";
+  isSending.value = false;
+  isDeviceConnected.value = false;
+};
+
+// 处理设备连接的响应（核心：收返回值后跳转）
+const handleDeviceResponse = (data) => {
+  isSending.value = false;
+  // 解析响应数据（确保是对象格式）
+  const res = typeof data === "string" ? JSON.parse(data) : data;
+
+  // 匹配设备连接成功的响应（根据后端实际返回字段调整）
+  if (res.code === 200 && res.deviceStatus === "online") {
+    msg.value = `连接成功！设备ID: ${res.deviceId}`;
+    isDeviceConnected.value = true;
+    // 核心需求：跳转到check页面并携带设备ID
+    router.push({
+      path: "/check",
+      query: { deviceId: res.deviceId },
+    });
+  } else {
+    msg.value = `连接失败: ${res.message || "未知错误"}`;
+    isDeviceConnected.value = false;
   }
 };
 
-// 点击按钮发送指令
+// 连接设备按钮点击事件（核心：发送数据）
 const connectDevice = () => {
-  // 设置发送中状态
+  // 校验WS是否已连接
+  if (!$ws.getStatus()) {
+    msg.value = "WebSocket未连接，请稍候重试";
+    return;
+  }
+
   isSending.value = true;
+  msg.value = "正在请求连接设备...";
 
-  // 要发送的指令
-  const commandData = { req_id: "00011", command: "EnableRobot", args: "" };
+  // 发送设备连接指令（根据后端约定格式）
+  const sendData = { req_id: "00011", command: "EnableRobot", args: "" };
+  const sendResult = $ws.send(sendData);
 
-  // 发送指令（发送后等待message回调获取返回值）
-  sendCommand(commandData);
+  // 发送失败的兜底处理
+  if (!sendResult) {
+    msg.value = "指令发送失败，请检查连接";
+    isSending.value = false;
+    return;
+  }
+
+  // 超时处理：防止一直显示「发送中」
+  setTimeout(() => {
+    if (isSending.value) {
+      msg.value = "连接请求超时，请重试";
+      isSending.value = false;
+    }
+  }, 15000);
 };
 
-// 组件挂载时初始化WebSocket
+// 页面挂载：仅注册回调（WS已在main.js启动，无需重复connect）
 onMounted(() => {
-  initWebSocket();
+  // 注册WS回调
+  $ws.onMessage(handleWsMessage);
+  $ws.onOpen(handleWsOpen);
+  $ws.onError(handleWsError);
+  $ws.onClose(handleWsClose);
+
+  // 初始化时显示WS当前状态
+  if ($ws.getStatus()) {
+    msg.value = "WebSocket已连接到服务器，请点击【连接设备】按钮";
+  } else {
+    msg.value = "WebSocket正在连接中...";
+  }
 });
 
-// 组件卸载时关闭连接
+// 页面卸载：仅移除当前页面的回调（不断开全局WS）
 onUnmounted(() => {
-  if (wsClient) {
-    wsClient.close();
-  }
+  // 核心修改4：只移除当前页面的回调，保留全局WS连接
+  $ws.offMessage(handleWsMessage);
+  $ws.offOpen(handleWsOpen);
+  $ws.offError(handleWsError);
+  $ws.offClose(handleWsClose);
+  
+  // 清空超时定时器（避免内存泄漏）
+  clearTimeout(window.wsTimeout);
 });
 </script>
 
 <style scoped lang="scss">
 .container {
   height: 100vh;
-  // height: 96vh;
   box-sizing: border-box;
   background: url("@/assets/pic/bg01.jpg") no-repeat;
   background-position: center center;
@@ -195,6 +225,17 @@ onUnmounted(() => {
             margin-bottom: 10px;
           }
 
+          .response-msg {
+            margin-top: 20px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 8px;
+            font-size: 14px;
+            color: #333;
+            max-width: 400px;
+            word-wrap: break-word;
+          }
+
           .home-right-btn {
             width: 100%;
             text-align: right;
@@ -206,7 +247,6 @@ onUnmounted(() => {
               font-size: 20px;
             }
 
-            // 自定义按钮样式
             :deep(.custom-btn) {
               --el-button-text-color: #fff;
               --el-button-bg-color: #af7dc4;
@@ -219,7 +259,6 @@ onUnmounted(() => {
               --el-button-active-border-color: #8a5ca0;
             }
 
-            // 连接成功状态的按钮样式
             :deep(.connected-btn) {
               --el-button-bg-color: #44a649;
               --el-button-border-color: #44a649;
