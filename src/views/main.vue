@@ -829,6 +829,7 @@ const cancelDialog = () => {
 
 :deep(.el-dialog) {
   --el-dialog-bg-color: #d4bfe1 !important;
+  border-radius: 20px;
 }
 
 :deep(.el-dialog__close) {

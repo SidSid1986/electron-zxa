@@ -37,6 +37,12 @@
       <div class="point-content-right">
         <div class="point-content-right-border">
           <div class="tool-bar">
+            <el-button
+              class="end-btn demo-btn"
+              @click="switchDemoMode"
+              type="warning"
+              >演示模式（8秒）</el-button
+            >
             <!-- 温度图标 -->
             <img
               src="@/assets/pic/temperature.png"
@@ -89,6 +95,7 @@
               :activeIndex="testIndex"
               :isTreating="isTreating"
               @countdownEnd="countdownEnd"
+              @pauseEdit="pauseEdit"
             />
           </div>
           <div class="btn-content">
@@ -212,8 +219,15 @@ const getPoint = (id) => {
     return;
   }
 
-  // 初始化第一个穴位
+  // 初始化第一个穴位 + 修复默认时长为1分钟（核心！）
   const planList = selectedCase.value.plan;
+  planList.forEach((item) => {
+    // 如果time未定义/为0/为1，强制设为1分钟（60秒）
+    if (!item.time || item.time === 0 || item.time === 1) {
+      item.time = 60; // 1分钟 = 60秒（匹配子组件的秒级计算）
+    }
+  });
+
   planList[0].status = 1;
   planList[0].isActive = true;
 
@@ -402,12 +416,23 @@ const handleUpdateSwiperData = (newSwiperData) => {
   ElMessage.success("时长已更新");
 };
 
-// 暂停当前倒计时
 const pauseTreat = () => {
+  // 1. 标记全局暂停
   isPsuse.value = true;
+  // 2. 暂停子组件倒计时
   if (treatSwiperRef.value) {
     treatSwiperRef.value.pauseCountdown();
-    ElMessage.info("治疗已暂停");
+  }
+  ElMessage.info("治疗已暂停");
+};
+
+// 暂停当前倒计时
+const pauseEdit = () => {
+  // 1. 标记全局暂停
+  isPsuse.value = true;
+  // 2. 暂停子组件倒计时（原逻辑保留）
+  if (treatSwiperRef.value) {
+    treatSwiperRef.value.pauseCountdown();
   }
 };
 
@@ -447,6 +472,7 @@ const continueTreat = () => {
 };
 
 // 结束当前治疗
+// 父组件 point.vue 的 endTreat 方法
 const endTreat = () => {
   isPsuse.value = true;
   ElMessageBox.confirm("确定要结束当前治疗吗？", "提示", {
@@ -456,22 +482,27 @@ const endTreat = () => {
     type: "warning",
   })
     .then(() => {
-      // 1. 关闭治疗开关，但保持hasTreatmentStarted=true（按钮仍显示）
+      // 1. 原有逻辑
       isTreating.value = false;
-      isTreatmentEnded.value = true; // 标记为手动结束
+      isTreatmentEnded.value = true;
 
-      // 2. 彻底停止子组件所有倒计时
+      // 2.  标记当前激活穴位为 ended 并保留 isActive
       if (treatSwiperRef.value) {
         treatSwiperRef.value.stopCountdown();
         treatSwiperRef.value.treatData.forEach((page) => {
           page.forEach((item) => {
-            item.status = "idle";
-            item.isActive = false;
+            if (item.isActive) {
+              item.status = "ended"; // 设为已结束
+              // 保留 isActive = true，确保红色边框显示
+            } else {
+              item.status = "idle";
+              item.isActive = false;
+            }
           });
         });
       }
 
-      // 3. 重置治疗计划数据
+      // 3. 原有逻辑
       const planList = selectedCase.value.plan || [];
       planList.forEach((item) => {
         if (item.status !== 2) {
@@ -479,8 +510,6 @@ const endTreat = () => {
           item.isActive = false;
         }
       });
-
-      // 4. 重置索引，但保持hasTreatmentStarted=true
       testIndex.value = -1;
       tableData.value = JSON.parse(JSON.stringify(planList));
 
@@ -612,6 +641,59 @@ const handlePlayingUpdate = (playingState) => {
 // 当前歌曲更新
 const handleCurrentSongUpdate = (song) => {
   currentPlayingSong.value = song;
+};
+
+// 演示模式：极简暴力版 - 确保100%生效
+const switchDemoMode = () => {
+  // 1. 提示用户演示模式是临时的
+  ElMessageBox.confirm(
+    "演示模式：所有穴位时长临时改为8秒（刷新页面恢复1分钟）！",
+    "演示模式",
+    {
+      confirmButtonText: "确定",
+      cancelButtonText: "取消",
+      customClass: "treat-confirm",
+      type: "warning",
+    }
+  )
+    .then(() => {
+      // 2. 直接修改tableData为12秒（临时生效）
+      tableData.value.forEach((item) => {
+        item.time = 8; // 12秒（子组件按秒计算）
+        item.time1 = "00:8:00";
+        item.time2 = "00:8";
+      });
+
+      // 3. 同步更新selectedCase（运行时数据）
+      if (selectedCase.value.plan) {
+        selectedCase.value.plan.forEach((item) => {
+          item.time = 8;
+        });
+      }
+
+      // 4. 强制更新当前选中穴位的显示
+      if (selectedObj.value) {
+        selectedObj.value.time = 8;
+        selectedObj.value.time1 = "00:8:00";
+        selectedObj.value.time2 = "00:8";
+      }
+
+      // 5. 强制启动/重启倒计时
+      nextTick(() => {
+        if (isPsuse.value) {
+          continueTreat();
+        }
+        if (treatSwiperRef.value) {
+          treatSwiperRef.value.stopCountdown();
+          treatSwiperRef.value.startCountdown(testIndex.value);
+        }
+      });
+
+      ElMessage.success("已切换到演示模式（8秒），刷新页面恢复1分钟！");
+    })
+    .catch(() => {
+      ElMessage.info("已取消演示模式切换");
+    });
 };
 
 // 监听Swiper实例
@@ -932,6 +1014,16 @@ onMounted(() => {
   --el-button-active-text-color: #fff;
   --el-button-active-bg-color: #8a5ca0;
   --el-button-active-border-color: #8a5ca0;
+}
+
+.demo-btn {
+  width: 15vw;
+  --el-button-bg-color: #f59e0b !important;
+  --el-button-border-color: #f59e0b !important;
+  --el-button-hover-bg-color: #d97706 !important;
+  --el-button-hover-border-color: #d97706 !important;
+  --el-button-active-bg-color: #b45309 !important;
+  --el-button-active-border-color: #b45309 !important;
 }
 </style>
 

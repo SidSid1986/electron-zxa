@@ -30,7 +30,21 @@
           <div class="swiper-item-circle">
             <div class="circle-bg">
               <div class="circle-content">
-                <div v-if="item.isActive" class="light-border"></div>
+                <!-- <div v-if="item.isActive" class="light-border"></div> -->
+                <!-- 绿色闪烁框：仅激活且运行中显示 -->
+                <div
+                  v-if="item.isActive && item.status === 'running'"
+                  class="light-border"
+                ></div>
+
+                <!-- 红色边框：仅激活且已结束显示（修正后的逻辑） -->
+                <div
+                  v-if="
+                    item.isActive &&
+                    (item.status === 'ended' || item.status === 'paused')
+                  "
+                  class="light-border-red"
+                ></div>
                 <div class="circle-text">
                   <Countdown
                     v-if="item.hasValidTime"
@@ -122,6 +136,7 @@ const emit = defineEmits([
   "detailSelectOne",
   "updateSwiperData",
   "countdownEnd",
+  "pauseEdit",
 ]);
 
 // 生成唯一标识
@@ -156,21 +171,26 @@ const transformSlotProps = (props) => {
 };
 
 // 格式化数据
+// 子组件 TreatSwiper 中修改时长计算逻辑
 const formatData = (data, activeIndex) => {
   return data.map((item, index) => {
-    const timeNum = parseInt(item.time) || 0;
+    // 确保time是数字，且默认60秒（1分钟）
+    const timeNum = parseInt(item.time) || 60;
     const uniqueKey = getUniqueKey(item);
     const hasValidTime = timeNum > 0;
-    const totalTimeMs = hasValidTime ? timeNum * 60 * 1000 : 0;
+    const totalTimeMs = hasValidTime ? timeNum * 1000 : 0; // 秒×1000
 
     return {
       ...item,
       uniqueKey,
+      // 显示格式：1分钟=60秒 → 00:60:00 / 01:00（可选优化）
       time1: hasValidTime
         ? `00:${timeNum.toString().padStart(2, "0")}:00`
         : "00:00:00",
       time2: hasValidTime
-        ? `${timeNum.toString().padStart(2, "0")}:00`
+        ? `${Math.floor(timeNum / 60)
+            .toString()
+            .padStart(2, "0")}:${(timeNum % 60).toString().padStart(2, "0")}`
         : "00:00",
       countdownTime: totalTimeMs,
       useTime: remainingTimeMap.value[uniqueKey] || totalTimeMs,
@@ -254,17 +274,16 @@ const pauseCountdown = () => {
     const currentRemaining = remainingTimeMap.value[activeKey.value];
 
     instance.abort();
-    targetItem.status = "paused";
+    targetItem.status = "paused"; // 关键：暂停时设为 paused
 
     const remainingMinutes = Math.floor(currentRemaining / 60000);
     const remainingSeconds = Math.floor((currentRemaining % 60000) / 1000);
-    // ElMessage.info(`倒计时已暂停，剩余${remainingMinutes}分${remainingSeconds}秒`);
   } else {
     ElMessage.warning("当前无运行中的倒计时可暂停");
   }
 };
 
-// 继续倒计时
+// 继续倒计时（优化剩余时长逻辑）
 const resumeCountdown = () => {
   if (
     !activeKey.value ||
@@ -283,6 +302,7 @@ const resumeCountdown = () => {
   if (targetItem) {
     if (targetItem.status === "paused") {
       if (currentRemaining > 100) {
+        // 恢复剩余时长
         targetItem.useTime = currentRemaining;
         renderKeyMap.value[activeKey.value] += 1;
         targetItem.renderKey = renderKeyMap.value[activeKey.value];
@@ -291,13 +311,7 @@ const resumeCountdown = () => {
           const newInstance = countdownRefs.value[activeKey.value];
           if (newInstance) {
             newInstance.start();
-            targetItem.status = "running";
-
-            const remainingMinutes = Math.floor(currentRemaining / 60000);
-            const remainingSeconds = Math.floor(
-              (currentRemaining % 60000) / 1000
-            );
-            // ElMessage.info(`倒计时已继续，剩余${remainingMinutes}分${remainingSeconds}秒`);
+            targetItem.status = "running"; // 关键：继续时恢复为 running
           }
         });
       } else {
@@ -311,7 +325,6 @@ const resumeCountdown = () => {
     }
   }
 };
-
 // 停止所有倒计时
 const stopCountdown = () => {
   // 终止所有Countdown实例
@@ -345,10 +358,12 @@ const handleCountdownStart = (item) => {
 };
 
 // 倒计时结束事件
+// TreatSwiper.vue 中的 handleCountdownEnd 方法
 const handleCountdownEnd = (item) => {
   if (item.status !== "running") return;
-  item.status = "ended";
-  item.isActive = false;
+  item.status = "ended"; // 关键：结束后设为 ended
+
+  // item.isActive = false;
   remainingTimeMap.value[item.uniqueKey] = 0;
   activeKey.value = "";
   emit("countdownEnd", item);
@@ -444,16 +459,28 @@ const goNext = () => {
 };
 
 // 修改时长
+// 修改时长方法（完整修复版）
 const editTime = (item) => {
+  // 1. 暂停当前倒计时（保留原逻辑）
+  emit("pauseEdit", item);
+
+  // 2. 保存修改前的关键状态（核心新增）
+  const originalTime = item.time; // 原始时长（分钟）
+  const originalRemainingTime = remainingTimeMap.value[item.uniqueKey]; // 原始剩余时长（毫秒）
+  const originalStatus = item.status; // 原始状态（running/paused/idle）
+
   ElMessageBox.prompt("请输入时长（单位：分钟）", "修改倒计时时长", {
     inputPattern: /^\d+$/,
     inputErrorMessage: "请输入有效的正整数",
     inputValue: item.time || "0",
+    confirmButtonText: "确认",
+    cancelButtonText: "取消",
   })
     .then(({ value }) => {
       const newTime = parseInt(value.trim()) || 0;
       const newTimeMs = newTime * 60 * 1000;
 
+      // 3. 确认修改：更新数据 + 用新时长重置倒计时
       // 通知父组件更新数据
       const newSwiperData = props.swiperData.map((d) =>
         d.name === item.name && d.point === item.point
@@ -462,42 +489,64 @@ const editTime = (item) => {
       );
       emit("updateSwiperData", newSwiperData);
 
-      // 更新本地数据
+      // 更新本地数据（用新时长重置）
       item.time = newTime;
       item.countdownTime = newTimeMs;
       item.time1 =
         newTime > 0
           ? `00:${newTime.toString().padStart(2, "0")}:00`
           : "00:00:00";
+      item.time2 =
+        newTime > 0 ? `${newTime.toString().padStart(2, "0")}:00` : "00:00";
       item.hasValidTime = newTime > 0;
+
+      // 重置剩余时长为新时长
       remainingTimeMap.value[item.uniqueKey] = newTimeMs;
       renderKeyMap.value[item.uniqueKey] += 1;
       item.renderKey = renderKeyMap.value[item.uniqueKey];
       item.useTime = newTimeMs;
 
-      // 重启倒计时
-      const instance = countdownRefs.value[item.uniqueKey];
-      if (instance) {
-        if (item.isActive && newTime > 0 && props.isTreating) {
-          instance.abort();
-          nextTick(() => {
-            const newInstance = countdownRefs.value[item.uniqueKey];
-            newInstance.start();
-          });
+      // 4. 重新启动倒计时（如果治疗仍在进行）
+      if (props.isTreating && newTime > 0) {
+        nextTick(() => {
+          const newInstance = countdownRefs.value[item.uniqueKey];
+          if (newInstance) {
+            newInstance.abort(); // 终止旧实例
+            newInstance.start(); // 启动新时长的倒计时
+          }
           item.status = "running";
-        } else if (newTime === 0) {
-          instance.abort();
-          item.status = "idle";
-        }
+          activeKey.value = item.uniqueKey;
+        });
       }
 
       ElMessage.success(`已将${item.name}时长修改为 ${newTime} 分钟`);
     })
     .catch(() => {
+      // 5. 取消修改：恢复原始状态 + 继续原剩余时长的倒计时
+      // 恢复原始剩余时长
+      remainingTimeMap.value[item.uniqueKey] = originalRemainingTime;
+      item.useTime = originalRemainingTime || item.countdownTime;
+      renderKeyMap.value[item.uniqueKey] += 1;
+      item.renderKey = renderKeyMap.value[item.uniqueKey];
+
+      // 恢复原始状态并继续计时（仅当治疗仍在进行且有剩余时长时）
+      if (props.isTreating && originalRemainingTime > 0) {
+        nextTick(() => {
+          const instance = countdownRefs.value[item.uniqueKey];
+          if (instance) {
+            instance.abort();
+            instance.start(); // 基于原剩余时长继续计时
+          }
+          item.status = originalStatus === "running" ? "running" : "paused";
+          if (originalStatus === "running") {
+            activeKey.value = item.uniqueKey;
+          }
+        });
+      }
+
       ElMessage.info("已取消修改时长");
     });
 };
-
 // 点击item回调
 const detailIconClick = (item) => {
   emit("detailSelectOne", item);
@@ -660,6 +709,18 @@ onUnmounted(() => {
           height: 8vh;
           margin: auto;
           animation: blink 1.5s infinite ease-in-out;
+        }
+        .light-border-red {
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          border-radius: 50%;
+          border: 4px solid rgba(222, 43, 31, 0.8);
+          width: 8vh;
+          height: 8vh;
+          margin: auto;
         }
 
         @keyframes blink {

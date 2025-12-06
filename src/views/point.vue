@@ -685,6 +685,7 @@ onUnmounted(() => {
 }
 
 :deep(.el-dialog) {
+  border-radius: 20px;
   --el-dialog-bg-color: #d4bfe1 !important;
 }
 
