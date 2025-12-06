@@ -30,8 +30,10 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, getCurrentInstance } from "vue";
 import { useRouter } from "vue-router";
+const { $XPack_WebSocket } =
+  getCurrentInstance().appContext.config.globalProperties;
 
 const router = useRouter();
 
@@ -47,8 +49,20 @@ const strokeDashoffset = computed(() => {
   return circumference * (1 - progress.value / 100);
 });
 
+const handleWebSocketData = (data) => {
+  console.log("======================================");
+  console.log("【WebSocket 原始数据】:", data);
+  console.log("【data.data 原值】:", data.data);
+  console.log("【data.data 类型】:", typeof data.data);
+  console.log("======================================");
+};
+
 // 模拟加载进度
 onMounted(() => {
+  // setTimeout(() => {
+  //   $XPack_WebSocket.EventAdd(handleWebSocketData);
+  // }, 10000);
+
   const timer = setInterval(() => {
     progress.value += 1;
 

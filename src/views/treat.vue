@@ -39,6 +39,12 @@
           <div class="tool-bar">
             <el-button
               class="end-btn demo-btn"
+              @click="refreshNormal"
+              type="warning"
+              >正常模式</el-button
+            >
+            <el-button
+              class="end-btn demo-btn"
               @click="switchDemoMode"
               type="warning"
               >演示模式（8秒）</el-button
@@ -643,11 +649,11 @@ const handleCurrentSongUpdate = (song) => {
   currentPlayingSong.value = song;
 };
 
-// 演示模式：极简暴力版 - 确保100%生效
+// 演示模式
 const switchDemoMode = () => {
   // 1. 提示用户演示模式是临时的
   ElMessageBox.confirm(
-    "演示模式：所有穴位时长临时改为8秒（刷新页面恢复1分钟）！",
+    "演示模式：所有穴位时长临时改为8秒（点击正常模式恢复1分钟）！",
     "演示模式",
     {
       confirmButtonText: "确定",
@@ -694,6 +700,11 @@ const switchDemoMode = () => {
     .catch(() => {
       ElMessage.info("已取消演示模式切换");
     });
+};
+
+const refreshNormal = () => {
+  //刷新页面
+  window.location.reload();
 };
 
 // 监听Swiper实例

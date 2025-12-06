@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-11-29 10:30:03
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-06 14:00:48
+ * @LastEditTime: 2025-12-06 17:01:40
  * @FilePath: \ai\src\main.js
  * @Description:
  */
@@ -16,6 +16,7 @@ import "@/styles/free-icons/iconfont.css";
 import router from "@/router/index.js";
 import store from "@/store";
 import { setupRemAdaptation } from "@/utils/rem";
+import XPack_WebSocketDefault from "@/utils/ws.js";
 
 //  ：先执行REM适配，再挂载Vue避免重绘
 // 兼容Electron/浏览器环境，确保document存在
@@ -34,7 +35,7 @@ function bootstrapApp() {
   for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
     app.component(key, component);
   }
-
+  // app.use(XPack_WebSocketDefault);
   // 挂载前确认#app存在，避免挂载失败
   const appDom = document.getElementById("app");
   if (appDom) {

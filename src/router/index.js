@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-11-29 10:30:04
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-06 14:02:00
+ * @LastEditTime: 2025-12-06 15:40:36
  * @FilePath: \ai\src\router\index.js
  * @Description:
  */
@@ -12,8 +12,8 @@ import { createWebHashHistory, createRouter } from "vue-router";
 const routes = [
   {
     path: "/",
-    name: "/",
-    redirect: "/load",
+    // redirect: "/load",
+    redirect: { name: "Load" },
   },
   {
     path: "/load",

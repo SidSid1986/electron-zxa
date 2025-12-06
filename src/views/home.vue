@@ -1,11 +1,3 @@
-<!--
- * @Author: Sid Li
- * @Date: 2025-12-01 08:40:17
- * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-01 14:47:19
- * @FilePath: \ai\src\views\home.vue
- * @Description: 
--->
 <template>
   <div class="container">
     <div class="home-content">
@@ -21,14 +13,14 @@
             <div class="right-text">连接成功后，点击下方【连接设备】按钮</div>
 
             <div class="home-right-btn">
-              <!-- 使用自定义类名代替直接样式绑定 -->
               <el-button
                 class="connect"
-                :class="['custom-btn', { 'connected-btn': isConnected }]"
+                :class="['custom-btn']"
                 @click="connectDevice"
                 round
+                :disabled="isSending"
               >
-                {{ buttonText }}
+                {{ isSending ? "发送中..." : "连接设备" }}
               </el-button>
             </div>
           </div>
@@ -39,34 +31,100 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from "vue";
-import { useRouter } from "vue-router";
+import { ref, onMounted, onUnmounted } from "vue";
+import WebSocketClient from "@/utils/ws";
+
+import { useRoute, useRouter } from "vue-router";
+
 const router = useRouter();
 
-// 连接状态
-const isConnected = ref(false);
+// 仅保留发送状态（防止重复点击）
+const isSending = ref(false);
+let wsClient = null;
 
-// 按钮文字
-const buttonText = computed(() => {
-  return isConnected.value ? "设备已连接" : "连接设备";
-});
+// 初始化WebSocket连接
+const initWebSocket = () => {
+  // 创建实例
+  wsClient = new WebSocketClient({
+    reconnectInterval: 3000,
+    maxReconnectAttempts: 10,
+  });
 
-// 连接设备方法
-const connectDevice = () => {
-  // 模拟连接设备的逻辑
-  if (!isConnected.value) {
-    console.log("正在连接设备...");
-    // 模拟连接成功
-    setTimeout(() => {
-      isConnected.value = true;
+  // 核心：只监听消息返回，不做任何判断
+  wsClient.on({
+    open: () => {
+      console.log("WebSocket已连接，可发送指令");
+    },
+    // 核心功能：获取返回值（你可以在这里处理返回的消息）
+    message: (data) => {
+      console.log("=== 收到设备返回值 ===");
+      console.log("原始返回数据:", data);
+      console.log("返回数据详情：", JSON.stringify(data, null, 2));
 
-      router.push("/check");
-    }, 500);
+      if (data.result.status == 0) {
+        console.log("连接成功");
+        router.push("/check");
+      }
+
+      // 取消发送中状态
+      isSending.value = false;
+    },
+    error: (error) => {
+      console.error("WebSocket错误:", error);
+      isSending.value = false;
+    },
+    close: () => {
+      console.log("WebSocket连接关闭");
+      isSending.value = false;
+    },
+  });
+
+  // 建立连接
+  wsClient.connect();
+};
+
+// 发送指令（核心方法）
+const sendCommand = (data) => {
+  try {
+    const success = wsClient.send(data);
+    console.log(success);
+    if (success) {
+      console.log("指令发送成功:", data);
+      return true;
+    } else {
+      console.error("指令发送失败");
+      isSending.value = false;
+      return false;
+    }
+  } catch (error) {
+    console.error("发送指令异常:", error);
+    isSending.value = false;
+    return false;
   }
 };
 
+// 点击按钮发送指令
+const connectDevice = () => {
+  // 设置发送中状态
+  isSending.value = true;
+
+  // 要发送的指令
+  const commandData = { req_id: "00011", command: "EnableRobot", args: "" };
+
+  // 发送指令（发送后等待message回调获取返回值）
+  sendCommand(commandData);
+};
+
+// 组件挂载时初始化WebSocket
 onMounted(() => {
-  console.log("组件挂载了");
+  initWebSocket();
+});
+
+// 组件卸载时关闭连接
+onUnmounted(() => {
+  if (wsClient) {
+    wsClient.close();
+  }
 });
 </script>
 

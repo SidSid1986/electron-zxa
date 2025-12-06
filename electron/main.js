@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-11-29 13:33:24
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-06 10:22:39
+ * @LastEditTime: 2025-12-06 16:19:52
  * @FilePath: \ai\electron\main.js
  * @Description: 基于loudness库的跨平台音量控制主进程代码
  */
@@ -230,6 +230,7 @@ function createWindow() {
                 "img-src 'self' data: file:;",
                 "font-src 'self' data:;",
                 "connect-src 'self' http://localhost:*",
+                
               ].join(" "),
             },
           });
