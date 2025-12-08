@@ -32,9 +32,6 @@
                 }}
               </el-button>
             </div>
-
-            <!-- 显示返回的消息/状态 -->
-            <!-- <div class="response-msg" v-if="msg">{{ msg }}</div> -->
           </div>
         </div>
       </div>
@@ -46,16 +43,16 @@
 import { ref, inject, onMounted, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
 
-// 核心修改1：注入全局WS实例（不再直接导入wsClient）
 const $ws = inject("$ws");
 const router = useRouter();
 
 const msg = ref("");
 const isSending = ref(false);
-// 核心修改2：变量名语义化，区分「设备连接」和「WS连接」
+
+//  设备连接
 const isDeviceConnected = ref(false);
 
-// 核心修改3：单独定义回调函数（方便卸载）
+//获取信息
 const handleWsMessage = (data) => {
   console.log("收到服务器返回数据:", data);
   handleDeviceResponse(data);
@@ -63,20 +60,19 @@ const handleWsMessage = (data) => {
 
 const handleWsOpen = () => {
   console.log("WebSocket连接成功");
-  msg.value = "WebSocket已连接到服务器，请点击【连接设备】按钮";
   isDeviceConnected.value = false; // WS连接≠设备连接
 };
 
 const handleWsError = (error) => {
   console.error("WebSocket错误:", error);
-  msg.value = `连接错误: ${error.message || "网络异常"}`;
+
   isSending.value = false;
   isDeviceConnected.value = false;
 };
 
 const handleWsClose = () => {
   console.log("WebSocket连接关闭");
-  msg.value = "设备连接已断开";
+
   isSending.value = false;
   isDeviceConnected.value = false;
 };
@@ -144,26 +140,10 @@ onMounted(() => {
   $ws.onOpen(handleWsOpen);
   $ws.onError(handleWsError);
   $ws.onClose(handleWsClose);
-
-  // 初始化时显示WS当前状态
-  // if ($ws.getStatus()) {
-  //   msg.value = "WebSocket已连接到服务器，请点击【连接设备】按钮";
-  // } else {
-  //   msg.value = "WebSocket正在连接中...";
-  // }
 });
 
 // 页面卸载：仅移除当前页面的回调（不断开全局WS）
-onUnmounted(() => {
-  // 核心修改4：只移除当前页面的回调，保留全局WS连接
-  $ws.offMessage(handleWsMessage);
-  $ws.offOpen(handleWsOpen);
-  $ws.offError(handleWsError);
-  $ws.offClose(handleWsClose);
-
-  // 清空超时定时器（避免内存泄漏）
-  clearTimeout(window.wsTimeout);
-});
+onUnmounted(() => {});
 </script>
 
 <style scoped lang="scss">

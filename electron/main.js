@@ -2,8 +2,8 @@
  * @Author: Sid Li
  * @Date: 2025-11-29 13:33:24
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-08 16:39:34
- * @FilePath: \ai\electron\main.js
+ * @LastEditTime: 2025-12-08 20:36:36
+ * @FilePath: \electron-zxa\electron\main.js
  * @Description: 基于loudness库的跨平台音量控制主进程代码
  */
 const { app, BrowserWindow, Menu, ipcMain } = require("electron");
@@ -13,14 +13,13 @@ const fs = require("fs");
 const { exec } = require("child_process"); // 用于系统命令执行
 const { pathToFileURL } = require("url");
 
-// ===================== 核心修复：先声明 logDir 和 log 函数 =====================
-// 1. 先创建日志目录（必须在 log 函数之前）
+// 1. 先创建日志目录
 const logDir = path.join(app.getPath("userData"), "logs");
 if (!fs.existsSync(logDir)) {
   fs.mkdirSync(logDir, { recursive: true });
 }
 
-// 2. 先定义 log 函数（必须在所有 log 调用之前）
+// 2. 定义 log 函数
 function log(message) {
   const logPath = path.join(logDir, "app.log");
   const logMessage = `[${new Date().toISOString()}] ${message}\n`;
@@ -100,7 +99,7 @@ function getMusicFiles() {
 
     log(`读取音乐目录：${musicDir}`);
 
-    // 关键修复1：用 fs.readdirSync 的 withFileTypes 模式，避免编码丢失
+    //  用 fs.readdirSync 的 withFileTypes 模式，避免编码丢失
     const files = fs
       .readdirSync(musicDir, { withFileTypes: true })
       .filter(
@@ -109,16 +108,16 @@ function getMusicFiles() {
           dirent.name.toLowerCase().endsWith(".mp3") &&
           !dirent.name.startsWith(".")
       )
-      .map((dirent) => dirent.name); // 直接获取原始文件名（避免路径拼接导致的编码问题）
+      .map((dirent) => dirent.name); // 直接获取原始文件名
 
     const result = [];
     for (const fileName of files) {
       try {
-        // 关键修复2：用 path.join 拼接路径，避免手动处理分隔符导致的编码问题
+        //   拼接路径，
         const fullPath = path.join(musicDir, fileName);
-        // 关键修复3：正确处理中文文件名的 URL 转换
+        //  正确处理中文文件名的 URL 转换
         const fileUrl = new URL(`file:///${fullPath.replace(/\\/g, "/")}`).href;
-        // 直接用原始 fileName，不再从 URL 解析（避免 URL 编码导致的乱码）
+        //  原始 fileName
         result.push({
           name: fileName.replace(".mp3", ""), // 原始中文文件名
           url: fileUrl,
@@ -132,7 +131,7 @@ function getMusicFiles() {
       `找到 ${result.length} 个音乐文件:`,
       result.map((item) => item.name)
     );
-    // 返回包含 name 和 url 的对象，而非纯 URL 数组
+    // 包含 name 和 url 的对象
     return result;
   } catch (error) {
     log(`读取音乐文件失败: ${error.message}`);

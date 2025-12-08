@@ -185,10 +185,6 @@ try {
   isElectronEnv.value = false;
 }
 
-// // 图片路径
-// const BodyPic = "/src/assets/pic/per_obverse.png";
-// const LegPic = "/src/assets/pic/leg_obverse.png";
-
 const router = useRouter();
 
 // 核心状态
@@ -233,7 +229,7 @@ const generateWsCommandArray = (data) => {
       req_id: `0001${index + 1}`, // 每个指令的req_id区分（也可固定为00011，根据你的需求调整）
       command: "MovJ_vertical",
       args: `pose='${poseStr}'`,
-      // 可选：携带穴位信息，方便后续使用
+      //  穴位信息
       // pointInfo: {
       //   name: item.name,
       //   point: item.point,
@@ -254,82 +250,7 @@ const getPoint = (id) => {
   selectedCase.value = JSON.parse(localStorage.getItem("selectedCase"));
   console.log(selectedCase.value);
 
-  // let data = {
-  //   id: 1,
-  //   name: "腹泻针灸1",
-  //   plan: [
-  //     {
-  //       name: "悬停灸",
-  //       time: 60,
-  //       point: "天枢穴(左)",
-  //       status: 1,
-  //       type: 0,
-  //       x: 405.568,
-  //       y: -211.1488,
-  //       z: 448.5161,
-  //       rx: -178.6889,
-  //       ry: -9.208,
-  //       rz: 90.8648,
-  //       isActive: true,
-  //     },
-  //     {
-  //       name: "悬停灸",
-  //       time: 60,
-  //       point: "天枢穴(右)",
-  //       status: 2,
-  //       type: 0,
-  //       x: 405.5679,
-  //       y: -211.1488,
-  //       z: 448.516,
-  //       rx: -178.6889,
-  //       ry: -9.208,
-  //       rz: 90.8647,
-  //     },
-  //     {
-  //       name: "悬停灸",
-  //       time: 60,
-  //       point: "神阙穴",
-  //       status: 2,
-  //       type: 0,
-  //       x: 405.568,
-  //       y: -211.1489,
-  //       z: 448.5167,
-  //       rx: -178.689,
-  //       ry: -9.208,
-  //       rz: 90.8648,
-  //     },
-  //     {
-  //       name: "悬停灸",
-  //       time: 60,
-  //       point: "上巨虚穴(左)",
-  //       status: 2,
-  //       type: 1,
-  //       x: 405.568,
-  //       y: -211.1488,
-  //       z: 448.5162,
-  //       rx: -178.6889,
-  //       ry: -9.208,
-  //       rz: 90.8648,
-  //     },
-  //     {
-  //       name: "悬停灸",
-  //       time: 60,
-  //       point: "上巨虚穴(右)",
-  //       status: 2,
-  //       type: 1,
-  //       x: 405.568,
-  //       y: -211.1488,
-  //       z: 448.5165,
-  //       rx: -178.689,
-  //       ry: -9.208,
-  //       rz: 90.8648,
-  //     },
-  //   ],
-  // };
-
   wsCommandArray.value = generateWsCommandArray(selectedCase.value);
-  // console.log(wsCommandArray.value);
-  // console.log(wsCommandArray.value[0]);
 
   sendWsMessage(wsCommandArray.value[0]);
   // let data = {"req_id":"00011","command": "MovJ_vertical","args": "pose='pose={500,-100,500,180,0,90}'"};

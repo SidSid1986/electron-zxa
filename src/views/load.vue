@@ -6,7 +6,6 @@
         <img src="@/assets/pic/device.png" alt="device" />
       </div>
 
-      <!-- 进度环（进一步放大） -->
       <svg class="progress-ring" viewBox="0 0 500 500">
         <!-- 进度圆环 -->
         <circle
@@ -49,27 +48,14 @@ const strokeDashoffset = computed(() => {
   return circumference * (1 - progress.value / 100);
 });
 
-const handleWebSocketData = (data) => {
-  console.log("======================================");
-  console.log("【WebSocket 原始数据】:", data);
-  console.log("【data.data 原值】:", data.data);
-  console.log("【data.data 类型】:", typeof data.data);
-  console.log("======================================");
-};
-
 // 模拟加载进度
 onMounted(() => {
-  // setTimeout(() => {
-  //   $XPack_WebSocket.EventAdd(handleWebSocketData);
-  // }, 10000);
-
   const timer = setInterval(() => {
     progress.value += 1;
-
     // 加载完成，跳转到目标页面
     if (progress.value >= 100) {
       clearInterval(timer);
-      // 替换为你的目标路由
+
       router.push("/home");
     }
   }, 30); // 调整速度，总时长约3秒

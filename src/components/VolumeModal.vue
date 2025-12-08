@@ -65,7 +65,7 @@ const props = defineProps({
   },
 });
 
-// 核心状态：仅维护音量数值
+//维护音量数值
 const visible = ref(false);
 const volume = ref(props.initialVolume);
 
@@ -103,7 +103,6 @@ defineExpose({
 </script>
 
 <style scoped lang="scss">
-/* 样式保留，仅移除环境相关的冗余样式 */
 * {
   box-sizing: border-box;
   margin: 0;

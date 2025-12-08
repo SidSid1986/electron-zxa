@@ -78,12 +78,9 @@ const startSelfCheck = () => {
  * 自检完成处理
  */
 const finishCheck = () => {
-  // 延迟1秒跳转（让用户看到完成状态）
   setTimeout(() => {
-    isRotating.value = false; // 停止旋转
-    // 跳转到目标页面（请替换为你的实际路由路径）
+    isRotating.value = false;
     router.push("/main");
-    // 如果需要替换历史记录，使用：router.replace("/dashboard")
   }, 1000);
 };
 </script>
