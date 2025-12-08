@@ -17,7 +17,7 @@
     "electron:build:linux": "cross-env NODE_ENV=production npm run build && npx electron-builder --linux",
     "electron:build:linux-arm64": "cross-env NODE_ENV=production npm run build && npx electron-builder --linux --arm64",
     "electron:start": "electron-forge start",
-    "start": "electron-forge start -- --inspect=9229 --no-sandbox",
+    "start": "electron-forge start",
     "package": "electron-forge package",
     "make": "electron-forge make",
     "build-linux-arm64": "electron-forge make --platform=linux --arch=arm64 --targets=\"@electron-forge/maker-zip\""
@@ -134,77 +134,27 @@
         ],
         "executableName": "ZiXiaoAi",
         "icon": "public/home",
-        "ignore": [
-          "node_modules/sass-embedded/**",
-          "node_modules/vite-plugin-imagemin/**"
-        ]
+        "ignore": [],
+        "copyIgnore": [],
+        "prune": false,
+        "noPrune": true,
+        "skipNativeRebuild": true,
+        "ignoreNativeModules": true,
+        "platform": "linux",
+        "arch": "arm64"
       },
       "makers": [
         {
           "name": "@electron-forge/maker-zip",
           "platforms": [
-            "linux",
-            "win32",
-            "darwin"
+            "linux"
           ]
-        },
-        {
-          "name": "@electron-forge/maker-deb",
-          "config": {
-            "arch": [
-              "arm64",
-              "x64"
-            ],
-            "maintainer": "Your Name <your.email@example.com>",
-            "category": "Utility",
-            "icon": "public/home.png"
-          }
-        },
-        {
-          "name": "@electron-forge/maker-rpm",
-          "config": {
-            "arch": [
-              "arm64",
-              "x64"
-            ],
-            "maintainer": "Your Name <your.email@example.com>",
-            "category": "Utility",
-            "icon": "public/home.png"
-          }
-        },
-        {
-          "name": "@electron-forge/maker-squirrel",
-          "config": {
-            "name": "ZiXiaoAi",
-            "iconUrl": "https://example.com/home.ico",
-            "setupIcon": "public/home.ico"
-          }
-        },
-        {
-          "name": "@electron-forge/maker-dmg",
-          "config": {
-            "icon": "public/home.png"
-          }
         }
       ],
       "plugins": [
         {
           "name": "@electron-forge/plugin-auto-unpack-natives",
           "config": {}
-        },
-        {
-          "name": "@electron-forge/plugin-fuses",
-          "config": {
-            "forgeConfig": "./forge.config.js",
-            "fuses": {
-              "runAsNode": false,
-              "enableCookieEncryption": true,
-              "enableNodeOptionsEnvironmentVariable": false,
-              "enableNodeCliInspectArguments": false,
-              "enableEmbeddedAsarIntegrityValidation": true,
-              "onlyLoadAppFromAsar": true
-            }
-          }
         }
       ]
     }
@@ -233,11 +183,11 @@
     "@electron-forge/plugin-auto-unpack-natives": "^7.10.2",
     "@electron-forge/plugin-fuses": "^7.10.2",
     "@electron/fuses": "^1.8.0",
+    "@electron/packager": "^19.0.1",
     "@vitejs/plugin-vue": "^5.2.1",
     "concurrently": "^9.2.1",
     "cross-env": "^10.1.0",
-    "electron": "^39.2.4",
-    "electron-builder": "^26.0.12",
+    "electron": "^39.2.6",
     "postcss-pxtorem": "^6.1.0",
     "sass": "^1.85.1",
     "sass-embedded": "^1.86.0",
