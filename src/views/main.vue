@@ -145,8 +145,10 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted, nextTick } from "vue";
-import caseData from "@/data/caseData.json";
 import { useRouter } from "vue-router";
+// 1. 替换原始JSON导入，使用封装的工具函数
+import { getCaseData, getCaseById } from "@/utils/caseDataManager";
+
 const router = useRouter();
 
 // dialog 状态
@@ -155,7 +157,8 @@ const dialogVisible = ref(false);
 // 核心数据状态
 const selectedCaseId = ref(1);
 const selectedPlan = ref([]);
-const caseArr = ref(caseData);
+// 2. 从localStorage获取最新的case数据（而非原始JSON）
+const caseArr = ref(getCaseData());
 
 // 左侧拖拽滚动相关状态（保持不变）
 const isDragging = ref(false);
@@ -250,8 +253,9 @@ onMounted(() => {
   // 窗口大小变化时，重新计算右侧容器高度（适配响应式）
   window.addEventListener("resize", initRightHeight);
 
-  // 初始化选中计划
-  selectedPlan.value = caseArr.value[selectedCaseId.value - 1]?.plan || [];
+  // 3. 初始化选中计划：从最新数据中获取（而非原始JSON）
+  const selectedItem = getCaseById(selectedCaseId.value);
+  selectedPlan.value = selectedItem?.plan || [];
 });
 
 // 组件卸载：清除定时器和事件监听
@@ -407,10 +411,11 @@ const handleRightWheel = (e) => {
   rightDragOffset.value = newOffset;
 };
 
-// 点击左侧方案切换：重新计算右侧高度
+// 点击左侧方案切换：重新计算右侧高度（从最新数据获取plan）
 const handleClick = (id) => {
   selectedCaseId.value = id;
-  const selectedItem = caseArr.value.find((item) => item.id === id);
+  // 4. 从最新数据中获取选中方案的plan（而非原始JSON）
+  const selectedItem = getCaseById(id);
   selectedPlan.value = selectedItem?.plan || [];
 
   // 重置滚动位置

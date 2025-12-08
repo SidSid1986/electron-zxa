@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-11-29 13:33:24
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-08 16:39:34
+ * @LastEditTime: 2025-12-06 16:19:52
  * @FilePath: \ai\electron\main.js
  * @Description: 基于loudness库的跨平台音量控制主进程代码
  */
@@ -11,16 +11,15 @@ const path = require("path");
 const os = require("os");
 const fs = require("fs");
 const { exec } = require("child_process"); // 用于系统命令执行
+const loudness = require("loudness"); // 跨平台音量控制库
 const { pathToFileURL } = require("url");
-
-// ===================== 核心修复：先声明 logDir 和 log 函数 =====================
-// 1. 先创建日志目录（必须在 log 函数之前）
+// 创建日志目录
 const logDir = path.join(app.getPath("userData"), "logs");
 if (!fs.existsSync(logDir)) {
   fs.mkdirSync(logDir, { recursive: true });
 }
 
-// 2. 先定义 log 函数（必须在所有 log 调用之前）
+// 日志函数
 function log(message) {
   const logPath = path.join(logDir, "app.log");
   const logMessage = `[${new Date().toISOString()}] ${message}\n`;
@@ -28,47 +27,19 @@ function log(message) {
   console.log(logMessage.trim());
 }
 
-// ===================== ARM64 Linux 适配 =====================
-// 禁用GPU和沙箱（解决ARM64 Linux段错误）
-if (process.platform === "linux" && os.arch() === "arm64") {
-  app.commandLine.appendSwitch("no-sandbox"); // ARM64 Linux必须
-  app.commandLine.appendSwitch("disable-gpu"); // 禁用GPU避免依赖问题
-  app.commandLine.appendSwitch("disable-software-rasterizer"); // 额外兼容
-  log("ARM64 Linux环境检测到，已启用兼容模式");
-}
-
-// ===================== 依赖加载检查 =====================
-// 安全加载loudness库，避免依赖缺失导致崩溃
-let loudness = null;
-try {
-  loudness = require("loudness");
-  log("loudness库加载成功");
-} catch (error) {
-  log(`loudness库加载失败: ${error.message}`);
-  log("音量控制功能将不可用，请重新安装依赖：npm install loudness");
-  // 提供降级方案，避免应用崩溃
-  loudness = {
-    getVolume: async () => 0.5,
-    setVolume: async () => {},
-  };
-}
-
 // 开发环境标识
 const isDev = process.env.NODE_ENV === "development";
-log(
-  `应用启动，环境：${isDev ? "开发" : "生产"}，系统：${
-    process.platform
-  }，架构：${os.arch()}`
-);
+log(`应用启动，环境：${isDev ? "开发" : "生产"}，系统：${process.platform}`);
 
 // 保持对窗口对象的全局引用
 let mainWindow;
 
-// ===================== 音乐文件处理函数 =====================
+// ===================== 新增：音乐文件处理函数 =====================
 /**
  * 获取音乐文件列表（适配开发/生产环境）
  * @returns {Array} 音乐文件的绝对路径列表
  */
+// ===================== 音乐文件处理函数（修改后） =====================
 function getMusicFiles() {
   try {
     const candidates = [];
@@ -140,6 +111,7 @@ function getMusicFiles() {
     return [];
   }
 }
+// ===================== 新增结束 =====================
 
 // 定期发送内存使用信息
 function sendMemoryUsage() {
@@ -213,15 +185,6 @@ function checkLinuxDependencies() {
       log("或: sudo pacman -S pulseaudio-utils (Arch Linux)");
     }
   });
-
-  // 检查human-signals依赖
-  try {
-    require.resolve("human-signals");
-    log("human-signals依赖检查通过");
-  } catch (err) {
-    log("错误: human-signals模块缺失，这是loudness的核心依赖");
-    log("请执行: npm install human-signals --save 修复");
-  }
 }
 
 function createWindow() {
@@ -246,7 +209,7 @@ function createWindow() {
         // 安全配置
         webSecurity: true,
         allowRunningInsecureContent: false,
-        devTools: true, // 开发环境下开启
+        devTools: isDev,
         contextIsolation: true,
         nodeIntegrationInWorker: false,
         nodeIntegrationInSubFrames: false,
@@ -266,7 +229,8 @@ function createWindow() {
                 "style-src 'self' 'unsafe-inline';",
                 "img-src 'self' data: file:;",
                 "font-src 'self' data:;",
-                "connect-src 'self' http://localhost:* ws://192.168.3.29:6789 ws://localhost:*;",
+                "connect-src 'self' http://localhost:*",
+                
               ].join(" "),
             },
           });
@@ -294,16 +258,6 @@ function createWindow() {
       }
 
       mainWindow.loadFile(indexPath);
-
-      setTimeout(() => {
-        try {
-          // detach 模式：调试窗口独立显示，不影响主窗口
-          mainWindow.webContents.openDevTools({ mode: "detach" });
-          log("打包模式：强制打开开发者工具成功");
-        } catch (error) {
-          log(`打包模式打开开发者工具失败: ${error.message}`);
-        }
-      }, 1500);
     }
 
     // 窗口加载完成后显示
@@ -375,11 +329,13 @@ function createWindow() {
       await setSystemVolume(value);
     });
 
-    // 音乐文件IPC监听
+    // ===================== 新增：音乐文件IPC监听 =====================
+    // 处理渲染进程获取音乐文件的请求
     ipcMain.handle("get-music-files", () => {
       log("接收到获取音乐文件请求");
       return getMusicFiles();
     });
+    // ===================== 新增结束 =====================
 
     // 窗口关闭时触发
     mainWindow.on("closed", () => {
@@ -441,10 +397,6 @@ app.on("activate", () => {
 process.on("uncaughtException", (error) => {
   log(`未捕获异常: ${error.message}`);
   log(`异常堆栈: ${error.stack}`);
-  // 新增：避免因未捕获异常直接崩溃
-  if (error.message.includes("Cannot find module 'human-signals'")) {
-    log("检测到human-signals模块缺失，建议执行：npm install human-signals");
-  }
 });
 
 process.on("unhandledRejection", (reason, promise) => {

@@ -11,11 +11,16 @@
     "build": "vite build --emptyOutDir",
     "preview": "vite preview",
     "electron:serve": "concurrently \"npm run dev\" \"sleep 5 && cross-env NODE_ENV=development electron .\"",
-    "electron:build": "cross-env NODE_ENV=production npm run build && electron-builder",
-    "electron:build:win": "cross-env NODE_ENV=production npm run build && electron-builder --win --x64",
-    "electron:build:mac": "cross-env NODE_ENV=production npm run build && electron-builder --mac",
-    "electron:build:linux": "cross-env NODE_ENV=production npm run build && electron-builder --linux",
-    "electron:start": "electron ."
+    "electron:build": "cross-env NODE_ENV=production npm run build && npx electron-builder",
+    "electron:build:win": "cross-env NODE_ENV=production npm run build && npx electron-builder --win --x64",
+    "electron:build:mac": "cross-env NODE_ENV=production npm run build && npx electron-builder --mac",
+    "electron:build:linux": "cross-env NODE_ENV=production npm run build && npx electron-builder --linux",
+    "electron:build:linux-arm64": "cross-env NODE_ENV=production npm run build && npx electron-builder --linux --arm64",
+    "electron:start": "electron-forge start",
+    "start": "electron-forge start -- --inspect=9229 --no-sandbox",
+    "package": "electron-forge package",
+    "make": "electron-forge make",
+    "build-linux-arm64": "electron-forge make --platform=linux --arch=arm64 --targets=\"@electron-forge/maker-zip\""
   },
   "build": {
     "appId": "com.yourcompany.zixiaoai",
@@ -97,9 +102,13 @@
       ],
       "icon": "public/home.png",
       "category": "Utility",
-      "artifactName": "${productName}-${version}-linux-x64.${ext}",
+      "artifactName": "${productName}-${version}-linux-arm64.${ext}",
       "executableName": "ZiXiaoAi",
-      "maintainer": "Your Name <your.email@example.com>"
+      "maintainer": "Your Name <your.email@example.com>",
+      "asarUnpack": [
+        "**/*.node",
+        "public/music/**"
+      ]
     },
     "nsis": {
       "oneClick": true,
@@ -114,12 +123,100 @@
       "artifactName": "${productName}-${version}-setup.${ext}"
     }
   },
+  "config": {
+    "forge": {
+      "packagerConfig": {
+        "asar": true,
+        "asarUnpack": [
+          "**/*.node",
+          "**/*.dll",
+          "public/music/**"
+        ],
+        "executableName": "ZiXiaoAi",
+        "icon": "public/home",
+        "ignore": [
+          "node_modules/sass-embedded/**",
+          "node_modules/vite-plugin-imagemin/**"
+        ]
+      },
+      "makers": [
+        {
+          "name": "@electron-forge/maker-zip",
+          "platforms": [
+            "linux",
+            "win32",
+            "darwin"
+          ]
+        },
+        {
+          "name": "@electron-forge/maker-deb",
+          "config": {
+            "arch": [
+              "arm64",
+              "x64"
+            ],
+            "maintainer": "Your Name <your.email@example.com>",
+            "category": "Utility",
+            "icon": "public/home.png"
+          }
+        },
+        {
+          "name": "@electron-forge/maker-rpm",
+          "config": {
+            "arch": [
+              "arm64",
+              "x64"
+            ],
+            "maintainer": "Your Name <your.email@example.com>",
+            "category": "Utility",
+            "icon": "public/home.png"
+          }
+        },
+        {
+          "name": "@electron-forge/maker-squirrel",
+          "config": {
+            "name": "ZiXiaoAi",
+            "iconUrl": "https://example.com/home.ico",
+            "setupIcon": "public/home.ico"
+          }
+        },
+        {
+          "name": "@electron-forge/maker-dmg",
+          "config": {
+            "icon": "public/home.png"
+          }
+        }
+      ],
+      "plugins": [
+        {
+          "name": "@electron-forge/plugin-auto-unpack-natives",
+          "config": {}
+        },
+        {
+          "name": "@electron-forge/plugin-fuses",
+          "config": {
+            "forgeConfig": "./forge.config.js",
+            "fuses": {
+              "runAsNode": false,
+              "enableCookieEncryption": true,
+              "enableNodeOptionsEnvironmentVariable": false,
+              "enableNodeCliInspectArguments": false,
+              "enableEmbeddedAsarIntegrityValidation": true,
+              "onlyLoadAppFromAsar": true
+            }
+          }
+        }
+      ]
+    }
+  },
   "dependencies": {
     "@chenfengyuan/vue-countdown": "^2.1.3",
     "@element-plus/icons-vue": "^2.3.2",
     "axios": "^1.7.9",
     "crypto-js": "^4.2.0",
+    "electron-squirrel-startup": "^1.0.1",
     "element-plus": "^2.9.0",
+    "human-signals": "^8.0.1",
     "loudness": "^0.4.2",
     "pinia": "^3.0.3",
     "pinia-plugin-persistedstate": "^4.2.0",
@@ -128,6 +225,14 @@
     "vue-router": "^4.5.0"
   },
   "devDependencies": {
+    "@electron-forge/cli": "^7.10.2",
+    "@electron-forge/maker-deb": "^7.10.2",
+    "@electron-forge/maker-rpm": "^7.10.2",
+    "@electron-forge/maker-squirrel": "^7.10.2",
+    "@electron-forge/maker-zip": "^7.10.2",
+    "@electron-forge/plugin-auto-unpack-natives": "^7.10.2",
+    "@electron-forge/plugin-fuses": "^7.10.2",
+    "@electron/fuses": "^1.8.0",
     "@vitejs/plugin-vue": "^5.2.1",
     "concurrently": "^9.2.1",
     "cross-env": "^10.1.0",

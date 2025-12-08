@@ -9,14 +9,17 @@ class WebSocketClient {
       return WebSocketClient.instance;
     }
 
-    // ========== 基础配置 ==========
-    // this.baseUrl = "192.168.1.100"; // 你的服务器IP
-    // this.port = 8080; // 你的服务器端口
-    // this.fullUrl = `ws://${this.baseUrl}:${this.port}`;
+    console.log("ws准备链接");
 
-    this.baseUrl = "ws.postman-echo.com/raw";
-    this.port = ""; // 空字符串即可
-    this.fullUrl = `wss://${this.baseUrl}`;
+    // ========== 基础配置 ==========
+    this.baseUrl = "192.168.3.29"; // 你的服务器IP
+    // this.baseUrl = "localhost"; // 机器服务器IP
+    this.port = 6789; // 你的服务器端口
+    this.fullUrl = `ws://${this.baseUrl}:${this.port}`;
+
+    // this.baseUrl = "ws.postman-echo.com/raw";
+    // this.port = ""; // 空字符串即可
+    // this.fullUrl = `wss://${this.baseUrl}`;
 
     // ========== 重连配置 ==========
     this.reconnectInterval = options.reconnectInterval || 3000; // 重连间隔

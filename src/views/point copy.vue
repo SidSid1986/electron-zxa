@@ -78,15 +78,15 @@
                         item.status == 1
                           ? 'status-red'
                           : item.status == 0
-                            ? 'status-blue'
-                            : 'status-green'
+                          ? 'status-blue'
+                          : 'status-green'
                       "
                       >{{
                         item.status == 0
                           ? "未定穴"
                           : item.status == 1
-                            ? "正在定穴"
-                            : "已定穴"
+                          ? "正在定穴"
+                          : "已定穴"
                       }}</span
                     >
                   </div>
@@ -308,11 +308,55 @@ const parseStringToNumberArray = (str) => {
     return []; // 转换失败返回空数组
   }
 };
+// const handleWsMessageTest = () => {
+//   const testData = "{100, 200, 300, 400, 500, 600}";
 
-const handleWsMessage = (data) => {
-  console.log(data);
+//   // 1. 转换字符串为数值数组
+//   const numArray = parseStringToNumberArray(testData);
+//   if (numArray.length !== 6) {
+//     console.error("数据长度错误，无法更新:", numArray);
+//     return;
+//   }
 
-  const numArray = parseStringToNumberArray(data.result.message);
+//   console.log("转换后的数组:", numArray);
+//   console.log(
+//     "更新前的plan项:",
+//     selectedCase.value.plan[selectedAutoIndex.value]
+//   );
+
+//   // 2. 先深拷贝一份plan数组（彻底断开响应式引用）
+//   const newPlan = JSON.parse(JSON.stringify(selectedCase.value.plan));
+//   // 3. 更新深拷贝后的数组项
+//   newPlan[selectedAutoIndex.value] = {
+//     ...newPlan[selectedAutoIndex.value],
+//     x: numArray[0],
+//     y: numArray[1],
+//     z: numArray[2],
+//     rx: numArray[3],
+//     ry: numArray[4],
+//     rz: numArray[5],
+//   };
+
+//   // 4. 核心：先赋值为空数组，强制触发更新，再赋值新数组
+//   // （空数组过渡是打破Vue响应式缓存的关键）
+//   tableData.value = [];
+//   nextTick(() => {
+//     // 5. 替换selectedCase的plan（保证源数据同步）
+//     selectedCase.value.plan = newPlan;
+//     // 6. 重新赋值tableData
+//     tableData.value = [...newPlan];
+
+//     console.log(
+//       "更新后的plan项:",
+//       selectedCase.value.plan[selectedAutoIndex.value]
+//     );
+//     console.log("更新后的tableData:", tableData.value);
+//   });
+// };
+
+const handleWsMessageTest = () => {
+  const testData = "{100, 200, 300, 400, 500, 600}";
+  const numArray = parseStringToNumberArray(testData);
 
   if (numArray.length !== 6) {
     console.error("数据长度错误，无法更新:", numArray);
@@ -354,10 +398,8 @@ const handleWsMessage = (data) => {
     nextTick(() => {
       selectedCase.value.plan = newPlan;
       tableData.value = [...newPlan];
-      //停止拖拽
-      stopDrag();
 
-      localStorage.setItem("selectedCase", JSON.stringify(selectedCase.value));
+      console.log(tableData.value);
 
       // 显示弹窗并跳转页面
       dialogVisible.value = true;
@@ -391,10 +433,51 @@ const handleWsMessage = (data) => {
     });
   }
 };
+const handleWsMessage = (data) => {
+  console.log("收到服务器返回数据:", data);
+  console.log("原始message:", data.result.message);
 
-const stopDrag = () => {
-  const data = { req_id: "00011", command: "StopDrag", args: "" };
-  const sendResult = $ws.send(data);
+  // 1. 转换字符串为数值数组
+  const numArray = parseStringToNumberArray(data.result.message);
+  if (numArray.length !== 6) {
+    console.error("数据长度错误，无法更新:", numArray);
+    return;
+  }
+
+  console.log("转换后的数组:", numArray);
+  console.log(
+    "更新前的plan项:",
+    selectedCase.value.plan[selectedAutoIndex.value]
+  );
+
+  // 2. 先深拷贝一份plan数组（彻底断开响应式引用）
+  const newPlan = JSON.parse(JSON.stringify(selectedCase.value.plan));
+  // 3. 更新深拷贝后的数组项
+  newPlan[selectedAutoIndex.value] = {
+    ...newPlan[selectedAutoIndex.value],
+    x: numArray[0],
+    y: numArray[1],
+    z: numArray[2],
+    rx: numArray[3],
+    ry: numArray[4],
+    rz: numArray[5],
+  };
+
+  // 4. 核心：先赋值为空数组，强制触发更新，再赋值新数组
+  // （空数组过渡是打破Vue响应式缓存的关键）
+  tableData.value = [];
+  nextTick(() => {
+    // 5. 替换selectedCase的plan（保证源数据同步）
+    selectedCase.value.plan = newPlan;
+    // 6. 重新赋值tableData
+    tableData.value = [...newPlan];
+
+    console.log(
+      "更新后的plan项:",
+      selectedCase.value.plan[selectedAutoIndex.value]
+    );
+    console.log("更新后的tableData:", tableData.value);
+  });
 };
 
 const getPointWs = () => {
@@ -419,18 +502,128 @@ const usePoint = (index) => {
   // 记录当前操作的索引（传递给消息处理函数）
   currentOperateIndex.value = index;
   // 触发模拟WS数据获取（实际场景是getPointWs()）
-  // handleWsMessageTest();
-  getPointWs();
+  handleWsMessageTest();
 };
 
-const startDrag = () => {
-  const data = { req_id: "00011", command: "StartDrag", args: "" };
-  const sendResult = $ws.send(data);
-};
+// const usePoint = (index) => {
+//   planList.value = selectedCase.value.plan;
+//   planLength.value = planList.length;
+
+//   //   检查是否是最后一个穴位（已修复判断条件：length - 1）
+//   if (index === planLength.value - 1) {
+//     //  处理最后一个穴位时，同步图片为当前穴位的类型（避免图片消失）
+//     planList.value[index].status = 2; // 标记最后一个穴位为已使用
+//     picType.value = planList.value[index].type; // 同步最后一个穴位的类型
+//     picUrl.value = picType.value === 0 ? BodyPic : LegPic; // 同步图片
+//     selectedObj.value = planList.value[index]; // 同步选中对象
+//     console.log("finish：最后一个穴位处理完成，保留当前图片");
+//     dialogVisible.value = true;
+//     // getPointWs();
+//     handleWsMessageTest();
+//     // 更新表格数据（保证状态同步）
+//     tableData.value = [...planList.value];
+
+//     setTimeout(() => {
+//       dialogVisible.value = false;
+//       router.push({
+//         path: "/setting",
+//       });
+//     }, 2000);
+//     return; // 终止函数，不执行else逻辑
+//   }
+
+//   console.log(planList.value[index]);
+//   console.log(selectedAutoIndex.value);
+//   // getPointWs();
+//   handleWsMessageTest();
+
+//   // 非最后一个穴位
+//   // 改变当前穴位的状态为已使用
+//   planList.value[index].status = 2;
+
+//   // 改变下一个穴位的状态为正在定穴
+//   planList.value[index + 1].status = 1;
+//   selectedAutoIndex.value = index + 1;
+
+//   picType.value = planList.value[index + 1].type;
+//   selectedObj.value = planList.value[index + 1];
+
+//   switch (picType.value) {
+//     case 0:
+//       picUrl.value = BodyPic;
+//       break;
+//     case 1:
+//       picUrl.value = LegPic;
+//       break;
+//     default:
+//       break;
+//   }
+
+//   console.log(picType.value);
+
+//   // 更新表格数据
+//   // tableData.value = [...planList.value];
+// };
+
+// const usePointTestDemo = (index) => {
+//   const planList = selectedCase.value.plan;
+//   const planLength = planList.length;
+
+//   //   检查是否是最后一个穴位（已修复判断条件：length - 1）
+//   if (index === planLength - 1) {
+//     //  处理最后一个穴位时，同步图片为当前穴位的类型（避免图片消失）
+//     planList[index].status = 2; // 标记最后一个穴位为已使用
+//     picType.value = planList[index].type; // 同步最后一个穴位的类型
+//     picUrl.value = picType.value === 0 ? BodyPic : LegPic; // 同步图片
+//     selectedObj.value = planList[index]; // 同步选中对象
+//     console.log("finish：最后一个穴位处理完成，保留当前图片");
+//     dialogVisible.value = true;
+
+//     // 更新表格数据（保证状态同步）
+//     tableData.value = [...planList];
+
+//     setTimeout(() => {
+//       dialogVisible.value = false;
+//       router.push({
+//         path: "/setting",
+//       });
+//     }, 2000);
+//     return; // 终止函数，不执行else逻辑
+//   }
+
+//   console.log(planList[index]);
+//   console.log(selectedAutoIndex.value);
+
+//   // 非最后一个穴位
+//   // 改变当前穴位的状态为已使用
+//   planList[index].status = 2;
+
+//   // 改变下一个穴位的状态为正在定穴
+//   planList[index + 1].status = 1;
+//   selectedAutoIndex.value = index + 1;
+
+//   picType.value = planList[index + 1].type;
+//   selectedObj.value = planList[index + 1];
+
+//   switch (picType.value) {
+//     case 0:
+//       picUrl.value = BodyPic;
+//       break;
+//     case 1:
+//       picUrl.value = LegPic;
+//       break;
+//     default:
+//       break;
+//   }
+
+//   console.log(picType.value);
+
+//   // 更新表格数据
+//   // tableData.value = [...planList];
+// };
 
 onMounted(() => {
   console.log("组件挂载了");
-  startDrag();// 开始拖拽
   selectedCaseId.value = route.query.id;
   getPoint(selectedCaseId.value);
 

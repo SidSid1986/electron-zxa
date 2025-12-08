@@ -164,6 +164,8 @@ import MusicPlayer from "@/components/MusicPlayer.vue";
 import BodyPic from "@/assets/pic/per_obverse.png";
 import LegPic from "@/assets/pic/leg_obverse.png";
 
+const $ws = inject("$ws");
+
 // 组件引用
 const tempModalRef = ref(null);
 const volumeModalRef = ref(null);
@@ -205,6 +207,7 @@ const selectedObj = ref({});
 const testIndex = ref(-1);
 const treatSwiperRef = ref(null);
 const swiperInstance = ref(null);
+const wsCommandArray = ref([]);
 
 // 计算属性：判断是否还有未完成的穴位
 const hasUnfinishedPoints = computed(() => {
@@ -212,9 +215,125 @@ const hasUnfinishedPoints = computed(() => {
   return planList.some((item) => item.status !== 2);
 });
 
+const generateWsCommandArray = (data) => {
+  // 校验入参
+  if (!data || !Array.isArray(data.plan) || data.plan.length === 0) {
+    console.error("无效的plan数据");
+    return [];
+  }
+
+  // 遍历plan，组装每个穴位的WS指令
+  const wsCommandArray = data.plan.map((item, index) => {
+    // 提取坐标值（保留原始精度，也可根据需求四舍五入）
+    const { x, y, z, rx, ry, rz } = item;
+    // 拼接args中的pose字符串
+    const poseStr = `pose={${x},${y},${z},${rx},${ry},${rz}}`;
+    // 组装完整的WS指令
+    return {
+      req_id: `0001${index + 1}`, // 每个指令的req_id区分（也可固定为00011，根据你的需求调整）
+      command: "MovJ_vertical",
+      args: `pose='${poseStr}'`,
+      // 可选：携带穴位信息，方便后续使用
+      // pointInfo: {
+      //   name: item.name,
+      //   point: item.point,
+      //   index: index,
+      // },
+    };
+  });
+
+  return wsCommandArray;
+};
+
 const getPoint = (id) => {
-  const caseDataCopy = JSON.parse(JSON.stringify(caseData));
-  selectedCase.value = caseDataCopy.find((item) => item.id * 1 === id * 1);
+  // const caseDataCopy = JSON.parse(JSON.stringify(caseData));
+  // selectedCase.value = caseDataCopy.find((item) => item.id * 1 === id * 1);
+
+  // console.log(selectedCase.value);
+
+  selectedCase.value = JSON.parse(localStorage.getItem("selectedCase"));
+  console.log(selectedCase.value);
+
+  // let data = {
+  //   id: 1,
+  //   name: "腹泻针灸1",
+  //   plan: [
+  //     {
+  //       name: "悬停灸",
+  //       time: 60,
+  //       point: "天枢穴(左)",
+  //       status: 1,
+  //       type: 0,
+  //       x: 405.568,
+  //       y: -211.1488,
+  //       z: 448.5161,
+  //       rx: -178.6889,
+  //       ry: -9.208,
+  //       rz: 90.8648,
+  //       isActive: true,
+  //     },
+  //     {
+  //       name: "悬停灸",
+  //       time: 60,
+  //       point: "天枢穴(右)",
+  //       status: 2,
+  //       type: 0,
+  //       x: 405.5679,
+  //       y: -211.1488,
+  //       z: 448.516,
+  //       rx: -178.6889,
+  //       ry: -9.208,
+  //       rz: 90.8647,
+  //     },
+  //     {
+  //       name: "悬停灸",
+  //       time: 60,
+  //       point: "神阙穴",
+  //       status: 2,
+  //       type: 0,
+  //       x: 405.568,
+  //       y: -211.1489,
+  //       z: 448.5167,
+  //       rx: -178.689,
+  //       ry: -9.208,
+  //       rz: 90.8648,
+  //     },
+  //     {
+  //       name: "悬停灸",
+  //       time: 60,
+  //       point: "上巨虚穴(左)",
+  //       status: 2,
+  //       type: 1,
+  //       x: 405.568,
+  //       y: -211.1488,
+  //       z: 448.5162,
+  //       rx: -178.6889,
+  //       ry: -9.208,
+  //       rz: 90.8648,
+  //     },
+  //     {
+  //       name: "悬停灸",
+  //       time: 60,
+  //       point: "上巨虚穴(右)",
+  //       status: 2,
+  //       type: 1,
+  //       x: 405.568,
+  //       y: -211.1488,
+  //       z: 448.5165,
+  //       rx: -178.689,
+  //       ry: -9.208,
+  //       rz: 90.8648,
+  //     },
+  //   ],
+  // };
+
+  wsCommandArray.value = generateWsCommandArray(selectedCase.value);
+  // console.log(wsCommandArray.value);
+  // console.log(wsCommandArray.value[0]);
+
+  sendWsMessage(wsCommandArray.value[0]);
+  // let data = {"req_id":"00011","command": "MovJ_vertical","args": "pose='pose={500,-100,500,180,0,90}'"};
+  // sendWsMessage(data);
 
   if (
     !selectedCase.value ||
@@ -324,6 +443,15 @@ const usePoint = () => {
 const countdownEnd = (item) => {
   const planList = selectedCase.value.plan || [];
   const planLength = planList.length;
+
+  console.log("数据顺序");
+  console.log(testIndex.value);
+
+  if (testIndex.value + 1 >= planLength) {
+    return;
+  }
+
+  sendWsMessage(wsCommandArray.value[testIndex.value + 1]);
 
   // 前置判断：已结束所有治疗
   if (testIndex.value >= planLength || !isTreating.value) {
@@ -702,6 +830,14 @@ const switchDemoMode = () => {
     });
 };
 
+const sendWsMessage = (data) => {
+  const sendResult = $ws.send(data);
+};
+const handleWsMessage = (data) => {
+  console.log("收到服务器返回数据:", data);
+  handleDeviceResponse(data);
+};
+
 const refreshNormal = () => {
   //刷新页面
   window.location.reload();
@@ -720,6 +856,7 @@ watch(
 
 // 初始化
 onMounted(() => {
+  $ws.onMessage(handleWsMessage);
   selectedCaseId.value = localStorage.getItem("selectedCaseId") || 1;
   getPoint(selectedCaseId.value);
 });

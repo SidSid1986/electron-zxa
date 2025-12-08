@@ -15,7 +15,10 @@
             <div class="home-right-btn">
               <el-button
                 class="connect"
-                :class="['custom-btn', isDeviceConnected ? 'connected-btn' : '']"
+                :class="[
+                  'custom-btn',
+                  isDeviceConnected ? 'connected-btn' : '',
+                ]"
                 @click="connectDevice"
                 round
                 :disabled="isSending || isDeviceConnected"
@@ -31,7 +34,7 @@
             </div>
 
             <!-- 显示返回的消息/状态 -->
-            <div class="response-msg" v-if="msg">{{ msg }}</div>
+            <!-- <div class="response-msg" v-if="msg">{{ msg }}</div> -->
           </div>
         </div>
       </div>
@@ -44,13 +47,13 @@ import { ref, inject, onMounted, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
 
 // 核心修改1：注入全局WS实例（不再直接导入wsClient）
-const $ws = inject('$ws');
+const $ws = inject("$ws");
 const router = useRouter();
 
 const msg = ref("");
 const isSending = ref(false);
 // 核心修改2：变量名语义化，区分「设备连接」和「WS连接」
-const isDeviceConnected = ref(false); 
+const isDeviceConnected = ref(false);
 
 // 核心修改3：单独定义回调函数（方便卸载）
 const handleWsMessage = (data) => {
@@ -81,20 +84,15 @@ const handleWsClose = () => {
 // 处理设备连接的响应（核心：收返回值后跳转）
 const handleDeviceResponse = (data) => {
   isSending.value = false;
-  // 解析响应数据（确保是对象格式）
+  // 解析响应数据
   const res = typeof data === "string" ? JSON.parse(data) : data;
-
-  // 匹配设备连接成功的响应（根据后端实际返回字段调整）
-  if (res.code === 200 && res.deviceStatus === "online") {
-    msg.value = `连接成功！设备ID: ${res.deviceId}`;
+  // 匹配设备连接成功的响应
+  if (res.result.status == 0) {
     isDeviceConnected.value = true;
-    // 核心需求：跳转到check页面并携带设备ID
     router.push({
       path: "/check",
-      query: { deviceId: res.deviceId },
     });
   } else {
-    msg.value = `连接失败: ${res.message || "未知错误"}`;
     isDeviceConnected.value = false;
   }
 };
@@ -132,6 +130,15 @@ const connectDevice = () => {
 
 // 页面挂载：仅注册回调（WS已在main.js启动，无需重复connect）
 onMounted(() => {
+  localStorage.removeItem("selectedCase");
+
+  //判断ws连接成功提示
+  if ($ws.getStatus()) {
+    ElMessage.success("WebSocket已连接到服务器，请点击【连接设备】按钮");
+  } else {
+    ElMessage.error("WebSocket连接失败，请检查网络");
+  }
+
   // 注册WS回调
   $ws.onMessage(handleWsMessage);
   $ws.onOpen(handleWsOpen);
@@ -139,11 +146,11 @@ onMounted(() => {
   $ws.onClose(handleWsClose);
 
   // 初始化时显示WS当前状态
-  if ($ws.getStatus()) {
-    msg.value = "WebSocket已连接到服务器，请点击【连接设备】按钮";
-  } else {
-    msg.value = "WebSocket正在连接中...";
-  }
+  // if ($ws.getStatus()) {
+  //   msg.value = "WebSocket已连接到服务器，请点击【连接设备】按钮";
+  // } else {
+  //   msg.value = "WebSocket正在连接中...";
+  // }
 });
 
 // 页面卸载：仅移除当前页面的回调（不断开全局WS）
@@ -153,7 +160,7 @@ onUnmounted(() => {
   $ws.offOpen(handleWsOpen);
   $ws.offError(handleWsError);
   $ws.offClose(handleWsClose);
-  
+
   // 清空超时定时器（避免内存泄漏）
   clearTimeout(window.wsTimeout);
 });
