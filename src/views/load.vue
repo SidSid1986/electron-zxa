@@ -55,7 +55,6 @@ onMounted(() => {
     // 加载完成，跳转到目标页面
     if (progress.value >= 100) {
       clearInterval(timer);
-
       router.push("/home");
     }
   }, 30); // 调整速度，总时长约3秒

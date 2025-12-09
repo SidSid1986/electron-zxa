@@ -27,8 +27,8 @@
                   isSending
                     ? "发送中..."
                     : isDeviceConnected
-                    ? "已连接设备"
-                    : "连接设备"
+                      ? "已连接设备"
+                      : "连接设备"
                 }}
               </el-button>
             </div>
@@ -143,7 +143,13 @@ onMounted(() => {
 });
 
 // 页面卸载：仅移除当前页面的回调（不断开全局WS）
-onUnmounted(() => {});
+onUnmounted(() => {
+  // 移除当前页面的回调
+  $ws.offMessage(handleWsMessage);
+  $ws.offOpen(handleWsOpen);
+  $ws.offError(handleWsError);
+  $ws.offClose(handleWsClose);
+});
 </script>
 
 <style scoped lang="scss">

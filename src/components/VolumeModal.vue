@@ -6,7 +6,7 @@
         <div class="modal-header">
           <div class="header-title">
             <img src="@/assets/pic/volume.png" alt="音量" class="header-icon" />
-            <span>音量调节</span>
+            <span class="header-text">音量调节</span>
           </div>
           <button class="close-btn" @click.stop="closeModal">×</button>
         </div>
@@ -133,8 +133,8 @@ defineExpose({
 
   .modal-container {
     position: relative;
-    width: 20vw;
-    min-width: 300px;
+    width: 30vw; // 从320→280
+    height: 30vh;
     height: auto;
     background-color: #ffffff;
     border-radius: 16px;
@@ -160,32 +160,40 @@ defineExpose({
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px;
+  padding: 12px 16px; // 从16x20→12x16，压缩头部高度
   background-color: #f8f0fc;
   border-bottom: 1px solid #f0e0f7;
+  height: 8vh;
 
   .header-title {
     display: flex;
     align-items: center;
-    gap: 8px;
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 6px; // 从8→6
     color: #693e9c;
-    font-size: 15px;
+    // 从16→15
     font-weight: 600;
 
     .header-icon {
-      width: 18px;
-      height: 18px;
+      width: 50px; // 从20→18
+      height: 50px;
+      // border: 1px solid red;
       object-fit: contain;
+    }
+    .header-text {
+      font-size: 32px;
+      line-height: 1; // 新增：重置行高
     }
   }
 
   .close-btn {
-    width: 24px;
-    height: 24px;
+    width: 40px; // 从28→24
+    height: 40px;
     border: none;
     background: transparent;
     color: #693e9c;
-    font-size: 18px;
+    font-size: 50px; // 从20→18
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -273,7 +281,7 @@ defineExpose({
       width: 100%;
       display: flex;
       justify-content: space-between;
-      font-size: 14px;
+      font-size: 24px;
       color: #8a5ca0;
     }
   }

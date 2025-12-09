@@ -252,6 +252,9 @@ const getPoint = (id) => {
 
   wsCommandArray.value = generateWsCommandArray(selectedCase.value);
 
+  console.log(123);
+  console.log(wsCommandArray.value[0]);
+
   sendWsMessage(wsCommandArray.value[0]);
   // let data = {"req_id":"00011","command": "MovJ_vertical","args": "pose='pose={500,-100,500,180,0,90}'"};
   // sendWsMessage(data);
@@ -700,6 +703,10 @@ const handleCurrentSongUpdate = (song) => {
 
 // 演示模式
 const switchDemoMode = () => {
+  isPsuse.value = true;
+  if (treatSwiperRef.value) {
+    treatSwiperRef.value.pauseCountdown();
+  }
   // 1. 提示用户演示模式是临时的
   ElMessageBox.confirm(
     "演示模式：所有穴位时长临时改为8秒（点击正常模式恢复1分钟）！",
@@ -712,9 +719,9 @@ const switchDemoMode = () => {
     }
   )
     .then(() => {
-      // 2. 直接修改tableData为12秒（临时生效）
+      // 2. 直接修改tableData为8秒（临时生效）
       tableData.value.forEach((item) => {
-        item.time = 8; // 12秒（子组件按秒计算）
+        item.time = 8; // 8秒（子组件按秒计算）
         item.time1 = "00:8:00";
         item.time2 = "00:8";
       });
@@ -736,7 +743,8 @@ const switchDemoMode = () => {
       // 5. 强制启动/重启倒计时
       nextTick(() => {
         if (isPsuse.value) {
-          continueTreat();
+          // continueTreat();
+          restartTreat();
         }
         if (treatSwiperRef.value) {
           treatSwiperRef.value.stopCountdown();
@@ -780,6 +788,11 @@ onMounted(() => {
   $ws.onMessage(handleWsMessage);
   selectedCaseId.value = localStorage.getItem("selectedCaseId") || 1;
   getPoint(selectedCaseId.value);
+});
+
+onUnmounted(() => {
+  // 移除当前页面的回调
+  $ws.offMessage(handleWsMessage);
 });
 </script>
 

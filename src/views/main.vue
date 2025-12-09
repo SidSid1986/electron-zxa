@@ -428,7 +428,7 @@ const handleClick = (id) => {
 };
 
 const confirmDialog = () => {
-  dialogVisible.value = false;
+  // dialogVisible.value = false;
   localStorage.setItem("selectedCaseId", selectedCaseId.value);
   router.push(`/point?id=${selectedCaseId.value}`);
 };

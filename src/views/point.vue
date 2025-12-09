@@ -310,10 +310,17 @@ const parseStringToNumberArray = (str) => {
 };
 
 const handleWsMessage = (data) => {
-  console.log(data);
+  if (data.command == "StartDrag()") {
+    return;
+  }
+
+  if (data.command == "StopDrag()") {
+    console.log("停止拖拽了~");
+    return;
+  }
 
   const numArray = parseStringToNumberArray(data.result.message);
-
+  console.log("ceshi");
   if (numArray.length !== 6) {
     console.error("数据长度错误，无法更新:", numArray);
     return;
@@ -430,7 +437,7 @@ const startDrag = () => {
 
 onMounted(() => {
   console.log("组件挂载了");
-  startDrag();// 开始拖拽
+  startDrag(); // 开始拖拽
   selectedCaseId.value = route.query.id;
   getPoint(selectedCaseId.value);
 
@@ -446,6 +453,8 @@ onMounted(() => {
 onUnmounted(() => {
   if (tableInertiaTimer.value) clearInterval(tableInertiaTimer.value);
   window.removeEventListener("resize", calcTableScrollHeight);
+  // 移除消息处理函数
+  $ws.offMessage(handleWsMessage);
 });
 </script>
 

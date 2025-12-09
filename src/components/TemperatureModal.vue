@@ -11,7 +11,7 @@
               alt="温度"
               class="header-icon"
             />
-            <span>温度调节</span>
+            <span class="header-text">温度调节</span>
           </div>
           <button class="close-btn" @click.stop="closeModal">×</button>
         </div>
@@ -108,8 +108,8 @@ defineExpose({
   //  减小弹窗宽度，压缩整体尺寸
   .modal-container {
     position: relative;
-    width: 20vw; // 从320→280
-    height: 20vh;
+    width: 30vw; // 从320→280
+    height: 30vh;
     background-color: #ffffff;
     border-radius: 16px;
     box-shadow: 0 10px 40px rgba(105, 62, 156, 0.25);
@@ -137,29 +137,37 @@ defineExpose({
   padding: 12px 16px; // 从16x20→12x16，压缩头部高度
   background-color: #f8f0fc;
   border-bottom: 1px solid #f0e0f7;
+  height: 8vh;
 
   .header-title {
     display: flex;
     align-items: center;
+    flex-direction: row;
+    justify-content: flex-start;
     gap: 6px; // 从8→6
     color: #693e9c;
-    font-size: 15px; // 从16→15
+    // 从16→15
     font-weight: 600;
 
     .header-icon {
-      width: 18px; // 从20→18
-      height: 18px;
+      width: 50px; // 从20→18
+      height: 50px;
+      // border: 1px solid red;
       object-fit: contain;
+    }
+    .header-text {
+      font-size: 32px;
+      line-height: 1; // 新增：重置行高
     }
   }
 
   .close-btn {
-    width: 24px; // 从28→24
-    height: 24px;
+    width: 40px; // 从28→24
+    height: 40px;
     border: none;
     background: transparent;
     color: #693e9c;
-    font-size: 18px; // 从20→18
+    font-size: 50px; // 从20→18
     cursor: pointer;
     display: flex;
     align-items: center;

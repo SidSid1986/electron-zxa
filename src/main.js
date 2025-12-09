@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-08 08:30:08
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-08 15:35:58
+ * @LastEditTime: 2025-12-09 11:04:36
  * @FilePath: \ai\src\main.js
  * @Description:
  */
@@ -31,7 +31,6 @@ if (typeof document !== "undefined") {
 if (typeof window !== "undefined") {
   // 启动WS连接
   wsClient.connect();
-  
 
   // // 页面关闭/刷新时断开WS（避免无效连接）
   // window.addEventListener("beforeunload", () => {

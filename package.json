@@ -20,7 +20,8 @@
     "start": "electron-forge start",
     "package": "electron-forge package",
     "make": "electron-forge make",
-    "build-linux-arm64": "electron-forge make --platform=linux --arch=arm64 --targets=\"@electron-forge/maker-zip\""
+    "forge-build-linux-arm64": "electron-forge make --platform=linux --arch=arm64 --targets=\"@electron-forge/maker-zip\"",
+    "forge-build-win": "electron-forge make --platform=win32 --arch=x64 --targets=\"@electron-forge/maker-zip\""
   },
   "build": {
     "appId": "com.yourcompany.zixiaoai",
@@ -147,7 +148,8 @@
         {
           "name": "@electron-forge/maker-zip",
           "platforms": [
-            "linux"
+            "linux",
+            "win32"
           ]
         }
       ],
@@ -183,11 +185,10 @@
     "@electron-forge/plugin-auto-unpack-natives": "^7.10.2",
     "@electron-forge/plugin-fuses": "^7.10.2",
     "@electron/fuses": "^1.8.0",
-    "@electron/packager": "^19.0.1",
     "@vitejs/plugin-vue": "^5.2.1",
     "concurrently": "^9.2.1",
     "cross-env": "^10.1.0",
-    "electron": "^39.2.6",
+    "electron": "39.2.4",
     "postcss-pxtorem": "^6.1.0",
     "sass": "^1.85.1",
     "sass-embedded": "^1.86.0",

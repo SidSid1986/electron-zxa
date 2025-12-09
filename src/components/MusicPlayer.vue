@@ -19,7 +19,7 @@
             >
               <path d="M8 3V21L19 12L8 3Z" fill="#693e9c" />
             </svg>
-            <span>音乐播放</span>
+            <span class="header-text">音乐播放</span>
           </div>
           <button class="close-btn" @click.stop="closePlayer">×</button>
         </div>
@@ -29,18 +29,9 @@
           <!-- 封面+播放状态（保留旋转动画） -->
           <div class="player-cover-wrapper">
             <div class="player-cover" :class="{ playing: isPlaying }">
-              <div class="cover-bg"></div>
               <!-- 统一静态图标，居中显示 -->
               <div class="cover-center-icon">
-                <svg
-                  width="32"
-                  height="32"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path d="M12 3V21L19 15H16V9H19L12 3Z" fill="#ffffff" />
-                </svg>
+                <img src="@/assets/pic/music-logo.png" alt="" />
               </div>
             </div>
           </div>
@@ -66,46 +57,49 @@
 
           <!-- 控制按钮 + 新增音量控制滑块 -->
           <div class="control-panel">
-            <button
-              class="control-btn"
-              @click.stop="prevSong"
-              :disabled="!songList.length"
-            >
-              <svg
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
+            <div class="control-space"></div>
+            <div class="play-btns">
+              <button
+                class="control-btn"
+                @click.stop="prevSong"
+                :disabled="!songList.length"
               >
-                <path d="M14 20L4 12L14 4V20Z" fill="#693e9c" />
-              </svg>
-            </button>
-            <button
-              class="play-btn"
-              @click.stop="initAudioAndPlay"
-              :class="{ playing: isPlaying }"
-              :disabled="!songList.length"
-            >
-              <span v-if="!isPlaying">播放</span>
-              <span v-else>暂停</span>
-            </button>
-            <button
-              class="control-btn"
-              @click.stop="nextSong"
-              :disabled="!songList.length"
-            >
-              <svg
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path d="M14 20L4 12L14 4V20Z" fill="#693e9c" />
+                </svg>
+              </button>
+              <button
+                class="play-btn"
+                @click.stop="initAudioAndPlay"
+                :class="{ playing: isPlaying }"
+                :disabled="!songList.length"
               >
-                <path d="M10 4L20 12L10 20V4Z" fill="#693e9c" />
-              </svg>
-            </button>
-            
+                <span v-if="!isPlaying">播放</span>
+                <span v-else>暂停</span>
+              </button>
+              <button
+                class="control-btn"
+                @click.stop="nextSong"
+                :disabled="!songList.length"
+              >
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path d="M10 4L20 12L10 20V4Z" fill="#693e9c" />
+                </svg>
+              </button>
+            </div>
+
             <!-- 新增：音量控制滑块 -->
             <div class="volume-control-wrapper">
               <svg
@@ -144,7 +138,7 @@
                   fill="#693e9c"
                 />
               </svg>
-              <span>歌曲列表</span>
+              <span class="list-title">歌曲列表</span>
             </div>
             <div class="song-list-container">
               <div class="song-list">
@@ -195,7 +189,11 @@
 <script setup>
 import { ref, reactive, onMounted, onUnmounted, watch, defineEmits } from "vue";
 
-const emit = defineEmits(["update:playing", "update:currentSong", "update:volume"]);
+const emit = defineEmits([
+  "update:playing",
+  "update:currentSong",
+  "update:volume",
+]);
 
 // 弹窗显示状态
 const visible = ref(false);
@@ -227,7 +225,9 @@ async function loadMusicList() {
   try {
     if (isDev) {
       // 开发模式逻辑不变（原本就正常）
-      const musicFiles = import.meta.glob("/public/music/*.mp3", { eager: true });
+      const musicFiles = import.meta.glob("/public/music/*.mp3", {
+        eager: true,
+      });
       console.debug("import.meta.glob result keys:", Object.keys(musicFiles));
       const arr = Object.entries(musicFiles).map(([filePath, mod]) => {
         const fileName = filePath.split("/").pop();
@@ -253,7 +253,9 @@ async function loadMusicList() {
       }
     } else {
       // 纯 Web 环境逻辑不变
-      const musicFiles = import.meta.glob("/public/music/*.mp3", { eager: true });
+      const musicFiles = import.meta.glob("/public/music/*.mp3", {
+        eager: true,
+      });
       const arr = Object.entries(musicFiles).map(([filePath, mod]) => {
         const fileName = filePath.split("/").pop();
         const songName = fileName.replace(".mp3", "");
@@ -301,7 +303,8 @@ const initAudioInstance = () => {
 
   audio.addEventListener("timeupdate", () => {
     currentTime.value = audio.currentTime;
-    progressPercent.value = (audio.currentTime / (audio.duration || 1)) * 100 || 0;
+    progressPercent.value =
+      (audio.currentTime / (audio.duration || 1)) * 100 || 0;
   });
 
   audio.addEventListener("ended", () => {
@@ -325,14 +328,22 @@ const initAudioAndPlay = async () => {
     initAudioInstance();
   } else {
     // 如果 audio 已存在但 src 与 currentSong 不一致，更新 src
-    if (audio && currentSong.value && currentSong.value.url && audio.src !== currentSong.value.url) {
+    if (
+      audio &&
+      currentSong.value &&
+      currentSong.value.url &&
+      audio.src !== currentSong.value.url
+    ) {
       audio.src = currentSong.value.url;
     }
   }
 
   if (!audio) {
     // 如果仍然没有 audio（例如 currentSong.url 为空），提示并返回
-    console.error("initAudioAndPlay: audio 未被创建，请检查 currentSong.url:", currentSong.value);
+    console.error(
+      "initAudioAndPlay: audio 未被创建，请检查 currentSong.url:",
+      currentSong.value
+    );
     alert("无法播放：当前没有可用的音频源。");
     return;
   }
@@ -388,7 +399,8 @@ const playSong = (index) => {
 // 上一曲 / 下一曲
 const prevSong = () => {
   if (!songList.length) return;
-  const newIndex = (currentSongIndex.value - 1 + songList.length) % songList.length;
+  const newIndex =
+    (currentSongIndex.value - 1 + songList.length) % songList.length;
   playSong(newIndex);
 };
 const nextSong = () => {
@@ -520,7 +532,7 @@ onMounted(() => {
 
   .music-player-container {
     position: relative;
-    width: 360px;
+    width: 30vw;
     background-color: #ffffff;
     border-radius: 16px;
     box-shadow: 0 10px 40px rgba(105, 62, 156, 0.25);
@@ -561,13 +573,18 @@ onMounted(() => {
     font-weight: 600;
   }
 
+  .header-text {
+    font-size: 32px;
+    line-height: 1;
+  }
+
   .close-btn {
-    width: 28px;
-    height: 28px;
+    width: 40px;
+    height: 40px;
     border: none;
     background: transparent;
     color: #693e9c;
-    font-size: 20px;
+    font-size: 40px;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -596,7 +613,7 @@ onMounted(() => {
       width: 120px;
       height: 120px;
       border-radius: 50%;
-      background: linear-gradient(135deg, #e8d5f2 0%, #d4bfe1 100%);
+      // background: linear-gradient(135deg, #e8d5f2 0%, #d4bfe1 100%);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -605,19 +622,6 @@ onMounted(() => {
 
       &.playing {
         animation: rotate 10s linear infinite;
-      }
-
-      .cover-bg {
-        position: absolute;
-        width: 100%;
-        height: 100%;
-        border-radius: 50%;
-        background: radial-gradient(
-          circle at 30% 30%,
-          #af7dc4 0%,
-          transparent 60%
-        );
-        opacity: 0.2;
       }
 
       .cover-center-icon {
@@ -630,6 +634,10 @@ onMounted(() => {
         position: absolute;
         top: 0;
         left: 0;
+        img {
+          width: 100%;
+          height: 100%;
+        }
       }
     }
   }
@@ -640,7 +648,7 @@ onMounted(() => {
 
     .song-name {
       text-align: center;
-      font-size: 18px;
+      font-size: 24px;
       font-weight: 600;
       color: #693e9c;
       margin-bottom: 8px;
@@ -654,7 +662,8 @@ onMounted(() => {
 
       .progress-bar {
         width: 100%;
-        height: 4px;
+        height: 6px;
+
         background-color: #f0e0f7;
         border-radius: 2px;
         cursor: pointer;
@@ -684,7 +693,7 @@ onMounted(() => {
       .time-info {
         display: flex;
         justify-content: space-between;
-        font-size: 12px;
+        font-size: 24px;
         color: #8a5ca0;
         margin-top: 6px;
       }
@@ -693,23 +702,36 @@ onMounted(() => {
 
   .control-panel {
     display: flex;
+    flex-direction: row;
     align-items: center;
-    justify-content: center;
-    gap: 24px;
+    justify-content: space-between;
     margin-bottom: 20px;
     width: 100%;
+
+    .control-space {
+      width: 15%;
+    }
+
+    .play-btns {
+      width: 60%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
 
     // 新增：音量控制容器样式
     .volume-control-wrapper {
       display: flex;
+      flex-direction: row;
       align-items: center;
-      gap: 6px;
-      width: 80px;
-      
+
+      width: 20%;
+
       .volume-icon {
         flex-shrink: 0;
       }
-      
+
       .volume-slider {
         width: 100%;
         height: 4px;
@@ -718,7 +740,7 @@ onMounted(() => {
         background-color: #f0e0f7;
         border-radius: 2px;
         outline: none;
-        
+
         &::-webkit-slider-thumb {
           -webkit-appearance: none;
           appearance: none;
@@ -757,13 +779,13 @@ onMounted(() => {
     }
 
     .play-btn {
-      min-width: 80px;
-      height: 40px;
+      min-width: 100px;
+      height: 50px;
       border-radius: 20px;
       border: none;
       background: linear-gradient(90deg, #693e9c 0%, #af7dc4 100%);
       color: #ffffff;
-      font-size: 14px;
+      font-size: 24px;
       font-weight: 600;
       cursor: pointer;
       transition: all 0.2s;
@@ -793,14 +815,27 @@ onMounted(() => {
     .list-header {
       display: flex;
       align-items: center;
+      flex-direction: row;
+      justify-content: flex-start;
       gap: 6px;
       color: #693e9c;
-      font-size: 14px;
+      svg {
+        width: 30px;
+        height: 30px;
+      }
+    }
+
+    .list-title {
+      font-size: 24px;
       font-weight: 600;
-      margin-bottom: 8px;
+      color: #693e9c;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .song-list-container {
+      margin-top: 10px;
       width: 100%;
       height: 120px;
       overflow: hidden;
@@ -858,7 +893,7 @@ onMounted(() => {
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 12px;
+            font-size: 20px;
             color: #8a5ca0;
             flex-shrink: 0;
           }
@@ -866,7 +901,7 @@ onMounted(() => {
           .song-text {
             flex: 1;
             margin: 0 8px;
-            font-size: 14px;
+            font-size: 20px;
             overflow: hidden;
             text-overflow: ellipsis;
             height: 100%;
@@ -918,7 +953,6 @@ onMounted(() => {
 .progress-bar {
   &:hover .progress-track {
     height: 6px;
-    top: -1px;
   }
 
   &:hover .progress-thumb {
