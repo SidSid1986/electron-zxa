@@ -152,7 +152,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch, nextTick, computed } from "vue";
+import { ref, onMounted, watch, nextTick, computed, onUnmounted } from "vue";
 import caseData from "@/data/caseData.json";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useRoute, useRouter } from "vue-router";
@@ -220,7 +220,7 @@ const generateWsCommandArray = (data) => {
 
   // 遍历plan，组装每个穴位的WS指令
   const wsCommandArray = data.plan.map((item, index) => {
-    // 提取坐标值（保留原始精度，也可根据需求四舍五入）
+    // 提取坐标值
     const { x, y, z, rx, ry, rz } = item;
     // 拼接args中的pose字符串
     const poseStr = `pose={${x},${y},${z},${rx},${ry},${rz}}`;
@@ -760,11 +760,9 @@ const switchDemoMode = () => {
 };
 
 const sendWsMessage = (data) => {
-  const sendResult = $ws.send(data);
-};
-const handleWsMessage = (data) => {
-  console.log("收到服务器返回数据:", data);
-  handleDeviceResponse(data);
+  $ws.SendMessage(`${data.command}`, `${data.args}`, (data) => {
+    console.log(data);
+  });
 };
 
 const refreshNormal = () => {
@@ -785,15 +783,11 @@ watch(
 
 // 初始化
 onMounted(() => {
-  $ws.onMessage(handleWsMessage);
   selectedCaseId.value = localStorage.getItem("selectedCaseId") || 1;
   getPoint(selectedCaseId.value);
 });
 
-onUnmounted(() => {
-  // 移除当前页面的回调
-  $ws.offMessage(handleWsMessage);
-});
+onUnmounted(() => {});
 </script>
 
 <style scoped lang="scss">

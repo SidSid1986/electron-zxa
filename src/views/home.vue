@@ -38,117 +38,88 @@
     </div>
   </div>
 </template>
-
 <script setup>
 import { ref, inject, onMounted, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
+import { ElMessage } from "element-plus";
 
 const $ws = inject("$ws");
 const router = useRouter();
 
+// 响应提示消息
 const msg = ref("");
+// 发送状态
 const isSending = ref(false);
-
-//  设备连接
+// 设备连接状态
 const isDeviceConnected = ref(false);
+// 超时定时器
+let timeoutTimer = null;
 
-//获取信息
-const handleWsMessage = (data) => {
-  console.log("收到服务器返回数据:", data);
-  handleDeviceResponse(data);
-};
-
-const handleWsOpen = () => {
-  console.log("WebSocket连接成功");
-  isDeviceConnected.value = false; // WS连接≠设备连接
-};
-
-const handleWsError = (error) => {
-  console.error("WebSocket错误:", error);
-
-  isSending.value = false;
-  isDeviceConnected.value = false;
-};
-
-const handleWsClose = () => {
-  console.log("WebSocket连接关闭");
-
-  isSending.value = false;
-  isDeviceConnected.value = false;
-};
-
-// 处理设备连接的响应（核心：收返回值后跳转）
-const handleDeviceResponse = (data) => {
-  isSending.value = false;
-  // 解析响应数据
-  const res = typeof data === "string" ? JSON.parse(data) : data;
-  // 匹配设备连接成功的响应
-  if (res.result.status == 0) {
-    isDeviceConnected.value = true;
-    router.push({
-      path: "/check",
-    });
-  } else {
-    isDeviceConnected.value = false;
-  }
-};
-
-// 连接设备按钮点击事件（核心：发送数据）
+// 连接设备按钮点击事件（原生SendMessage，req_id从0开始）
 const connectDevice = () => {
-  // 校验WS是否已连接
-  if (!$ws.getStatus()) {
+  // 1. 校验WS是否已连接（原生Status属性）
+  if (!$ws.Status) {
     msg.value = "WebSocket未连接，请稍候重试";
+    ElMessage.warning("WebSocket未连接，请稍候重试");
     return;
   }
 
   isSending.value = true;
-  msg.value = "正在请求连接设备...";
+  console.log("正在请求连接设备...");
 
-  // 发送设备连接指令（根据后端约定格式）
-  const sendData = { req_id: "00011", command: "EnableRobot", args: "" };
-  const sendResult = $ws.send(sendData);
+  $ws.SendMessage("EnableRobot", "", (data) => {
+    console.log(data);
 
-  // 发送失败的兜底处理
-  if (!sendResult) {
-    msg.value = "指令发送失败，请检查连接";
+    // 标记发送完成
     isSending.value = false;
-    return;
-  }
 
-  // 超时处理：防止一直显示「发送中」
-  setTimeout(() => {
+    // 处理设备连接响应
+    if (data && data.result.status == 0) {
+      isDeviceConnected.value = true;
+      ElMessage.success("设备连接成功,准备自检！");
+      setTimeout(() => {
+        router.push({ path: "/check" });
+      }, 1000);
+    } else {
+      console.log("设备连接失败，请重试");
+
+      isDeviceConnected.value = false;
+    }
+  });
+
+  // 5. 超时处理：15秒未响应则标记超时
+  timeoutTimer = setTimeout(() => {
     if (isSending.value) {
       msg.value = "连接请求超时，请重试";
       isSending.value = false;
+      ElMessage.warning("连接请求超时，请重试");
     }
   }, 15000);
 };
 
-// 页面挂载：仅注册回调（WS已在main.js启动，无需重复connect）
+// 页面挂载时初始化
 onMounted(() => {
+  // 清除本地缓存的用例
   localStorage.removeItem("selectedCase");
 
-  //判断ws连接成功提示
-  if ($ws.getStatus()) {
+  // 提示WS连接状态
+  if ($ws.Status) {
     ElMessage.success("WebSocket已连接到服务器，请点击【连接设备】按钮");
   } else {
     ElMessage.error("WebSocket连接失败，请检查网络");
   }
-
-  // 注册WS回调
-  $ws.onMessage(handleWsMessage);
-  $ws.onOpen(handleWsOpen);
-  $ws.onError(handleWsError);
-  $ws.onClose(handleWsClose);
 });
 
-// 页面卸载：仅移除当前页面的回调（不断开全局WS）
+// 页面卸载时清理资源
 onUnmounted(() => {
-  // 移除当前页面的回调
-  $ws.offMessage(handleWsMessage);
-  $ws.offOpen(handleWsOpen);
-  $ws.offError(handleWsError);
-  $ws.offClose(handleWsClose);
+  // 清除超时定时器
+  if (timeoutTimer) {
+    clearTimeout(timeoutTimer);
+  }
+  // 重置状态
+  isDeviceConnected.value = false;
+  isSending.value = false;
+  msg.value = "";
 });
 </script>
 
@@ -240,7 +211,8 @@ onUnmounted(() => {
               font-size: 20px;
             }
 
-            :deep(.custom-btn) {
+            // 关键修复1：提升样式穿透的优先级，直接匹配 .connect.connected-btn
+            :deep(.connect.custom-btn) {
               --el-button-text-color: #fff;
               --el-button-bg-color: #af7dc4;
               --el-button-border-color: #af7dc4;
@@ -250,15 +222,30 @@ onUnmounted(() => {
               --el-button-active-text-color: #fff;
               --el-button-active-bg-color: #8a5ca0;
               --el-button-active-border-color: #8a5ca0;
+              // 增加disabled状态的样式继承
+              &.is-disabled {
+                --el-button-disabled-text-color: #fff;
+                --el-button-disabled-bg-color: var(--el-button-bg-color);
+                --el-button-disabled-border-color: var(
+                  --el-button-border-color
+                );
+              }
             }
 
-            :deep(.connected-btn) {
-              --el-button-bg-color: #44a649;
-              --el-button-border-color: #44a649;
-              --el-button-hover-bg-color: #3da043;
-              --el-button-hover-border-color: #3da043;
-              --el-button-active-bg-color: #368c3b;
-              --el-button-active-border-color: #368c3b;
+            // 关键修复2：直接匹配 .connect.connected-btn，提升优先级
+            :deep(.connect.connected-btn) {
+              --el-button-bg-color: #44a649 !important;
+              --el-button-border-color: #44a649 !important;
+              --el-button-hover-bg-color: #3da043 !important;
+              --el-button-hover-border-color: #3da043 !important;
+              --el-button-active-bg-color: #368c3b !important;
+              --el-button-active-border-color: #368c3b !important;
+              // 强制生效disabled状态的样式
+              &.is-disabled {
+                --el-button-disabled-bg-color: #44a649 !important;
+                --el-button-disabled-border-color: #44a649 !important;
+                --el-button-disabled-text-color: #fff !important;
+              }
             }
           }
         }

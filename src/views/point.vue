@@ -309,112 +309,111 @@ const parseStringToNumberArray = (str) => {
   }
 };
 
-const handleWsMessage = (data) => {
-  if (data.command == "StartDrag()") {
-    return;
-  }
-
-  if (data.command == "StopDrag()") {
-    console.log("停止拖拽了~");
-    return;
-  }
-
-  const numArray = parseStringToNumberArray(data.result.message);
-  console.log("ceshi");
-  if (numArray.length !== 6) {
-    console.error("数据长度错误，无法更新:", numArray);
-    return;
-  }
-
-  // 1. 获取基础数据
-  const planList = selectedCase.value.plan;
-  const planLength = planList.length;
-  const index = currentOperateIndex.value; // 当前操作的索引
-
-  console.log("转换后的数组:", numArray);
-  console.log("更新前的plan项:", planList[selectedAutoIndex.value]);
-
-  // 2. 深拷贝并更新坐标数据
-  const newPlan = JSON.parse(JSON.stringify(planList));
-  newPlan[selectedAutoIndex.value] = {
-    ...newPlan[selectedAutoIndex.value],
-    x: numArray[0],
-    y: numArray[1],
-    z: numArray[2],
-    rx: numArray[3],
-    ry: numArray[4],
-    rz: numArray[5],
-  };
-
-  // 3. 核心业务逻辑：判断是否是最后一个穴位
-  if (index === planLength - 1) {
-    // 处理最后一个穴位的逻辑
-    newPlan[index].status = 2; // 标记为已使用
-    picType.value = newPlan[index].type;
-    picUrl.value = picType.value === 0 ? BodyPic : LegPic;
-    selectedObj.value = newPlan[index];
-
-    console.log("finish：最后一个穴位处理完成，保留当前图片");
-
-    // 4. 更新数据并触发视图刷新
-    tableData.value = [];
-    nextTick(() => {
-      selectedCase.value.plan = newPlan;
-      tableData.value = [...newPlan];
-      //停止拖拽
-      stopDrag();
-
-      localStorage.setItem("selectedCase", JSON.stringify(selectedCase.value));
-
-      // 显示弹窗并跳转页面
-      dialogVisible.value = true;
-      setTimeout(() => {
-        dialogVisible.value = false;
-        router.push({ path: "/setting" });
-      }, 2000);
-    });
-  } else {
-    // 处理非最后一个穴位的逻辑
-    newPlan[index].status = 2; // 当前穴位标记为已使用
-    newPlan[index + 1].status = 1; // 下一个穴位标记为正在定穴
-
-    // 更新选中索引和图片信息
-    selectedAutoIndex.value = index + 1;
-    picType.value = newPlan[index + 1].type;
-    selectedObj.value = newPlan[index + 1];
-    picUrl.value = picType.value === 0 ? BodyPic : LegPic;
-
-    // 5. 更新数据并触发视图刷新
-    tableData.value = [];
-    nextTick(() => {
-      selectedCase.value.plan = newPlan;
-      tableData.value = [...newPlan];
-
-      console.log(
-        "更新后的plan项:",
-        selectedCase.value.plan[selectedAutoIndex.value]
-      );
-      console.log("更新后的tableData:", tableData.value);
-    });
-  }
+const startDrag = () => {
+  $ws.SendMessage("StartDrag", "", (data) => {
+    console.log(data);
+  });
 };
-
 const stopDrag = () => {
-  const data = { req_id: "00011", command: "StopDrag", args: "" };
-  const sendResult = $ws.send(data);
+  $ws.SendMessage("StopDrag", "", (data) => {
+    console.log(data);
+  });
 };
 
 const getPointWs = () => {
   // 校验WS是否已连接
-  if (!$ws.getStatus()) {
+  if (!$ws.Status) {
     console.log("WebSocket未连接，请稍候重试");
     return;
   }
   console.log("正在请求连接设备...");
 
   // 发送设备连接指令
-  const sendData = { req_id: "00011", command: "GetPose", args: "" };
-  const sendResult = $ws.send(sendData);
+
+  const sendResult = $ws.SendMessage("GetPose", "", (data) => {
+    console.log(data);
+    const numArray = parseStringToNumberArray(data.result.message);
+    console.log("ceshi");
+    if (numArray.length !== 6) {
+      console.error("数据长度错误，无法更新:", numArray);
+      return;
+    }
+
+    // 1. 获取基础数据
+    const planList = selectedCase.value.plan;
+    const planLength = planList.length;
+    const index = currentOperateIndex.value; // 当前操作的索引
+
+    console.log("转换后的数组:", numArray);
+    console.log("更新前的plan项:", planList[selectedAutoIndex.value]);
+
+    // 2. 深拷贝并更新坐标数据
+    const newPlan = JSON.parse(JSON.stringify(planList));
+    newPlan[selectedAutoIndex.value] = {
+      ...newPlan[selectedAutoIndex.value],
+      x: numArray[0],
+      y: numArray[1],
+      z: numArray[2],
+      rx: numArray[3],
+      ry: numArray[4],
+      rz: numArray[5],
+    };
+
+    // 3. 核心业务逻辑：判断是否是最后一个穴位
+    if (index === planLength - 1) {
+      // 处理最后一个穴位的逻辑
+      newPlan[index].status = 2; // 标记为已使用
+      picType.value = newPlan[index].type;
+      picUrl.value = picType.value === 0 ? BodyPic : LegPic;
+      selectedObj.value = newPlan[index];
+
+      console.log("finish：最后一个穴位处理完成，保留当前图片");
+
+      // 4. 更新数据并触发视图刷新
+      tableData.value = [];
+      nextTick(() => {
+        selectedCase.value.plan = newPlan;
+        tableData.value = [...newPlan];
+        //停止拖拽
+        stopDrag();
+
+        localStorage.setItem(
+          "selectedCase",
+          JSON.stringify(selectedCase.value)
+        );
+
+        // 显示弹窗并跳转页面
+        dialogVisible.value = true;
+        setTimeout(() => {
+          dialogVisible.value = false;
+          router.push({ path: "/setting" });
+        }, 2000);
+      });
+    } else {
+      // 处理非最后一个穴位的逻辑
+      newPlan[index].status = 2; // 当前穴位标记为已使用
+      newPlan[index + 1].status = 1; // 下一个穴位标记为正在定穴
+
+      // 更新选中索引和图片信息
+      selectedAutoIndex.value = index + 1;
+      picType.value = newPlan[index + 1].type;
+      selectedObj.value = newPlan[index + 1];
+      picUrl.value = picType.value === 0 ? BodyPic : LegPic;
+
+      // 5. 更新数据并触发视图刷新
+      tableData.value = [];
+      nextTick(() => {
+        selectedCase.value.plan = newPlan;
+        tableData.value = [...newPlan];
+
+        console.log(
+          "更新后的plan项:",
+          selectedCase.value.plan[selectedAutoIndex.value]
+        );
+        console.log("更新后的tableData:", tableData.value);
+      });
+    }
+  });
   // 发送失败的兜底处理
   if (!sendResult) {
     console.log("指令发送失败，请检查连接");
@@ -425,14 +424,8 @@ const getPointWs = () => {
 const usePoint = (index) => {
   // 记录当前操作的索引（传递给消息处理函数）
   currentOperateIndex.value = index;
-  // 触发模拟WS数据获取（实际场景是getPointWs()）
-  // handleWsMessageTest();
-  getPointWs();
-};
 
-const startDrag = () => {
-  const data = { req_id: "00011", command: "StartDrag", args: "" };
-  const sendResult = $ws.send(data);
+  getPointWs();
 };
 
 onMounted(() => {
@@ -441,20 +434,16 @@ onMounted(() => {
   selectedCaseId.value = route.query.id;
   getPoint(selectedCaseId.value);
 
-  nextTick(() => {
-    setTimeout(calcTableScrollHeight, 100);
-  });
+  // nextTick(() => {
+  //   setTimeout(calcTableScrollHeight, 100);
+  // });
 
-  window.addEventListener("resize", calcTableScrollHeight);
-
-  $ws.onMessage(handleWsMessage);
+  // window.addEventListener("resize", calcTableScrollHeight);
 });
 
 onUnmounted(() => {
   if (tableInertiaTimer.value) clearInterval(tableInertiaTimer.value);
   window.removeEventListener("resize", calcTableScrollHeight);
-  // 移除消息处理函数
-  $ws.offMessage(handleWsMessage);
 });
 </script>
 
