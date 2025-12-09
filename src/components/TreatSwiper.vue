@@ -261,7 +261,7 @@ const startCountdown = (targetIndex) => {
 // 暂停倒计时
 const pauseCountdown = () => {
   if (!activeKey.value || !countdownRefs.value[activeKey.value]) {
-    ElMessage.warning("暂无运行中的倒计时");
+    // ElMessage.warning("暂无运行中的倒计时");
     return;
   }
 
@@ -367,7 +367,7 @@ const handleCountdownEnd = (item) => {
   remainingTimeMap.value[item.uniqueKey] = 0;
   activeKey.value = "";
   emit("countdownEnd", item);
-  ElMessage.success(`${item.name} 倒计时已结束`);
+  ElMessage.success(`${item.point} 倒计时已结束`);
 };
 
 // 监听swiperData变化（新增治疗状态判断）

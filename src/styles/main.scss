@@ -11,3 +11,10 @@
   // background-color: red;
   width: 100% !important;
 }
+
+.el-message--success,
+.el-message--error,
+.el-message--warning,
+.el-message--info {
+  top: 5vh !important;
+}

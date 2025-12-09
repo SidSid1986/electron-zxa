@@ -1110,21 +1110,6 @@ onUnmounted(() => {
 </style>
 
 <style>
-.el-message {
-  /* 将默认的 top 值改为 5vh，你可以根据实际需要调整 */
-  top: 5vh !important;
-  /* 可选：如果需要调整水平居中，确保 left 属性正确 */
-  left: 50%;
-  transform: translateX(-50%);
-}
-
-.el-message--success,
-.el-message--error,
-.el-message--warning,
-.el-message--info {
-  top: 5vh !important;
-}
-
 .treat-confirm {
   font-size: 20px !important;
 
