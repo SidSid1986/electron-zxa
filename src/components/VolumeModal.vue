@@ -89,7 +89,7 @@ const handleVolumeChange = () => {
 watch(
   () => props.initialVolume,
   (newVal) => {
-    volume.value = newVal;
+    volume.value = newVal * 1;
   },
   { immediate: true }
 );

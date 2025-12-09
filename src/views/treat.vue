@@ -662,8 +662,9 @@ const handleTempUpdate = (temp) => {
 
 // 音量更新处理（ 同步到音乐播放器+Electron系统音量）
 const handleVolumeUpdate = (volume) => {
-  currentVolume.value = volume;
-  console.log("当前音量:", volume + "%");
+  currentVolume.value = volume * 1;
+
+  // console.log("当前音量:", volume + "%");
 
   // 1. Electron环境：控制系统音量（loudness）
   if (isElectronEnv.value) {
@@ -684,7 +685,7 @@ const handleVolumeUpdate = (volume) => {
 
 // 同步音乐播放器的音量变化到全局
 const handleMusicVolumeUpdate = (volume) => {
-  currentVolume.value = volume;
+  currentVolume.value = volume * 1;
   // 同步到音量弹窗（如果弹窗打开）
   if (volumeModalRef.value?.visible) {
     volumeModalRef.value.volume = volume;
