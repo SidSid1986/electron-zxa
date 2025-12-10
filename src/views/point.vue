@@ -13,12 +13,7 @@
               <span class="left-nav-text">定穴中</span>
             </div>
           </div>
-          <FuXie
-            :picType="picType"
-            :picUrl="picUrl"
-            :selectedObj="selectedObj"
-            :tableData="tableData"
-          />
+          <FuXie :picType="picType" :picUrl="picUrl" :tableData="tableData" />
         </div>
       </div>
       <div class="point-content-right">
@@ -174,17 +169,17 @@ const getPoint = (id) => {
   selectedObj.value = selectedCase.value.plan[0];
 
   picType.value = selectedCase.value.plan[0].type;
-
-  switch (selectedCase.value.plan[0].type) {
-    case 0:
-      picUrl.value = BodyPic;
-      break;
-    case 1:
-      picUrl.value = LegPic;
-      break;
-    default:
-      break;
-  }
+  picUrl.value = selectedCase.value.plan[0].type === 0 ? BodyPic : LegPic;
+  // switch (selectedCase.value.plan[0].type) {
+  //   case 0:
+  //     picUrl.value = BodyPic;
+  //     break;
+  //   case 1:
+  //     picUrl.value = LegPic;
+  //     break;
+  //   default:
+  //     break;
+  // }
 
   tableData.value = selectedCase.value.plan;
 

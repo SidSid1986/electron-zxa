@@ -19,7 +19,7 @@
               'light-ball-text-green': p1.status === 2,
             }"
           >
-            天枢穴(左)
+            {{ p1?.point || "" }}
           </div>
         </div>
 
@@ -38,7 +38,7 @@
               'light-ball-text-green': p2.status === 2,
             }"
           >
-            神阙穴
+            {{ p2?.point || "" }}
           </div>
         </div>
 
@@ -57,7 +57,7 @@
               'light-ball-text-green': p3.status === 2,
             }"
           >
-            天枢穴(右)
+            {{ p3?.point || "" }}
           </div>
         </div>
       </div>
@@ -81,7 +81,7 @@
               'light-ball-text-green2': p4.status === 2,
             }"
           >
-            上巨虚穴(左)
+            {{ p4?.point || "" }}
           </div>
         </div>
 
@@ -100,7 +100,7 @@
               'light-ball-text-green2': p5.status === 2,
             }"
           >
-            上巨虚穴(右)
+            {{ p5?.point || "" }}
           </div>
         </div>
       </div>
@@ -133,33 +133,32 @@ const p4 = ref({});
 const p5 = ref({});
 const forceUpdate = ref(0);
 
-// ========== 核心逻辑修复1：监听picType变化（强制触发响应式） ==========
+// 监听picType变化 强制触发响应式
 watch(
   () => props.picType,
   (newType) => {
     console.log("FuXie组件：picType更新为", newType);
-    // 强制更新组件（解决v-if不触发的核心方案）
+    // 强制更新组件
     // 通过更新一个空的响应式变量触发重新渲染
     forceUpdate.value++;
   },
   { immediate: true }
 );
 
-// ========== 核心逻辑修复2：新增强制更新变量 ==========
-
-// ========== 核心逻辑修复3：优化tableData监听（兼容空数据+深度监听） ==========
+//  新增强制更新变量
+// 兼容空数据+深度监听
 watch(
   () => props.tableData,
   (newVal) => {
     console.log("FuXie组件：tableData更新", newVal);
     if (!newVal || newVal.length === 0) return;
 
-    // 匹配穴位名称（保持和你原有逻辑一致）
-    p1.value = newVal.filter((item) => item.point === "天枢穴(左)")[0] || {};
-    p2.value = newVal.filter((item) => item.point === "神阙穴")[0] || {};
-    p3.value = newVal.filter((item) => item.point === "天枢穴(右)")[0] || {};
-    p4.value = newVal.filter((item) => item.point === "上巨虚穴(左)")[0] || {};
-    p5.value = newVal.filter((item) => item.point === "上巨虚穴(右)")[0] || {};
+    // 匹配穴位名称
+    p1.value = newVal[0];
+    p2.value = newVal[1];
+    p3.value = newVal[2];
+    p4.value = newVal[3];
+    p5.value = newVal[4];
 
     console.log("穴位数据匹配结果：", {
       p1: p1.value,
@@ -172,24 +171,23 @@ watch(
   { immediate: true, deep: true } // 立即执行 + 深度监听（关键）
 );
 
-// ========== 核心逻辑修复4：移除有问题的getImageUrl方法 ==========
-// 直接使用父组件传递的picUrl，保留你原有图片引用逻辑
+// 直接使用父组件传递的picUrl，保留原有图片引用逻辑
 
 onMounted(() => {
   console.log("组件挂载了");
   // 初始化穴位数据
-  if (props.tableData.length > 0) {
-    p1.value =
-      props.tableData.filter((item) => item.point === "天枢穴(左)")[0] || {};
-    p2.value =
-      props.tableData.filter((item) => item.point === "神阙穴")[0] || {};
-    p3.value =
-      props.tableData.filter((item) => item.point === "天枢穴(右)")[0] || {};
-    p4.value =
-      props.tableData.filter((item) => item.point === "上巨虚穴(左)")[0] || {};
-    p5.value =
-      props.tableData.filter((item) => item.point === "上巨虚穴(右)")[0] || {};
-  }
+  // if (props.tableData.length > 0) {
+  //   p1.value =
+  //     props.tableData.filter((item) => item.point === "天枢穴(左)")[0] || {};
+  //   p2.value =
+  //     props.tableData.filter((item) => item.point === "神阙穴")[0] || {};
+  //   p3.value =
+  //     props.tableData.filter((item) => item.point === "天枢穴(右)")[0] || {};
+  //   p4.value =
+  //     props.tableData.filter((item) => item.point === "上巨虚穴(左)")[0] || {};
+  //   p5.value =
+  //     props.tableData.filter((item) => item.point === "上巨虚穴(右)")[0] || {};
+  // }
 });
 </script>
 

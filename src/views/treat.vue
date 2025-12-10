@@ -26,12 +26,7 @@
               <span class="left-nav-text">已结束 </span>
             </div>
           </div>
-          <FuXie
-            :picType="picType"
-            :picUrl="picUrl"
-            :selectedObj="selectedObj"
-            :tableData="tableData"
-          />
+          <FuXie :picType="picType" :picUrl="picUrl" :tableData="tableData" />
         </div>
       </div>
       <div class="point-content-right">
@@ -226,7 +221,7 @@ const generateWsCommandArray = (data) => {
     const poseStr = `pose={${x},${y},${z},${rx},${ry},${rz}}`;
     // 组装完整的WS指令
     return {
-      req_id: `0001${index + 1}`, // 每个指令的req_id区分（也可固定为00011，根据你的需求调整）
+      // req_id: `0001${index + 1}`, // 每个指令的req_id区分（也可固定为00011，根据你的需求调整）
       command: "MovJ_vertical",
       args: `pose='${poseStr}'`,
       //  穴位信息
@@ -252,7 +247,6 @@ const getPoint = (id) => {
 
   wsCommandArray.value = generateWsCommandArray(selectedCase.value);
 
-  console.log(123);
   console.log(wsCommandArray.value[0]);
 
   sendWsMessage(wsCommandArray.value[0]);
@@ -629,6 +623,7 @@ const restartTreat = () => {
 
 // 返回定穴
 const backPoint = () => {
+  localStorage.removeItem("selectedCase");
   router.push(`/point?id=${localStorage.getItem("selectedCaseId")}`);
 };
 
