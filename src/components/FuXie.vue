@@ -194,7 +194,6 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-// 完全保留你原有所有CSS，一字未改
 .content-left-img-border {
   width: 100%;
   height: calc(82vh - 40px);

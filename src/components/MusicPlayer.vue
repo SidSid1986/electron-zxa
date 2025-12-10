@@ -1,5 +1,4 @@
 <template>
-  <!-- 纯自定义音乐播放器弹窗，无el-dialog依赖 -->
   <teleport to="body">
     <div v-if="visible" class="music-player-modal">
       <!-- 遮罩层 -->
@@ -217,14 +216,14 @@ const currentTime = ref(0);
 const duration = ref(0);
 const progressPercent = ref(0);
 
-// audio 实例（延迟创建）
+// audio 实例
 let audio = null;
 
-// 异步加载歌单（开发/生产/ electron 三种情况）
+// 异步加载歌单
 async function loadMusicList() {
   try {
     if (isDev) {
-      // 开发模式逻辑不变（原本就正常）
+      // 开发模式逻辑不变
       const musicFiles = import.meta.glob("/public/music/*.mp3", {
         eager: true,
       });
@@ -237,12 +236,12 @@ async function loadMusicList() {
       });
       songList.splice(0, songList.length, ...arr);
     } else if (isElectron) {
-      // 关键修复：直接使用主进程返回的 name 和 url
+      //  主进程返回的 name 和 url
       try {
         const musicItems = await window.electronAPI.getMusicFiles();
         console.debug("electronAPI.getMusicFiles ->", musicItems);
         if (Array.isArray(musicItems) && musicItems.length) {
-          // 无需解析 URL，直接使用主进程处理好的 name
+          //  直接使用主进程处理好的 name
           songList.splice(0, songList.length, ...musicItems);
         } else {
           songList.splice(0, songList.length);
@@ -252,7 +251,7 @@ async function loadMusicList() {
         songList.splice(0, songList.length);
       }
     } else {
-      // 纯 Web 环境逻辑不变
+      // 纯 Web 环境
       const musicFiles = import.meta.glob("/public/music/*.mp3", {
         eager: true,
       });
@@ -281,7 +280,7 @@ async function loadMusicList() {
     currentSong.value = { name: "暂无音乐", url: "" };
   }
 }
-// 初始化 audio 实例（只在有有效 URL 时创建/设置 src）
+// 初始化 audio 实例
 const initAudioInstance = () => {
   if (audio || !songList.length) return;
   if (!currentSong.value || !currentSong.value.url) {
@@ -319,7 +318,7 @@ const initAudioInstance = () => {
   audioInitiated.value = true;
 };
 
-// 初始化并播放（谨慎处理 src）
+// 初始化并播放
 const initAudioAndPlay = async () => {
   if (!songList.length) return;
 
@@ -339,7 +338,7 @@ const initAudioAndPlay = async () => {
   }
 
   if (!audio) {
-    // 如果仍然没有 audio（例如 currentSong.url 为空），提示并返回
+    // 如果 没有 audio（ 提示并返回
     console.error(
       "initAudioAndPlay: audio 未被创建，请检查 currentSong.url:",
       currentSong.value
@@ -500,7 +499,6 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-/* 样式部分保持不变，和原代码一致 */
 * {
   box-sizing: border-box;
   margin: 0;

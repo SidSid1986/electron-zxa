@@ -270,6 +270,7 @@ const getPoint = (id) => {
 
   // 初始化第一个穴位 + 修复默认时长为1分钟（核心！）
   const planList = selectedCase.value.plan;
+
   planList.forEach((item) => {
     // 如果time未定义/为0/为1，强制设为1分钟（60秒）
     if (!item.time || item.time === 0 || item.time === 1) {
@@ -792,7 +793,6 @@ onUnmounted(() => {});
 </script>
 
 <style scoped lang="scss">
-// 样式部分保持不变
 .container {
   box-sizing: border-box;
   background: url("@/assets/pic/backgroundImage.png") no-repeat;

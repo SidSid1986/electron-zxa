@@ -1,5 +1,4 @@
 <template>
-  <!-- 模板部分保持不变，无需修改 -->
   <div class="container">
     <div class="point-nav">
       <span>定穴</span>
@@ -124,7 +123,6 @@
 </template>
 
 <script setup>
-// 脚本部分保持不变，无需修改
 import { ref, onMounted, computed, nextTick, onUnmounted } from "vue";
 import caseData from "@/data/caseData.json";
 import { ElMessage, ElMessageBox } from "element-plus";
@@ -377,6 +375,9 @@ const getPointWs = () => {
         //停止拖拽
         stopDrag();
 
+        selectedCase.value.plan.forEach((item) => {
+          item.status = 0;
+        });
         localStorage.setItem(
           "selectedCase",
           JSON.stringify(selectedCase.value)
