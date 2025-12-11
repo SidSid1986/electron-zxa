@@ -74,36 +74,33 @@ import {
 } from "vue";
 import Keyboard from "simple-keyboard";
 import "simple-keyboard/build/css/index.css";
-// 引入官方中文布局（核心：实现完整中文输入）
 import chineseLayout from "simple-keyboard-layouts/build/layouts/chinese.js";
 
-// 定义Props（极简，仅核心参数）
+// 定义Props：移除field，仅保留form和precision
 const props = defineProps({
-  visible: {
-    type: Boolean,
-    default: false,
+  form: {
+    type: Object,
+    required: true,
   },
-  modelValue: {
-    type: String,
-    default: "",
-  },
-  // 数字精度（可选）
   precision: {
     type: Number,
     default: 2,
   },
 });
 
-// 定义Emits（仅核心事件）
-const emit = defineEmits(["update:modelValue", "close", "enter"]);
+const emit = defineEmits(["close"]);
 
-// 内部状态
+// 内部状态：新增currentField维护当前绑定字段（替代props.field）
 const keyboardRef = ref(null);
 const keyboardInstance = ref(null);
-const currentValue = ref(props.modelValue);
-const isChineseMode = ref(false); // 默认中文模式
+const visible = ref(false);
+const isChineseMode = ref(false);
+const isOpening = ref(false);
+const keyboardWrapperRef = ref(null);
+const currentValue = ref("");
+const currentField = ref(""); // 新增：内部维护当前字段
 
-// 基础布局（精简版：仅保留核心按键）
+// 基础布局不变
 const baseLayout = {
   default: [
     "1 2 3 4 5 6 7 8 9 0 {bksp}",
@@ -121,29 +118,30 @@ const baseLayout = {
   ],
 };
 
-// 初始化键盘
+// 初始化键盘：将props.field改为currentField
 const initKeyboard = () => {
-  if (!keyboardRef.value) return;
+  if (!keyboardRef.value || !currentField.value) return; // 改为currentField
 
-  // 销毁旧实例
   if (keyboardInstance.value) {
     keyboardInstance.value.destroy();
   }
 
-  // 创建键盘实例（集成官方中文布局）
+  // 初始化值改为currentField
+  currentValue.value = props.form[currentField.value] || "";
+
   keyboardInstance.value = new Keyboard(keyboardRef.value, {
     onChange: (input) => {
       currentValue.value = input;
-      emit("update:modelValue", input);
+      // 同步到表单：改为currentField
+      props.form[currentField.value] = input;
     },
     onKeyPress: handleKeyPress,
     onInit: (kbd) => {
       kbd.setInput(currentValue.value);
-      // 初始化中文布局（关键）
       if (isChineseMode.value) {
         kbd.setOptions({
-          layoutCandidates: chineseLayout.layoutCandidates, // 中文候选词
-          enableCandidates: true, // 显示候选词框
+          layoutCandidates: chineseLayout.layoutCandidates,
+          enableCandidates: true,
         });
       }
     },
@@ -157,39 +155,38 @@ const initKeyboard = () => {
       "{clear}": "清空",
     },
     theme: "hg-theme-default",
-    adaptive: true, // 自适应宽度
+    adaptive: true,
   });
 };
 
-// 按键处理（核心逻辑）
+// 按键处理：所有props.field改为currentField
 const handleKeyPress = (button) => {
   const kbd = keyboardInstance.value;
   if (!kbd) return;
 
   switch (button) {
-    case "{bksp}": // 删除
+    case "{bksp}":
       currentValue.value = currentValue.value.slice(0, -1);
-      emit("update:modelValue", currentValue.value);
+      props.form[currentField.value] = currentValue.value; // 改为currentField
       break;
-    case "{shift}": // 大小写切换
+    case "{shift}":
       const newLayout =
         kbd.options.layoutName === "default" ? "shift" : "default";
       kbd.setOptions({ layoutName: newLayout });
       break;
-    case "{enter}": // 回车
-      emit("enter");
+    case "{enter}":
+      handleClose();
       break;
-    case "{clear}": // 清空
+    case "{clear}":
       kbd.clearInput();
       currentValue.value = "";
-      emit("update:modelValue", "");
+      props.form[currentField.value] = ""; // 改为currentField
       break;
-    case "{space}": // 空格
+    case "{space}":
       currentValue.value += " ";
-      emit("update:modelValue", currentValue.value);
+      props.form[currentField.value] = currentValue.value; // 改为currentField
       break;
     default:
-      // 保持输入焦点（可选）
       nextTick(() => {
         document.activeElement?.focus();
       });
@@ -197,7 +194,7 @@ const handleKeyPress = (button) => {
   }
 };
 
-// 切换中英文模式
+// 切换中英文模式不变
 const toggleChineseMode = () => {
   isChineseMode.value = !isChineseMode.value;
   const kbd = keyboardInstance.value;
@@ -206,66 +203,102 @@ const toggleChineseMode = () => {
       layoutCandidates: isChineseMode.value
         ? chineseLayout.layoutCandidates
         : null,
-      enableCandidates: isChineseMode.value, // 中文模式显示候选词，英文隐藏
+      enableCandidates: isChineseMode.value,
     });
   }
 };
 
-// 关闭键盘（含数字精度处理）
+// 关闭键盘：props.field改为currentField
 const handleClose = () => {
-  // 数字精度处理（可选）
   if (props.precision && currentValue.value) {
     currentValue.value = currentValue.value
       ?.replace(new RegExp(`(\\d+)\\.(\\d{${props.precision}}).*$`), "$1.$2")
       .replace(/\.$/, "");
-    emit("update:modelValue", currentValue.value);
+    props.form[currentField.value] = currentValue.value; // 改为currentField
   }
+  visible.value = false;
   emit("close");
 };
 
-// 监听Props变化
-watch(
-  () => props.visible,
-  (val) => {
-    if (val) {
-      currentValue.value = props.modelValue;
-      nextTick(initKeyboard); // 确保DOM渲染后初始化
-    }
-  },
-  { immediate: true }
-);
+// 打开键盘：修改为给currentField赋值（不再修改props）
+const open = (field) => {
+  if (!field) return;
+  isOpening.value = true;
+  currentField.value = field; // 改为内部变量赋值
+  visible.value = true;
 
+  nextTick(() => {
+    initKeyboard(); // 此时currentField已有值，能正常初始化
+    keyboardWrapperRef.value = document.querySelector(
+      ".virtual-keyboard-wrapper"
+    );
+
+    const inputEl = document.querySelector(
+      `.login-input input[placeholder*="${field === "username" ? "账号" : "密码"}"]`
+    );
+    if (inputEl) {
+      inputEl.focus();
+      setTimeout(() => {
+        inputEl.selectionStart = inputEl.selectionEnd = inputEl.value.length;
+        isOpening.value = false;
+      }, 0);
+    }
+  });
+
+  setTimeout(() => {
+    isOpening.value = false;
+  }, 100);
+};
+
+// 点击外部关闭逻辑不变
+const handleClickOutside = (e) => {
+  if (!visible.value || isOpening.value) return;
+
+  const wrapperEl =
+    keyboardWrapperRef.value ||
+    document.querySelector(".virtual-keyboard-wrapper");
+  if (!wrapperEl) return;
+
+  const isInput =
+    e.target.tagName === "INPUT" &&
+    e.target.classList.contains("el-input__inner");
+  if (!wrapperEl.contains(e.target) && !isInput) {
+    handleClose();
+  }
+};
+
+// 监听表单变化：改为监听currentField对应的字段
 watch(
-  () => props.modelValue,
+  () => props.form[currentField.value], // 改为currentField
   (val) => {
-    if (props.visible && val !== currentValue.value) {
+    if (visible.value && val !== currentValue.value) {
       currentValue.value = val;
       keyboardInstance.value?.setInput(val);
     }
-  }
+  },
+  { deep: true }
 );
 
-// 生命周期
+// 生命周期不变
 onMounted(() => {
-  if (props.visible) initKeyboard();
+  document.addEventListener("click", handleClickOutside);
 });
 
 onUnmounted(() => {
   if (keyboardInstance.value) {
     keyboardInstance.value.destroy();
   }
+  document.removeEventListener("click", handleClickOutside);
 });
 
-// 暴露方法（可选）
+// 暴露方法不变
 defineExpose({
-  initKeyboard,
+  open,
   handleClose,
-  toggleChineseMode,
 });
 </script>
 
 <style scoped>
-/* 核心样式：填满宽度+适配触屏 */
 .virtual-keyboard-wrapper {
   font-size: 16px !important;
 }
@@ -294,7 +327,6 @@ defineExpose({
   text-align: center;
 }
 
-/* 功能键样式 */
 :deep(.hg-button-bksp),
 :deep(.hg-button-shift),
 :deep(.hg-button-enter),
@@ -310,7 +342,6 @@ defineExpose({
   background: #e0e0e0 !important;
 }
 
-/* 中文候选词框样式（核心） */
 :deep(.hg-candidate-box) {
   background: #f8f8f8;
   border-bottom: 1px solid #e0e0e0;
@@ -333,9 +364,7 @@ defineExpose({
   background: #e8e8e8;
 }
 
-/* 输入法切换按钮 hover 效果 */
 .input-method-switch:hover {
   background: #f5f5f5;
 }
 </style>
-// .hg-candidate-box { // margin-top: -20px; // }

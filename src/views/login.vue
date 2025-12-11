@@ -28,7 +28,7 @@
                 placeholder="请输入绑定账号"
                 class="login-input"
                 size="large"
-                @focus="() => openKeyboard('username')"
+                @focus="() => keyboardRef.open('username')"
               >
                 <template #prefix>
                   <i class="iconfont icon-yonghu"></i>
@@ -45,7 +45,7 @@
                 class="login-input"
                 size="large"
                 show-password
-                @focus="() => openKeyboard('password')"
+                @focus="() => keyboardRef.open('password')"
               >
                 <template #prefix>
                   <i class="iconfont icon-lock"></i>
@@ -78,13 +78,8 @@
       </div>
     </div>
 
-    <!-- 引入虚拟键盘组件 -->
-    <Keyboard
-      v-model="keyboardValue"
-      :visible="keyboardVisible"
-      :layout-type="keyboardLayout"
-      @close="keyboardVisible = false"
-    />
+    <!-- 引入虚拟键盘组件（仅传递表单对象） -->
+    <Keyboard ref="keyboardRef" :form="loginForm" />
   </div>
 </template>
 
@@ -98,19 +93,16 @@ import Keyboard from "@/components/Keyboard.vue";
 
 const router = useRouter();
 
+// 仅维护表单本身，无需任何键盘相关状态
 const loginForm = ref({
   username: "",
   password: "",
 });
-
 const isLoginLoading = ref(false);
+const loginFormRef = ref(null);
+const keyboardRef = ref(null); // 仅保留组件ref，用于调用open方法
 
-// 虚拟键盘状态
-const keyboardVisible = ref(false);
-const keyboardValue = ref("");
-const keyboardLayout = ref("default");
-let currentInputField = ref("");
-
+// 表单验证规则 
 const loginRules = ref({
   username: [
     { required: true, message: "请输入绑定账号", trigger: ["blur", "change"] },
@@ -137,8 +129,7 @@ const loginRules = ref({
   ],
 });
 
-const loginFormRef = ref(null);
-
+// 表单聚焦验证 
 const handleFormFocus = (e) => {
   const form = loginFormRef.value;
   if (!form) return;
@@ -148,30 +139,12 @@ const handleFormFocus = (e) => {
   });
 };
 
-// 打开键盘
-const openKeyboard = (field) => {
-  currentInputField.value = field;
-  keyboardValue.value = loginForm.value[field];
-  keyboardLayout.value = "default"; // 账号/密码都用默认布局
-  keyboardVisible.value = true;
-};
-
-// 同步键盘值到表单
-watch(
-  () => keyboardValue.value,
-  (val) => {
-    if (currentInputField.value) {
-      loginForm.value[currentInputField.value] = val;
-    }
-  }
-);
-
-// 返回按钮逻辑：直接跳回main页（保留当前用户）
+// 返回按钮逻辑 
 const handleReturn = () => {
   router.push("/main");
 };
 
-// 登录逻辑：替换用户信息 + 刷新main页
+// 登录逻辑 
 const handleLogin = async () => {
   try {
     await loginFormRef.value.validate();
@@ -192,7 +165,6 @@ const handleLogin = async () => {
     });
 
     if (matchUser) {
-      // 替换本地存储的用户信息（新用户）
       localStorage.setItem(
         "userInfo",
         JSON.stringify({
@@ -202,7 +174,6 @@ const handleLogin = async () => {
         })
       );
       ElMessage.success(`登录成功，欢迎 ${matchUser.nickName}！`);
-      // 跳转到main页（触发页面刷新，显示新用户）
       router.push("/main");
     } else {
       ElMessage.error("账号或密码错误，请重新输入");
