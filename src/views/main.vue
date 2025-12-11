@@ -155,6 +155,18 @@
         </div>
       </div>
     </el-dialog>
+
+    <!-- 抽屉 -->
+
+    <el-drawer
+      class="drawer-content"
+      v-model="drawerVisible"
+      :modal="false"
+      direction="ltr"
+      modal-penetrable
+    >
+      <DrawerList />
+    </el-drawer>
   </div>
 </template>
 
@@ -162,6 +174,7 @@
 import { ref, onMounted, onUnmounted, nextTick, watch } from "vue";
 import { useRouter } from "vue-router";
 import { getCaseData, getCaseById } from "@/utils/caseDataManager";
+import DrawerList from "@/components/DrawerList.vue";
 
 const router = useRouter();
 
@@ -210,11 +223,9 @@ const rightInertiaTimer = ref(null);
 const rightContentHeight = ref(0);
 const rightContainerHeight = ref(0);
 const rightMaxOffset = ref(0);
-// 新增：菜单状态管理
-const menuVisible = ref(false);
-
+const drawerVisible = ref(false);
 const openMenu = () => {
-  menuVisible.value = true;
+  drawerVisible.value = true;
 };
 
 const updateMaxOffset = () => {
@@ -451,6 +462,7 @@ const cancelDialog = () => {
   .logo {
     width: 6vw;
     height: 4vh;
+    cursor: pointer;
   }
 
   .main-top-middle {
@@ -838,5 +850,18 @@ const cancelDialog = () => {
   margin: 0;
   padding: 0;
   font-family: "Microsoft YaHei", sans-serif;
+}
+
+// 抽屉内容样式
+</style>
+<style lang="scss">
+.drawer-content {
+  height: 86vh;
+  box-sizing: border-box;
+  margin-top: 4vh;
+  width: 20vw !important;
+  .el-drawer__header {
+    display: none;
+  }
 }
 </style>
