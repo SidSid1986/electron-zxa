@@ -102,7 +102,7 @@ const isLoginLoading = ref(false);
 const loginFormRef = ref(null);
 const keyboardRef = ref(null); // 仅保留组件ref，用于调用open方法
 
-// 表单验证规则 
+// 表单验证规则（不变）
 const loginRules = ref({
   username: [
     { required: true, message: "请输入绑定账号", trigger: ["blur", "change"] },
@@ -129,7 +129,7 @@ const loginRules = ref({
   ],
 });
 
-// 表单聚焦验证 
+// 表单聚焦验证（不变）
 const handleFormFocus = (e) => {
   const form = loginFormRef.value;
   if (!form) return;
@@ -139,12 +139,12 @@ const handleFormFocus = (e) => {
   });
 };
 
-// 返回按钮逻辑 
+// 返回按钮逻辑（不变）
 const handleReturn = () => {
   router.push("/main");
 };
 
-// 登录逻辑 
+// 登录逻辑
 const handleLogin = async () => {
   try {
     await loginFormRef.value.validate();

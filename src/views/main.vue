@@ -1,21 +1,35 @@
 <template>
   <div class="container">
     <div class="main-top">
-      <img class="logo" src="@/assets/pic/logo.png" alt="" />
+      <img
+        @click="openMenu"
+        draggable="false"
+        class="logo"
+        src="@/assets/pic/logo.png"
+        alt=""
+      />
       <div class="main-top-middle flex-row">
         <div class="flex-row nav-text">
-          <img src="@/assets/pic/file-icon/clear_off.png" alt="" />
+          <img
+            draggable="false"
+            src="@/assets/pic/file-icon/clear_off.png"
+            alt=""
+          />
           <span>清灰</span>
         </div>
         <div class="flex-row nav-text">
-          <img src="@/assets/pic/file-icon/change_off.png" alt="" />
+          <img
+            draggable="false"
+            src="@/assets/pic/file-icon/change_off.png"
+            alt=""
+          />
           <span>艾条装卸</span>
         </div>
       </div>
 
       <!-- 显示当前登录用户的昵称 -->
       <div @click="handleClickUser" class="flex-row nav-text">
-        <img src="@/assets/pic/file-icon/user.png" alt="" />
+        <img draggable="false" src="@/assets/pic/file-icon/user.png" alt="" />
         <span>{{ currentUser.nickName || "未登录" }}</span>
       </div>
     </div>
@@ -196,6 +210,12 @@ const rightInertiaTimer = ref(null);
 const rightContentHeight = ref(0);
 const rightContainerHeight = ref(0);
 const rightMaxOffset = ref(0);
+// 新增：菜单状态管理
+const menuVisible = ref(false);
+
+const openMenu = () => {
+  menuVisible.value = true;
+};
 
 const updateMaxOffset = () => {
   if (contentHeight.value <= containerHeight.value) {

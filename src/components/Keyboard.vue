@@ -56,7 +56,7 @@
     <div
       ref="keyboardRef"
       class="simple-keyboard-container"
-      style="height: 320px; margin-top: 30px; width: 100%"
+      style="height: 30vh; margin-top: 30px; width: 100%"
     ></div>
   </div>
 </template>
@@ -366,5 +366,10 @@ defineExpose({
 
 .input-method-switch:hover {
   background: #f5f5f5;
+}
+</style>
+<style>
+.hg-candidate-box {
+  margin-top: -5vh !important;
 }
 </style>
