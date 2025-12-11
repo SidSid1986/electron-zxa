@@ -2,8 +2,8 @@
  * @Author: Sid Li
  * @Date: 2025-11-29 10:30:04
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-06 15:40:36
- * @FilePath: \ai\src\router\index.js
+ * @LastEditTime: 2025-12-11 09:32:11
+ * @FilePath: \zi-xiao-ai\src\router\index.js
  * @Description:
  */
 import { createWebHashHistory, createRouter } from "vue-router";
@@ -56,6 +56,11 @@ const routes = [
     path: "/treat",
     name: "Treat",
     component: () => import("@/views/treat.vue"),
+  },
+  {
+    path: "/login",
+    name: "Login",
+    component: () => import("@/views/login.vue"),
   },
 ];
 

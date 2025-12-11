@@ -168,10 +168,8 @@ watch(
       p5: p5.value,
     });
   },
-  { immediate: true, deep: true } // 立即执行 + 深度监听（关键）
+  { immediate: true, deep: true }
 );
-
-// 直接使用父组件传递的picUrl，保留原有图片引用逻辑
 
 onMounted(() => {
   console.log("组件挂载了");

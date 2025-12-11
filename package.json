@@ -53,8 +53,8 @@
     ],
     "extraResources": [
       {
-        "from": "public/music",
-        "to": "public/music",
+        "from": "src/assets/music",
+        "to": "assets/music",
         "filter": [
           "**/*.mp3"
         ]
@@ -64,7 +64,7 @@
     "asarUnpack": [
       "**/*.node",
       "**/*.dll",
-      "public/music/**"
+      "src/assets/music/**"
     ],
     "compression": "store",
     "mac": {
@@ -108,7 +108,7 @@
       "maintainer": "Your Name <your.email@example.com>",
       "asarUnpack": [
         "**/*.node",
-        "public/music/**"
+        "src/assets/music/**"
       ]
     },
     "nsis": {
@@ -131,7 +131,7 @@
         "asarUnpack": [
           "**/*.node",
           "**/*.dll",
-          "public/music/**"
+          "src/assets/music/**"
         ],
         "executableName": "ZiXiaoAi",
         "icon": "public/home",

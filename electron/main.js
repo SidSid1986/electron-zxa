@@ -2,8 +2,8 @@
  * @Author: Sid Li
  * @Date: 2025-11-29 13:33:24
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-08 20:36:36
- * @FilePath: \electron-zxa\electron\main.js
+ * @LastEditTime: 2025-12-10 14:12:11
+ * @FilePath: \zi-xiao-ai\electron\main.js
  * @Description: 基于loudness库的跨平台音量控制主进程代码
  */
 const { app, BrowserWindow, Menu, ipcMain } = require("electron");
@@ -73,13 +73,20 @@ function getMusicFiles() {
     const candidates = [];
 
     if (app.isPackaged) {
-      candidates.push(
-        path.join(process.resourcesPath, "app.asar.unpacked", "public", "music")
+      // candidates.push(
+      //   path.join(process.resourcesPath, "app.asar.unpacked", "public", "music")
+      // );
+      // candidates.push(path.join(process.resourcesPath, "public", "music"));
+      // candidates.push(path.join(__dirname, "../public/music"));
+
+   candidates.push(
+        path.join(process.resourcesPath, "assets", "music"), // 对应 extraResources 配置
+        path.join(process.resourcesPath, "app.asar.unpacked", "assets", "music"), // 兼容 asarUnpack
+        path.join(app.getAppPath(), "dist", "assets", "music") // 备用
       );
-      candidates.push(path.join(process.resourcesPath, "public", "music"));
-      candidates.push(path.join(__dirname, "../public/music"));
     } else {
-      candidates.push(path.join(app.getAppPath(), "public/music"));
+      // candidates.push(path.join(app.getAppPath(), "public/music"));
+       candidates.push(path.join(app.getAppPath(), "src/assets/music"));
     }
 
     log(`getMusicFiles: 尝试候选目录: ${JSON.stringify(candidates)}`);

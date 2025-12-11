@@ -13,7 +13,7 @@
         </div>
       </div>
 
-      <div class="flex-row nav-text">
+      <div @click="handleClickUser" class="flex-row nav-text">
         <img src="@/assets/pic/file-icon/user.png" alt="" />
         <span>艾灸师</span>
       </div>
@@ -240,6 +240,11 @@ const initRightHeight = () => {
 const handleStartClick = () => {
   console.log("start");
   dialogVisible.value = true;
+};
+
+// 点击用户头像
+const handleClickUser = () => {
+  router.push("/login");
 };
 
 // 组件挂载初始化

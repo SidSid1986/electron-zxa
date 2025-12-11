@@ -332,8 +332,9 @@ class XPack_WebSocket {
    * 建立与服务器的连接
    */
   Connect() {
-    this.#_Socket = new WebSocket(`ws://192.168.3.29:${this.#_Port}`);
-    // this.#_Socket = new WebSocket(`ws://localhost:${this.#_Port}`);
+    // this.#_Socket = new WebSocket(`ws://192.168.3.29:${this.#_Port}`);
+    this.#_Socket = new WebSocket(`ws://localhost:${this.#_Port}`);
+    // this.#_Socket = new WebSocket(`ws://127.0.0.1:${this.#_Port}`);
     this.#_Socket.onopen = (event) => this.OnOpen(event);
     this.#_Socket.onmessage = (event) => this.OnMessage(event);
     this.#_Socket.onclose = (event) => this.OnClose(event);

@@ -186,7 +186,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, onUnmounted, watch, defineEmits } from "vue";
+import { ref, reactive, onMounted, onUnmounted, watch } from "vue";
 
 const emit = defineEmits([
   "update:playing",
@@ -224,14 +224,16 @@ async function loadMusicList() {
   try {
     if (isDev) {
       // 开发模式逻辑不变
-      const musicFiles = import.meta.glob("/public/music/*.mp3", {
+      // const musicFiles = import.meta.glob("/public/music/*.mp3", {
+      const musicFiles = import.meta.glob("@/assets/music/*.mp3?url", {
         eager: true,
       });
       console.debug("import.meta.glob result keys:", Object.keys(musicFiles));
       const arr = Object.entries(musicFiles).map(([filePath, mod]) => {
         const fileName = filePath.split("/").pop();
         const songName = fileName.replace(".mp3", "");
-        const songUrl = `/music/${fileName}`;
+        // const songUrl = `/music/${fileName}`;
+        const songUrl = mod.default;
         return { name: songName, url: songUrl };
       });
       songList.splice(0, songList.length, ...arr);
@@ -252,13 +254,15 @@ async function loadMusicList() {
       }
     } else {
       // 纯 Web 环境
-      const musicFiles = import.meta.glob("/public/music/*.mp3", {
+      // const musicFiles = import.meta.glob("/public/music/*.mp3", {
+      const musicFiles = import.meta.glob("/src/assets/music/*.mp3?url", {
         eager: true,
       });
       const arr = Object.entries(musicFiles).map(([filePath, mod]) => {
         const fileName = filePath.split("/").pop();
         const songName = fileName.replace(".mp3", "");
-        const songUrl = `/music/${fileName}`;
+        // const songUrl = `/music/${fileName}`;
+        const songUrl = mod.default;
         return { name: songName, url: songUrl };
       });
       songList.splice(0, songList.length, ...arr);

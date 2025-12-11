@@ -52,7 +52,7 @@
 </template>
 
 <script setup>
-import { ref, defineEmits, watch } from "vue";
+import { ref, watch } from "vue";
 
 // 仅定义必要事件：传递音量数值
 const emit = defineEmits(["update:volume"]);

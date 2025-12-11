@@ -83,14 +83,7 @@
 </template>
 
 <script setup>
-import {
-  ref,
-  watch,
-  defineExpose,
-  onUnmounted,
-  onMounted,
-  nextTick,
-} from "vue";
+import { ref, watch, onUnmounted, onMounted, nextTick } from "vue";
 import { Swiper, SwiperSlide } from "swiper/vue";
 import "swiper/css";
 import { Navigation } from "swiper/modules";
