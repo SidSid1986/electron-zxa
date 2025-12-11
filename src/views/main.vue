@@ -13,9 +13,10 @@
         </div>
       </div>
 
+      <!-- 显示当前登录用户的昵称 -->
       <div @click="handleClickUser" class="flex-row nav-text">
         <img src="@/assets/pic/file-icon/user.png" alt="" />
-        <span>艾灸师</span>
+        <span>{{ currentUser.nickName || "未登录" }}</span>
       </div>
     </div>
     <div class="main-content">
@@ -144,23 +145,38 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, nextTick } from "vue";
+import { ref, onMounted, onUnmounted, nextTick, watch } from "vue";
 import { useRouter } from "vue-router";
-// 1. 替换原始JSON导入，使用封装的工具函数
 import { getCaseData, getCaseById } from "@/utils/caseDataManager";
 
 const router = useRouter();
 
-// dialog 状态
-const dialogVisible = ref(false);
+// 新增：获取当前登录用户信息
+const currentUser = ref(
+  JSON.parse(localStorage.getItem("userInfo") || '{"nickName":"未登录"}')
+);
 
-// 核心数据状态
+// 监听localStorage变化（登录新用户时刷新用户信息）
+const watchUserInfo = () => {
+  window.addEventListener("storage", (e) => {
+    if (e.key === "userInfo") {
+      currentUser.value = JSON.parse(e.newValue || '{"nickName":"未登录"}');
+    }
+  });
+};
+
+// 点击用户头像：强制跳转到login页（无限制）
+const handleClickUser = () => {
+  router.push("/login");
+};
+
+// 原有逻辑不变（以下为你的原有代码）
+const dialogVisible = ref(false);
 const selectedCaseId = ref(1);
 const selectedPlan = ref([]);
-// 2. 从localStorage获取最新的case数据（而非原始JSON）
 const caseArr = ref(getCaseData());
 
-// 左侧拖拽滚动相关状态（保持不变）
+// 左侧/右侧拖拽滚动相关状态
 const isDragging = ref(false);
 const startY = ref(0);
 const dragOffset = ref(0);
@@ -171,7 +187,6 @@ const contentHeight = ref(0);
 const containerHeight = ref(0);
 const maxOffset = ref(0);
 
-// 右侧拖拽滚动相关状态（完全复刻左侧命名）
 const rightIsDragging = ref(false);
 const rightStartY = ref(0);
 const rightDragOffset = ref(0);
@@ -179,11 +194,9 @@ const rightLastY = ref(0);
 const rightVelocity = ref(0);
 const rightInertiaTimer = ref(null);
 const rightContentHeight = ref(0);
-// 右侧容器高度：动态计算（最大55vh，最小自适应）
 const rightContainerHeight = ref(0);
 const rightMaxOffset = ref(0);
 
-// 左侧：计算最大滚动偏移量（保持不变）
 const updateMaxOffset = () => {
   if (contentHeight.value <= containerHeight.value) {
     maxOffset.value = 0;
@@ -193,20 +206,16 @@ const updateMaxOffset = () => {
   }
 };
 
-// 右侧：计算最大滚动偏移量（适配动态容器高度）
 const updateRightMaxOffset = () => {
-  // 内容高度 <= 容器高度（自适应状态）：不允许滚动
   if (rightContentHeight.value <= rightContainerHeight.value) {
     rightMaxOffset.value = 0;
-    rightDragOffset.value = 0; // 重置滚动位置
+    rightDragOffset.value = 0;
   } else {
-    // 内容高度 > 容器高度（最大55vh状态）：允许滚动
     rightMaxOffset.value =
       rightContainerHeight.value - rightContentHeight.value;
   }
 };
 
-// 左侧高度初始化（保持不变）
 const initLeftHeight = () => {
   const leftContainer = document.querySelector(".left-table");
   const leftContent = document.querySelector(".table-content");
@@ -217,22 +226,15 @@ const initLeftHeight = () => {
   }
 };
 
-// 右侧高度初始化：核心优化！动态计算容器高度（最大55vh）
 const initRightHeight = () => {
   const rightContainer = document.querySelector(".right-table");
   const rightContent = document.querySelector(".right-table-content");
   if (rightContainer && rightContent) {
-    // 1. 获取内容自然高度（自适应高度）
     const contentNaturalHeight = rightContent.scrollHeight;
-    // 2. 计算55vh对应的像素值
     const maxHeight = window.innerHeight * 0.55;
-    // 3. 容器高度 = 取最小值（内容自然高度，55vh）：实现"最大55vh，最小自适应"
     rightContainerHeight.value = Math.min(contentNaturalHeight, maxHeight);
-    // 4. 设置容器实际高度（同步到DOM）
     rightContainer.style.height = `${rightContainerHeight.value}px`;
-    // 5. 记录内容高度
     rightContentHeight.value = contentNaturalHeight;
-    // 6. 更新滚动限制
     updateRightMaxOffset();
   }
 };
@@ -242,99 +244,76 @@ const handleStartClick = () => {
   dialogVisible.value = true;
 };
 
-// 点击用户头像
-const handleClickUser = () => {
-  router.push("/login");
-};
-
-// 组件挂载初始化
 onMounted(() => {
-  // 延迟获取DOM高度（确保渲染完成）
   setTimeout(() => {
     initLeftHeight();
     initRightHeight();
   }, 100);
-
-  // 窗口大小变化时，重新计算右侧容器高度（适配响应式）
   window.addEventListener("resize", initRightHeight);
-
-  // 3. 初始化选中计划：从最新数据中获取（而非原始JSON）
   const selectedItem = getCaseById(selectedCaseId.value);
   selectedPlan.value = selectedItem?.plan || [];
+
+  // 监听用户信息变化
+  watchUserInfo();
 });
 
-// 组件卸载：清除定时器和事件监听
 onUnmounted(() => {
   if (inertiaTimer.value) clearInterval(inertiaTimer.value);
   if (rightInertiaTimer.value) clearInterval(rightInertiaTimer.value);
   window.removeEventListener("resize", initRightHeight);
 });
 
-// 左侧：拖拽开始（保持不变）
 const handleDragStart = (e) => {
   if (contentHeight.value <= containerHeight.value) return;
-
   isDragging.value = true;
   startY.value = e.clientY;
   lastY.value = e.clientY;
   velocity.value = 0;
   document.body.style.cursor = "grabbing";
   document.body.style.userSelect = "none";
-
   if (inertiaTimer.value) clearInterval(inertiaTimer.value);
 };
 
-// 左侧：拖拽移动（保持不变）
 const handleDragMove = (e) => {
   if (!isDragging.value) return;
   if (contentHeight.value <= containerHeight.value) return;
-
   const currentY = e.clientY;
   const moveY = currentY - lastY.value;
   lastY.value = currentY;
-
   velocity.value = moveY * 0.5;
   let newOffset = dragOffset.value + moveY;
   newOffset = Math.max(maxOffset.value, Math.min(0, newOffset));
   dragOffset.value = newOffset;
 };
 
-// 左侧：拖拽结束（保持不变）
 const handleDragEnd = () => {
   isDragging.value = false;
   document.body.style.cursor = "grab";
   document.body.style.userSelect = "auto";
-
   if (contentHeight.value <= containerHeight.value) return;
-
   if (Math.abs(velocity.value) > 1) {
     startInertiaScroll();
   }
 };
 
-// 左侧：惯性滚动（保持不变）
 const startInertiaScroll = () => {
   if (inertiaTimer.value) clearInterval(inertiaTimer.value);
-
   inertiaTimer.value = setInterval(() => {
     velocity.value *= 0.92;
     let newOffset = dragOffset.value + velocity.value;
     newOffset = Math.max(maxOffset.value, Math.min(0, newOffset));
     dragOffset.value = newOffset;
-
     if (Math.abs(velocity.value) < 0.5) {
       clearInterval(inertiaTimer.value);
     }
   }, 16);
 };
 
-// 左侧：滚轮滚动（保持不变）
 const handleWheel = (e) => {
   if (contentHeight.value <= containerHeight.value) {
     e.preventDefault();
     return;
   }
-
   e.preventDefault();
   const scrollStep = Math.abs(e.deltaY) > 100 ? 50 : 30;
   let newOffset = dragOffset.value + (e.deltaY > 0 ? -scrollStep : scrollStep);
@@ -342,72 +321,57 @@ const handleWheel = (e) => {
   dragOffset.value = newOffset;
 };
 
-// 右侧：拖拽开始（适配动态高度，仅在可滚动时生效）
 const handleRightDragStart = (e) => {
-  // 只有内容高度 > 容器高度时，才允许拖拽
   if (rightContentHeight.value <= rightContainerHeight.value) return;
-
   rightIsDragging.value = true;
   rightStartY.value = e.clientY;
   rightLastY.value = e.clientY;
   rightVelocity.value = 0;
   document.body.style.cursor = "grabbing";
   document.body.style.userSelect = "none";
-
   if (rightInertiaTimer.value) clearInterval(rightInertiaTimer.value);
 };
 
-// 右侧：拖拽移动（保持与左侧一致的逻辑）
 const handleRightDragMove = (e) => {
   if (!rightIsDragging.value) return;
   if (rightContentHeight.value <= rightContainerHeight.value) return;
-
   const currentY = e.clientY;
   const moveY = currentY - rightLastY.value;
   rightLastY.value = currentY;
-
   rightVelocity.value = moveY * 0.5;
   let newOffset = rightDragOffset.value + moveY;
   newOffset = Math.max(rightMaxOffset.value, Math.min(0, newOffset));
   rightDragOffset.value = newOffset;
 };
 
-// 右侧：拖拽结束（保持与左侧一致的逻辑）
 const handleRightDragEnd = () => {
   rightIsDragging.value = false;
   document.body.style.cursor = "grab";
   document.body.style.userSelect = "auto";
-
   if (rightContentHeight.value <= rightContainerHeight.value) return;
-
   if (Math.abs(rightVelocity.value) > 1) {
     startRightInertiaScroll();
   }
 };
 
-// 右侧：惯性滚动（保持与左侧一致的逻辑）
 const startRightInertiaScroll = () => {
   if (rightInertiaTimer.value) clearInterval(rightInertiaTimer.value);
-
   rightInertiaTimer.value = setInterval(() => {
     rightVelocity.value *= 0.92;
     let newOffset = rightDragOffset.value + rightVelocity.value;
     newOffset = Math.max(rightMaxOffset.value, Math.min(0, newOffset));
     rightDragOffset.value = newOffset;
-
     if (Math.abs(rightVelocity.value) < 0.5) {
       clearInterval(rightInertiaTimer.value);
     }
   }, 16);
 };
 
-// 右侧：滚轮滚动（仅在可滚动时生效）
 const handleRightWheel = (e) => {
   if (rightContentHeight.value <= rightContainerHeight.value) {
-    e.preventDefault(); // 不可滚动时，阻止默认滚轮行为
+    e.preventDefault();
     return;
   }
-
   e.preventDefault();
   const scrollStep = Math.abs(e.deltaY) > 100 ? 50 : 30;
   let newOffset =
@@ -416,24 +380,17 @@ const handleRightWheel = (e) => {
   rightDragOffset.value = newOffset;
 };
 
-// 点击左侧方案切换：重新计算右侧高度（从最新数据获取plan）
 const handleClick = (id) => {
   selectedCaseId.value = id;
-  // 4. 从最新数据中获取选中方案的plan（而非原始JSON）
   const selectedItem = getCaseById(id);
   selectedPlan.value = selectedItem?.plan || [];
-
-  // 重置滚动位置
   rightDragOffset.value = 0;
-
-  // 方案切换后，等待DOM更新完成再计算高度
   nextTick(() => {
-    setTimeout(initRightHeight, 50); // 确保内容渲染完成
+    setTimeout(initRightHeight, 50);
   });
 };
 
 const confirmDialog = () => {
-  // dialogVisible.value = false;
   localStorage.setItem("selectedCaseId", selectedCaseId.value);
   router.push(`/point?id=${selectedCaseId.value}`);
 };

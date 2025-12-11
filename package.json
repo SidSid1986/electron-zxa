@@ -172,6 +172,8 @@
     "loudness": "^0.4.2",
     "pinia": "^3.0.3",
     "pinia-plugin-persistedstate": "^4.2.0",
+    "simple-keyboard": "^3.8.93",
+    "simple-keyboard-layouts": "^3.4.147",
     "swiper": "^11.2.5",
     "vue": "^3.5.25",
     "vue-router": "^4.5.0"
