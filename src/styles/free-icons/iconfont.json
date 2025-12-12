@@ -6,6 +6,27 @@
   "description": "",
   "glyphs": [
     {
+      "icon_id": "15995466",
+      "name": "home",
+      "font_class": "home1",
+      "unicode": "e606",
+      "unicode_decimal": 58886
+    },
+    {
+      "icon_id": "30525159",
+      "name": "入库方案",
+      "font_class": "rukufangan",
+      "unicode": "e600",
+      "unicode_decimal": 58880
+    },
+    {
+      "icon_id": "32731478",
+      "name": "设置",
+      "font_class": "shezhi",
+      "unicode": "e74a",
+      "unicode_decimal": 59210
+    },
+    {
       "icon_id": "12753745",
       "name": "上一首",
       "font_class": "shangyishou_huaban",

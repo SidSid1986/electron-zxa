@@ -1,5 +1,5 @@
 <template>
-  <div class="container">
+  <div class="main-container">
     <div class="main-top">
       <img
         @click="openMenu"
@@ -161,9 +161,8 @@
     <el-drawer
       class="drawer-content"
       v-model="drawerVisible"
-      :modal="false"
       direction="ltr"
-      modal-penetrable
+      :with-header="false"
     >
       <DrawerList />
     </el-drawer>
@@ -431,7 +430,7 @@ const cancelDialog = () => {
 </script>
 
 <style scoped lang="scss">
-.container {
+.main-container {
   box-sizing: border-box;
   background: url("@/assets/pic/backgroundImage.png") no-repeat;
   background-position: center center;
@@ -856,12 +855,18 @@ const cancelDialog = () => {
 </style>
 <style lang="scss">
 .drawer-content {
-  height: 86vh;
+  // border: 3px solid blue;
+  height: 90vh !important;
   box-sizing: border-box;
-  margin-top: 4vh;
+  margin-top: 10vh;
   width: 20vw !important;
-  .el-drawer__header {
-    display: none;
+  .el-drawer__body {
+    padding: 0 !important;
   }
+}
+
+.main-container .el-overlay {
+  background: transparent !important;
+  backdrop-filter: none !important;
 }
 </style>
