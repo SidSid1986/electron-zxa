@@ -1,11 +1,19 @@
+<!--
+ * @Author: Sid Li
+ * @Date: 2025-12-12 11:26:16
+ * @LastEditors: Sid Li
+ * @LastEditTime: 2025-12-12 14:45:57
+ * @FilePath: \zi-xiao-ai\src\views\plan.vue
+ * @Description: 
+-->
 <template>
-  <div class="main-container">
+  <div class="plan-container">
     <Top @openMenu="openMenu" />
+
     <div class="main-content">
       <div class="left">
         <div class="title">
           <span>方案灸</span>
-          <el-button round type="primary" class="title-btn">自由灸</el-button>
         </div>
 
         <!-- 外层容器：限制高度 + 隐藏滚动条 -->
@@ -29,7 +37,7 @@
           >
             <div
               @click="handleClick(item.id)"
-              class="flex-row line-one"
+              class="line-one"
               :class="{
                 'line-one-bottom': index !== caseArr.length - 1,
                 'line-one-selected': item.id === selectedCaseId,
@@ -41,6 +49,14 @@
               <div class="btn">预设</div>
             </div>
           </div>
+        </div>
+
+        <div class="edit-group">
+          <el-button @click="openDialog" class="edit-btn" type="primary"
+            >新增灸方</el-button
+          >
+          <el-button class="edit-btn" type="primary">编辑</el-button>
+          <el-button class="edit-btn" type="primary">删除</el-button>
         </div>
       </div>
       <div class="right">
@@ -80,31 +96,27 @@
               <span>
                 <span class="right-name">{{ item.name }}</span>
               </span>
-              <span>{{ item.time }}</span>
+              <span>{{ item.time }}分钟</span>
               <span>{{ item.point }}</span>
             </div>
           </div>
         </div>
-
-        <!-- 开始按钮容器 -->
-        <div class="start-content">
-          <el-button
-            round
-            type="primary"
-            class="start-btn"
-            @click="handleStartClick"
-            >开始</el-button
-          >
-        </div>
       </div>
     </div>
 
-    <!-- dialog -->
     <el-dialog v-model="dialogVisible" width="500">
       <div class="dialog-content">
-        <div class="dialog-title">预备定穴</div>
-        <div class="dialog-text">客户在艾灸床上躺好后，点击</div>
-        <div class="dialog-text">下方【开始定穴】按钮，进行定穴</div>
+        <div class="dialog-title">新建灸方</div>
+        <div class="dialog-text">请输入方案名称:</div>
+        <div class="dialog-text">
+          <el-input
+            class="plan-input"
+            v-model="planName"
+            placeholder="请输入方案名称"
+          />
+        </div>
+        <div class="dialog-text">创建完成后可在下一个页面配置灸法详情</div>
+
         <div class="dialog-btn-content">
           <el-button
             round
@@ -118,13 +130,11 @@
             type="primary"
             @click="confirmDialog"
             class="title-btn"
-            >开始定穴</el-button
+            >确定</el-button
           >
         </div>
       </div>
     </el-dialog>
-
-    <!-- 抽屉 -->
 
     <el-drawer
       class="drawer-content"
@@ -143,30 +153,16 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, nextTick, watch } from "vue";
+import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
-import { getCaseData, getCaseById } from "@/utils/caseDataManager";
-import DrawerList from "@/components/DrawerList.vue";
-import Top from "@/components/Top.vue";
 
+import Top from "@/components/Top.vue";
+import { getCaseData, getCaseById } from "@/utils/caseDataManager";
 const router = useRouter();
 
-// 获取当前登录用户信息
-const currentUser = ref(
-  JSON.parse(localStorage.getItem("userInfo") || '{"nickName":"未登录"}')
-);
-
-// 监听localStorage变化（登录新用户时刷新用户信息）
-const watchUserInfo = () => {
-  window.addEventListener("storage", (e) => {
-    if (e.key === "userInfo") {
-      currentUser.value = JSON.parse(e.newValue || '{"nickName":"未登录"}');
-    }
-  });
-};
-
-// 原有逻辑不变（以下为你的原有代码）
 const dialogVisible = ref(false);
+
+const drawerVisible = ref(false);
 const selectedCaseId = ref(1);
 const selectedPlan = ref([]);
 const caseArr = ref(getCaseData());
@@ -191,7 +187,20 @@ const rightInertiaTimer = ref(null);
 const rightContentHeight = ref(0);
 const rightContainerHeight = ref(0);
 const rightMaxOffset = ref(0);
-const drawerVisible = ref(false);
+
+const planName = ref("");
+
+const currentUser = ref(
+  JSON.parse(localStorage.getItem("userInfo") || '{"nickName":"未登录"}')
+);
+
+const watchUserInfo = () => {
+  window.addEventListener("storage", (e) => {
+    if (e.key === "userInfo") {
+      currentUser.value = JSON.parse(e.newValue || '{"nickName":"未登录"}');
+    }
+  });
+};
 const openMenu = () => {
   drawerVisible.value = true;
 };
@@ -236,11 +245,6 @@ const initRightHeight = () => {
     rightContentHeight.value = contentNaturalHeight;
     updateRightMaxOffset();
   }
-};
-
-const handleStartClick = () => {
-  console.log("start");
-  dialogVisible.value = true;
 };
 
 const handleDragStart = (e) => {
@@ -370,12 +374,12 @@ const handleClick = (id) => {
   });
 };
 
-const confirmDialog = () => {
-  localStorage.setItem("selectedCaseId", selectedCaseId.value);
-  router.push(`/point?id=${selectedCaseId.value}`);
+const openDialog = () => {
+  dialogVisible.value = true;
 };
-const cancelDialog = () => {
-  dialogVisible.value = false;
+
+const confirmDialog = () => {
+  router.push(`/newPlan`);
 };
 
 onMounted(() => {
@@ -390,16 +394,10 @@ onMounted(() => {
   // 监听用户信息变化
   watchUserInfo();
 });
-
-onUnmounted(() => {
-  if (inertiaTimer.value) clearInterval(inertiaTimer.value);
-  if (rightInertiaTimer.value) clearInterval(rightInertiaTimer.value);
-  window.removeEventListener("resize", initRightHeight);
-});
 </script>
 
 <style scoped lang="scss">
-.main-container {
+.plan-container {
   box-sizing: border-box;
   background: url("@/assets/pic/backgroundImage.png") no-repeat;
   background-position: center center;
@@ -409,7 +407,7 @@ onUnmounted(() => {
   align-items: center;
   justify-content: flex-start;
   width: 100vw;
-  // height: 96vh;
+
   height: 100vh;
   margin: 0;
   padding: 0;
@@ -431,13 +429,15 @@ onUnmounted(() => {
     width: 30%;
     height: calc(90vh - 80px);
     box-sizing: border-box;
-    padding: 10px 20px;
+    padding: 0px 20px 10px 20px;
 
     .title {
       display: flex;
       flex-direction: row;
       align-items: center;
       justify-content: flex-start;
+
+      height: 4vh;
       span {
         height: 50px;
         line-height: 50px;
@@ -466,7 +466,6 @@ onUnmounted(() => {
 
     // 左侧容器样式（保持不变）
     .left-table {
-      margin-top: 10px;
       border-left: 1px solid #b99aca;
       border-right: 1px solid #b99aca;
       height: 70vh;
@@ -485,11 +484,14 @@ onUnmounted(() => {
       .line-one {
         box-sizing: border-box;
         width: 100%;
-        justify-content: space-between;
         padding: 0px 5px 0px 20px;
         background-color: #fff;
         height: 5vh;
         transition: background-color 0.2s ease;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
 
         .title {
           font-size: 24px;
@@ -504,13 +506,14 @@ onUnmounted(() => {
 
         .btn {
           width: 50px;
-          height: 25px;
+          height: 30px;
+          line-height: 30px;
           display: flex;
           flex-direction: row;
           align-items: center;
           justify-content: center;
           background: #ff860e;
-          font-size: 12px;
+          font-size: 14px;
           color: #ffffff;
           border-radius: 8px;
           transition: background-color 0.2s ease;
@@ -535,15 +538,39 @@ onUnmounted(() => {
         }
       }
     }
+
+    .edit-group {
+      margin-top: 20px;
+      display: flex;
+      flex-direction: row;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 10px;
+      .edit-btn {
+        width: 120px;
+        height: 50px;
+        font-size: 24px;
+        border-radius: 40px;
+        --el-button-text-color: #fff;
+        --el-button-bg-color: #af7dc4;
+        --el-button-border-color: #af7dc4;
+        --el-button-hover-text-color: #fff;
+        --el-button-hover-bg-color: #9a6cb8;
+        --el-button-hover-border-color: #9a6cb8;
+        --el-button-active-text-color: #fff;
+        --el-button-active-bg-color: #8a5ca0;
+        --el-button-active-border-color: #8a5ca0;
+      }
+    }
   }
 
   .right {
-    padding-top: 4vh;
     width: 70%;
     height: calc(90vh - 80px);
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
+    margin-top: 4vh;
 
     .right-top {
       height: 5vh;
@@ -679,24 +706,6 @@ onUnmounted(() => {
   }
 }
 
-.flex-row {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-
-  img {
-    width: 60px;
-    height: 60px;
-    margin-right: 10px;
-  }
-
-  span {
-    font-size: 30px;
-    margin-right: 40px;
-    color: #511d6a;
-  }
-}
-
 // Dialog 整体文字样式：居中 + 颜色 #D4BFE1
 :deep(.el-dialog__body) {
   // 让内部所有文本居中
@@ -713,7 +722,7 @@ onUnmounted(() => {
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  height: 25vh;
+  height: 28vh;
   .dialog-title {
     font-size: 40px;
     font-weight: bold;
@@ -724,7 +733,7 @@ onUnmounted(() => {
     font-size: 24px;
     font-weight: 500;
     color: #4c1c64;
-    margin-bottom: 20px;
+    margin-bottom: 10px;
   }
 }
 
@@ -768,6 +777,20 @@ onUnmounted(() => {
   color: #ffffff !important;
 }
 
+.plan-input {
+  --el-input-border-radius: 10px;
+  --el-input-text-color: #511d6a;
+  --el-input-placeholder-color: #9262a8;
+  --el-input-border-color: #c1a6d5;
+  --el-input-hover-border-color: #722a8f;
+  --el-input-focus-border-color: #511d6a;
+  --el-input-bg-color: #f9f5fc;
+  width: 320px;
+  height: 60px;
+  line-height: 60px;
+  font-size: 20px;
+}
+
 // 隐藏所有浏览器的滚动条
 ::-webkit-scrollbar {
   display: none;
@@ -779,36 +802,5 @@ onUnmounted(() => {
   margin: 0;
   padding: 0;
   font-family: "Microsoft YaHei", sans-serif;
-}
-
-// 抽屉内容样式
-</style>
-<style lang="scss">
-.drawer-content {
-  // border: 3px solid blue;
-  max-height: 90vh !important;
-  box-sizing: border-box;
-  margin-top: 10vh;
-  width: 280px !important;
-  .el-drawer__body {
-    padding: 0 !important;
-  }
-}
-
-.main-container .el-overlay {
-  background: transparent !important;
-  backdrop-filter: none !important;
-}
-
-.drawer-user {
-  height: 60vh !important;
-}
-
-.drawer-admin {
-  height: 70vh !important;
-}
-
-.drawer-super {
-  height: 88vh !important;
 }
 </style>

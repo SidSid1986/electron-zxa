@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-11-29 10:30:04
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-11 13:59:44
+ * @LastEditTime: 2025-12-12 15:21:23
  * @FilePath: \zi-xiao-ai\src\router\index.js
  * @Description:
  */
@@ -94,6 +94,33 @@ const routes = [
     meta: {
       requiresAuth: false, // 始终允许访问（无论是否登录）
       roles: ["admin", "user", "super_admin"],
+    },
+  },
+  {
+    path: "/plan",
+    name: "Plan",
+    component: () => import("@/views/plan.vue"),
+    meta: {
+      requiresAuth: true,
+      roles: ["admin", "super_admin"],
+    },
+  },
+  {
+    path: "/newplan",
+    name: "NewPlan",
+    component: () => import("@/views/newPlan.vue"),
+    meta: {
+      requiresAuth: true,
+      roles: ["admin", "super_admin"],
+    },
+  },
+  {
+    path: "/material",
+    name: "Material",
+    component: () => import("@/views/material.vue"),
+    meta: {
+      requiresAuth: true,
+      roles: ["admin", "super_admin"],
     },
   },
 ];

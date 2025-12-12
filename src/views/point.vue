@@ -124,8 +124,8 @@ import { ElMessage, ElMessageBox } from "element-plus";
 import { useRoute, useRouter } from "vue-router";
 import FuXie from "@/components/FuXie.vue";
 
-import BodyPic from "@/assets/pic/per_obverse.png";
-import LegPic from "@/assets/pic/leg_obverse.png";
+import BodyPic from "@/assets/pic/body/5.png";
+import LegPic from "@/assets/pic/body/3.png";
 
 const $ws = inject("$ws");
 

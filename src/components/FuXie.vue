@@ -213,7 +213,7 @@ onMounted(() => {
 
   .point-line {
     position: absolute;
-    bottom: 160px;
+    bottom: 180px;
     height: 5vh;
     width: 100%;
     // border: 2px solid red;
@@ -319,7 +319,7 @@ onMounted(() => {
 
   .point-line2 {
     position: absolute;
-    bottom: 240px;
+    bottom: 280px;
     height: 5vh;
     width: 100%;
     // border: 2px solid red;

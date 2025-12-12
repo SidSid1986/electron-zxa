@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-11 17:24:46
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-12 11:02:02
+ * @LastEditTime: 2025-12-12 15:22:20
  * @FilePath: \zi-xiao-ai\src\components\DrawerList.vue
  * @Description: 
 -->
@@ -58,14 +58,14 @@ const menuList = ref([
     hasBorder: false,
     role: ["admin", "super_admin"],
     icon: "icon-rukufangan",
-    path: "/main",
+    path: "/plan",
   },
   {
     name: "耗材管理",
     hasBorder: true,
     role: ["admin", "user", "super_admin"],
     icon: "icon-shezhi",
-    path: "/main",
+    path: "/material",
   },
   {
     name: "剩余时间查询",
