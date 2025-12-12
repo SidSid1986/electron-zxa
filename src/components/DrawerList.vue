@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-11 17:24:46
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-12 09:38:30
+ * @LastEditTime: 2025-12-12 11:02:02
  * @FilePath: \zi-xiao-ai\src\components\DrawerList.vue
  * @Description: 
 -->
@@ -15,6 +15,7 @@
         'list-item',
         { 'border-left': index == selectedIndex },
         { 'border-item': item.hasBorder },
+        { 'item-display': !item.role.includes(userInfo.role) },
       ]"
       @click="handleClickItem(item, index)"
     >
@@ -42,6 +43,8 @@ import { useRouter } from "vue-router";
 
 const router = useRouter();
 
+const userInfo = JSON.parse(localStorage.getItem("userInfo")) || {};
+
 const menuList = ref([
   {
     name: "主页",
@@ -52,14 +55,14 @@ const menuList = ref([
   },
   {
     name: "灸方管理",
-    hasBorder: true,
-    role: ["admin", "user", "super_admin"],
+    hasBorder: false,
+    role: ["admin", "super_admin"],
     icon: "icon-rukufangan",
     path: "/main",
   },
   {
     name: "耗材管理",
-    hasBorder: false,
+    hasBorder: true,
     role: ["admin", "user", "super_admin"],
     icon: "icon-shezhi",
     path: "/main",
@@ -74,7 +77,7 @@ const menuList = ref([
   {
     name: "设备信息",
     hasBorder: false,
-    role: ["admin", "user", "super_admin"],
+    role: ["super_admin"],
     icon: "icon-shezhi",
     path: "/main",
   },
@@ -94,14 +97,14 @@ const menuList = ref([
   },
   {
     name: "设备校准",
-    hasBorder: true,
-    role: ["admin", "user", "super_admin"],
+    hasBorder: false,
+    role: ["super_admin"],
     icon: "icon-shezhi",
     path: "/main",
   },
   {
     name: "订单统计",
-    hasBorder: false,
+    hasBorder: true,
     role: ["admin", "user", "super_admin"],
     icon: "icon-shezhi",
     path: "/main",
@@ -123,8 +126,22 @@ const menuList = ref([
   {
     name: "回打包位",
     hasBorder: false,
-    role: ["admin", "user", "super_admin"],
+    role: ["admin", "super_admin"],
     icon: "icon-shezhi",
+    path: "/main",
+  },
+  {
+    name: "运行日志",
+    hasBorder: false,
+    role: ["super_admin"],
+    icon: "icon-shezhi",
+    path: "/main",
+  },
+  {
+    name: userInfo.nickName,
+    hasBorder: true,
+    role: ["admin", "user", "super_admin"],
+    icon: "icon-yonghu",
     path: "/main",
   },
 ]);
@@ -157,8 +174,7 @@ onMounted(() => {
 .list-item {
   box-sizing: border-box;
   width: 100%;
-
-  height: 7.5vh;
+  height: 6vh;
   font-size: 16px;
   cursor: pointer;
   display: flex;
@@ -193,10 +209,14 @@ onMounted(() => {
 }
 
 .border-item {
-  border-bottom: 1px solid #cccccc;
+  border-top: 1px solid #cccccc;
 }
 
 .list-item:hover {
   background-color: #f5f5f5;
+}
+
+.item-display {
+  display: none;
 }
 </style>

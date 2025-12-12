@@ -160,6 +160,11 @@
 
     <el-drawer
       class="drawer-content"
+      :class="[
+        { 'drawer-user': currentUser.role.includes('user') },
+        { 'drawer-admin': currentUser.role.includes('admin') },
+        { 'drawer-super': currentUser.role.includes('super_admin') },
+      ]"
       v-model="drawerVisible"
       direction="ltr"
       :with-header="false"
@@ -225,6 +230,9 @@ const rightMaxOffset = ref(0);
 const drawerVisible = ref(false);
 const openMenu = () => {
   drawerVisible.value = true;
+  nextTick(() => {
+    setHeight();
+  });
 };
 
 const updateMaxOffset = () => {
@@ -273,25 +281,6 @@ const handleStartClick = () => {
   console.log("start");
   dialogVisible.value = true;
 };
-
-onMounted(() => {
-  setTimeout(() => {
-    initLeftHeight();
-    initRightHeight();
-  }, 100);
-  window.addEventListener("resize", initRightHeight);
-  const selectedItem = getCaseById(selectedCaseId.value);
-  selectedPlan.value = selectedItem?.plan || [];
-
-  // 监听用户信息变化
-  watchUserInfo();
-});
-
-onUnmounted(() => {
-  if (inertiaTimer.value) clearInterval(inertiaTimer.value);
-  if (rightInertiaTimer.value) clearInterval(rightInertiaTimer.value);
-  window.removeEventListener("resize", initRightHeight);
-});
 
 const handleDragStart = (e) => {
   if (contentHeight.value <= containerHeight.value) return;
@@ -427,6 +416,29 @@ const confirmDialog = () => {
 const cancelDialog = () => {
   dialogVisible.value = false;
 };
+const userstatus = ref(false);
+const setHeight = () => {
+  userstatus.value = true;
+};
+
+onMounted(() => {
+  setTimeout(() => {
+    initLeftHeight();
+    initRightHeight();
+  }, 100);
+  window.addEventListener("resize", initRightHeight);
+  const selectedItem = getCaseById(selectedCaseId.value);
+  selectedPlan.value = selectedItem?.plan || [];
+
+  // 监听用户信息变化
+  watchUserInfo();
+});
+
+onUnmounted(() => {
+  if (inertiaTimer.value) clearInterval(inertiaTimer.value);
+  if (rightInertiaTimer.value) clearInterval(rightInertiaTimer.value);
+  window.removeEventListener("resize", initRightHeight);
+});
 </script>
 
 <style scoped lang="scss">
@@ -856,7 +868,8 @@ const cancelDialog = () => {
 <style lang="scss">
 .drawer-content {
   // border: 3px solid blue;
-  height: 90vh !important;
+
+  max-height: 90vh !important;
   box-sizing: border-box;
   margin-top: 10vh;
   width: 20vw !important;
@@ -868,5 +881,17 @@ const cancelDialog = () => {
 .main-container .el-overlay {
   background: transparent !important;
   backdrop-filter: none !important;
+}
+
+.drawer-user {
+  height: 60vh !important;
+}
+
+.drawer-admin {
+  height: 70vh !important;
+}
+
+.drawer-super {
+  height: 88vh !important;
 }
 </style>
