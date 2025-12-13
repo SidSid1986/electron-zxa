@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-13 14:06:46
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-13 17:17:47
+ * @LastEditTime: 2025-12-13 17:25:24
  * @FilePath: \zi-xiao-ai\src\components\body\BodyBack.vue
  * @Description: 身体正面图片组件
 -->
@@ -42,9 +42,37 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, watch } from "vue";
+
+const props = defineProps({
+  newPlanPoint: {
+    type: Array,
+    default: () => [],
+  },
+});
 
 const pointData = ref([]);
+
+watch(
+  () => props.newPlanPoint,
+  (newVal) => {
+    if (newVal.length > 0) {
+      console.log(newVal);
+      //比较newVal和pointData，然后把pointData里面的staus修改为newVal的status
+      pointData.value.forEach((item) => {
+        if (newVal.find((newItem) => newItem.id === item.id)) {
+          item.status = newVal.find((newItem) => newItem.id === item.id).status;
+        } else {
+          item.status = 0;
+        }
+      });
+    }
+  },
+  {
+    immediate: true,
+    deep: true,
+  }
+);
 
 onMounted(() => {
   console.log("组件挂载了");

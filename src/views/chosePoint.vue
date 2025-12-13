@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-12 14:38:40
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-13 14:55:05
+ * @LastEditTime: 2025-12-13 17:27:25
  * @FilePath: \zi-xiao-ai\src\views\chosePoint.vue
  * @Description: 选择穴位页面  
 -->
@@ -13,7 +13,11 @@
     </div>
     <div class="point-content">
       <div class="point-content-left">
-        <component :is="currentComponent" ref="bodyRef" />
+        <component
+          :is="currentComponent"
+          ref="bodyRef"
+          :newPlanPoint="newPlanPoint"
+        />
       </div>
       <div class="point-content-right">
         <div class="right-content">
@@ -29,7 +33,7 @@
             </div>
           </div>
           <div class="point-point">
-            <BodyBackPoint />
+            <BodyBackPoint @getNewPlan="getNewPlan" />
           </div>
           <div class="point-info"></div>
           <div class="point-btn"></div>
@@ -47,16 +51,16 @@ import BodyFront from "@/components/body/BodyFront.vue";
 import BodyBack from "@/components/body/BodyBack.vue";
 import LegFront from "@/components/body/LegFront.vue";
 import LegBack from "@/components/body/LegBack.vue";
-// import BodyFrontPoint from "@/components/point/BodyFrontPoint.vue";    
+// import BodyFrontPoint from "@/components/point/BodyFrontPoint.vue";
 import BodyBackPoint from "@/components/point/BodyBackPoint.vue";
 // import LegFrontPoint from "@/components/point/LegFrontPoint.vue";
 // import LegBackPoint from "@/components/point/LegBackPoint.vue";
 
-
-
 const router = useRouter();
 const chooseBodyIndex = ref(0);
 const currentComponent = shallowRef(markRaw(BodyBack));
+
+const newPlanPoint = ref([]);
 
 const tabData = ref([
   {
@@ -100,6 +104,12 @@ const chooseBody = (item, index) => {
   }
 
   chooseBodyIndex.value = index;
+};
+
+// 刷新newPlan
+const getNewPlan = () => {
+  console.log(111111);
+  newPlanPoint.value = JSON.parse(localStorage.getItem("newPlan")).points || {};
 };
 
 // 页面初始化

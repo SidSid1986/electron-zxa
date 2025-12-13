@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-13 14:48:09
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-13 16:04:06
+ * @LastEditTime: 2025-12-13 17:21:05
  * @FilePath: \zi-xiao-ai\src\components\point\BodyBackPoint.vue
  * @Description: 
 -->
@@ -29,6 +29,8 @@
 <script setup>
 import { ref, onMounted, watch } from "vue";
 import PointData from "@/data/pointData.json";
+
+const emit = defineEmits(["getNewPlan"]);
 
 // 初始化newPlan，补充points数组 + 自动添加bodyType=2
 const initNewPlan = () => {
@@ -72,6 +74,8 @@ const treatPoint = (item) => {
 
   // 同步到localStorage（包含bodyType字段）
   localStorage.setItem("newPlan", JSON.stringify(currentPlan.value));
+
+  emit("getNewPlan");
 };
 
 onMounted(() => {
