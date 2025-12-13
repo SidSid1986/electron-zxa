@@ -2,8 +2,8 @@
  * @Author: Sid Li
  * @Date: 2025-12-13 14:48:09
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-13 17:21:05
- * @FilePath: \zi-xiao-ai\src\components\point\BodyBackPoint.vue
+ * @LastEditTime: 2025-12-13 19:05:29
+ * @FilePath: \electron-zxa\src\components\point\BodyBackPoint.vue
  * @Description: 
 -->
 <template>
@@ -27,10 +27,14 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from "vue";
+import { ref, onMounted, onUnmounted, watch } from "vue";
+// 若使用Vue Router，引入路由实例（根据项目实际路径调整）
+import { useRouter } from "vue-router";
 import PointData from "@/data/pointData.json";
 
 const emit = defineEmits(["getNewPlan"]);
+// 初始化路由实例（Vue Router场景）
+const router = useRouter();
 
 // 初始化newPlan，补充points数组 + 自动添加bodyType=2
 const initNewPlan = () => {
@@ -53,13 +57,16 @@ const isPointSelected = (item) => {
   return currentPlan.value.points.some((p) => p.id === item.id);
 };
 
-// 处理穴位选择（基于chooseType判断单选/多选）
+// 处理穴位选择（基于treatType判断单选/多选，单选支持反选）
 const treatPoint = (item) => {
   const isMultiSelect = currentPlan.value.treatType === 3;
+  const isSelected = isPointSelected(item); // 先判断当前穴位是否选中
+
+  // 统一设置status（0未选中，1选中）
+  item.status = isSelected ? 0 : 1;
 
   if (isMultiSelect) {
     // 多选模式：切换选中状态
-    const isSelected = isPointSelected(item);
     if (isSelected) {
       currentPlan.value.points = currentPlan.value.points.filter(
         (p) => p.id !== item.id
@@ -68,13 +75,29 @@ const treatPoint = (item) => {
       currentPlan.value.points.push(item);
     }
   } else {
-    // 单选模式：直接替换数组
-    currentPlan.value.points = [item];
+    // 单选模式：支持反选（核心修改）
+    if (isSelected) {
+      // 已选中当前穴位 → 清空数组（取消选中）
+      currentPlan.value.points = [];
+    } else {
+      // 未选中 → 替换为当前穴位
+      currentPlan.value.points = [item];
+    }
   }
 
   // 同步到localStorage（包含bodyType字段）
   localStorage.setItem("newPlan", JSON.stringify(currentPlan.value));
+  emit("getNewPlan");
+};
 
+// 清空选中状态的方法（抽离为通用函数）
+const clearSelectedPoints = () => {
+  console.log("222");
+  // 清空points数组
+  currentPlan.value.points = [];
+  // 同步到localStorage
+  localStorage.setItem("newPlan", JSON.stringify(currentPlan.value));
+  // 通知父组件更新
   emit("getNewPlan");
 };
 
@@ -87,6 +110,23 @@ onMounted(() => {
 
   console.log("筛选后的穴位列表:", pointList.value);
   console.log("当前计划数据:", currentPlan.value); // 可看到bodyType:2
+
+  // 【可选】路由切换时清空（Vue Router场景）
+  if (router) {
+    // 监听路由变化，离开当前页面时清空
+    router.afterEach((to, from) => {
+      // 假设当前组件对应的路由路径是 /bodyBackPoint，根据实际路径修改
+      if (from.path === "/bodyBackPoint") {
+        clearSelectedPoints();
+      }
+    });
+  }
+});
+
+// 【核心】组件卸载时清空选中状态（必加）
+onUnmounted(() => {
+  clearSelectedPoints();
+  console.log("组件卸载，已清空选中状态");
 });
 </script>
 

@@ -2,14 +2,14 @@
  * @Author: Sid Li
  * @Date: 2025-12-12 14:38:40
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-13 17:27:25
- * @FilePath: \zi-xiao-ai\src\views\chosePoint.vue
+ * @LastEditTime: 2025-12-13 19:12:17
+ * @FilePath: \electron-zxa\src\views\chosePoint.vue
  * @Description: 选择穴位页面  
 -->
 <template>
   <div class="container">
     <div class="point-nav">
-      <span class="plan-name">穴位选择</span>
+      <span class="plan-name">穴位选择--{{ newPlanName }}</span>
     </div>
     <div class="point-content">
       <div class="point-content-left">
@@ -36,7 +36,9 @@
             <BodyBackPoint @getNewPlan="getNewPlan" />
           </div>
           <div class="point-info"></div>
-          <div class="point-btn"></div>
+          <div class="point-btn">
+            <el-button type="primary" @click="backToPlan">返回</el-button>
+          </div>
         </div>
       </div>
     </div>
@@ -61,6 +63,7 @@ const chooseBodyIndex = ref(0);
 const currentComponent = shallowRef(markRaw(BodyBack));
 
 const newPlanPoint = ref([]);
+const newPlanName = ref("");
 
 const tabData = ref([
   {
@@ -109,11 +112,17 @@ const chooseBody = (item, index) => {
 // 刷新newPlan
 const getNewPlan = () => {
   console.log(111111);
-  newPlanPoint.value = JSON.parse(localStorage.getItem("newPlan")).points || {};
+  newPlanPoint.value = JSON.parse(localStorage.getItem("newPlan")).points;
+};
+
+const backToPlan = () => {
+  router.push("/newPlan");
 };
 
 // 页面初始化
-onMounted(() => {});
+onMounted(() => {
+  newPlanName.value = JSON.parse(localStorage.getItem("newPlan")).chooseName;
+});
 
 // 组件卸载：清理定时器和事件监听
 onUnmounted(() => {});

@@ -2,8 +2,8 @@
  * @Author: Sid Li
  * @Date: 2025-12-13 14:06:46
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-13 17:25:24
- * @FilePath: \zi-xiao-ai\src\components\body\BodyBack.vue
+ * @LastEditTime: 2025-12-13 19:00:22
+ * @FilePath: \electron-zxa\src\components\body\BodyBack.vue
  * @Description: 身体正面图片组件
 -->
 <template>
@@ -53,20 +53,36 @@ const props = defineProps({
 
 const pointData = ref([]);
 
+const pointDataCopy = ref([]);
+
+const replaceStatusById = (sourceArr, targetArr) => {
+  // 1. 构建id->status的映射表（提升匹配效率）
+  const statusMap = sourceArr.reduce((map, item) => {
+    map[item.id] = item.status;
+    return map;
+  }, {});
+
+  // 2. 遍历目标数组，替换匹配id的status（不修改原数组）
+  return targetArr.map((item) => {
+    // 若id在映射表中存在，则替换status，否则返回原数据
+    if (statusMap.hasOwnProperty(item.id)) {
+      return { ...item, status: statusMap[item.id] };
+    }
+    return { ...item }; // 浅拷贝原对象，避免修改原数组
+  });
+};
+
 watch(
   () => props.newPlanPoint,
   (newVal) => {
-    if (newVal.length > 0) {
-      console.log(newVal);
-      //比较newVal和pointData，然后把pointData里面的staus修改为newVal的status
-      pointData.value.forEach((item) => {
-        if (newVal.find((newItem) => newItem.id === item.id)) {
-          item.status = newVal.find((newItem) => newItem.id === item.id).status;
-        } else {
-          item.status = 0;
-        }
-      });
-    }
+    console.log(newVal);
+    //比较newVal和pointData，然后把pointData里面的staus修改为newVal的status
+    const updatedArr2 = replaceStatusById(newVal, pointDataCopy.value);
+    console.log(updatedArr2);
+
+    pointData.value = updatedArr2;
+
+    console.log(pointData.value);
   },
   {
     immediate: true,
@@ -77,8 +93,8 @@ watch(
 onMounted(() => {
   console.log("组件挂载了");
   const pointDataJson = JSON.parse(localStorage.getItem("pointData")) || [];
-  const arr = JSON.parse(JSON.stringify(pointDataJson));
-  pointData.value = arr.filter((item) => item.type === 2);
+  pointDataCopy.value = JSON.parse(JSON.stringify(pointDataJson));
+  pointData.value = pointDataCopy.value.filter((item) => item.type === 2);
 });
 </script>
 
