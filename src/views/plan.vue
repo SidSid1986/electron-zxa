@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-12 11:26:16
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-13 10:14:32
+ * @LastEditTime: 2025-12-13 17:06:37
  * @FilePath: \zi-xiao-ai\src\views\plan.vue
  * @Description: 
 -->
@@ -168,6 +168,8 @@ import { useRouter } from "vue-router";
 import Top from "@/components/Top.vue";
 import Keyboard from "@/components/Keyboard.vue";
 import { getCaseData, getCaseById } from "@/utils/caseDataManager";
+
+import pointData from "@/data/pointData.json";
 const router = useRouter();
 
 const dialogVisible = ref(false);
@@ -401,6 +403,7 @@ const confirmDialog = () => {
 };
 
 onMounted(() => {
+  localStorage.setItem("pointData", JSON.stringify(pointData));
   setTimeout(() => {
     initLeftHeight();
     initRightHeight();

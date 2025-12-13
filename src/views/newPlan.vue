@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-12 14:38:40
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-13 09:52:04
+ * @LastEditTime: 2025-12-13 14:21:32
  * @FilePath: \zi-xiao-ai\src\views\newPlan.vue
  * @Description: 新增灸方页面  
 -->
@@ -20,7 +20,9 @@
       <div class="point-content-right">
         <div class="right-content">
           <div class="table-nav">
-            <el-button class="add-btn" type="primary">新增</el-button>
+            <el-button @click="handleAdd" class="add-btn" type="primary"
+              >新增</el-button
+            >
           </div>
           <div class="table-content">
             <div class="table-header">
@@ -117,6 +119,9 @@ const handleCancel = () => {
   router.push("/plan");
 };
 
+const handleAdd = () => {
+  router.push("/chooseType");
+};
 // 更新最大滚动偏移（边界计算）
 const updateRightMaxOffset = () => {
   if (rightContentHeight.value <= rightContainerHeight.value) {
@@ -319,8 +324,8 @@ onUnmounted(() => {
         border-radius: 12px;
 
         img {
-          width: 441px;
-          height: 636px;
+          width: 480px;
+          height: 800px;
         }
       }
     }
