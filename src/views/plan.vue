@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-12 11:26:16
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-12 14:45:57
+ * @LastEditTime: 2025-12-13 10:14:32
  * @FilePath: \zi-xiao-ai\src\views\plan.vue
  * @Description: 
 -->
@@ -113,6 +113,8 @@
             class="plan-input"
             v-model="planName"
             placeholder="请输入方案名称"
+            @focus="() => keyboardRef.open(null, 'input-planName')"
+            @click.stop
           />
         </div>
         <div class="dialog-text">创建完成后可在下一个页面配置灸法详情</div>
@@ -149,6 +151,13 @@
     >
       <DrawerList />
     </el-drawer>
+
+    <Keyboard
+      ref="keyboardRef"
+      v-model="planName"
+      inputId="input-planName"
+      :isNumber="false"
+    />
   </div>
 </template>
 
@@ -157,6 +166,7 @@ import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 
 import Top from "@/components/Top.vue";
+import Keyboard from "@/components/Keyboard.vue";
 import { getCaseData, getCaseById } from "@/utils/caseDataManager";
 const router = useRouter();
 
@@ -188,7 +198,9 @@ const rightContentHeight = ref(0);
 const rightContainerHeight = ref(0);
 const rightMaxOffset = ref(0);
 
+const keyboardRef = ref(null);
 const planName = ref("");
+const newPlan = ref({});
 
 const currentUser = ref(
   JSON.parse(localStorage.getItem("userInfo") || '{"nickName":"未登录"}')
@@ -378,7 +390,13 @@ const openDialog = () => {
   dialogVisible.value = true;
 };
 
+const cancelDialog = () => {
+  dialogVisible.value = false;
+};
+
 const confirmDialog = () => {
+  newPlan.value.name = planName.value;
+  localStorage.setItem("newPlan", JSON.stringify(newPlan.value));
   router.push(`/newPlan`);
 };
 

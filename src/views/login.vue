@@ -28,6 +28,7 @@
                 placeholder="请输入绑定账号"
                 class="login-input"
                 size="large"
+                @click.stop
                 @focus="() => keyboardRef.open('username')"
               >
                 <template #prefix>
@@ -45,6 +46,7 @@
                 class="login-input"
                 size="large"
                 show-password
+                @click.stop
                 @focus="() => keyboardRef.open('password')"
               >
                 <template #prefix>

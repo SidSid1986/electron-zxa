@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-11-29 10:30:04
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-12 15:21:23
+ * @LastEditTime: 2025-12-12 16:17:52
  * @FilePath: \zi-xiao-ai\src\router\index.js
  * @Description:
  */
@@ -118,6 +118,15 @@ const routes = [
     path: "/material",
     name: "Material",
     component: () => import("@/views/material.vue"),
+    meta: {
+      requiresAuth: true,
+      roles: ["admin", "super_admin"],
+    },
+  },
+  {
+    path: "/time",
+    name: "Time",
+    component: () => import("@/views/time.vue"),
     meta: {
       requiresAuth: true,
       roles: ["admin", "super_admin"],

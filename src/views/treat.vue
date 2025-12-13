@@ -156,8 +156,8 @@ import TreatSwiper from "@/components/TreatSwiper.vue";
 import TemperatureModal from "@/components/TemperatureModal.vue";
 import VolumeModal from "@/components/VolumeModal.vue";
 import MusicPlayer from "@/components/MusicPlayer.vue";
-import BodyPic from "@/assets/pic/5.png";
-import LegPic from "@/assets/pic/3.png";
+import BodyPic from "@/assets/pic/body/body0.png";
+import LegPic from "@/assets/pic/body/body1.png";
 
 const $ws = inject("$ws");
 

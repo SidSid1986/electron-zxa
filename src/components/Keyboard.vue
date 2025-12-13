@@ -76,21 +76,39 @@ import Keyboard from "simple-keyboard";
 import "simple-keyboard/build/css/index.css";
 import chineseLayout from "simple-keyboard-layouts/build/layouts/chinese.js";
 
-// 定义Props：移除field，仅保留form和precision
+// 定义Props：支持两种模式（表单模式/普通值模式）
 const props = defineProps({
+  // 表单模式：表单对象 + 字段名
   form: {
     type: Object,
-    required: true,
+    default: null,
   },
+  // 普通值模式：v-model绑定单个值
+  modelValue: {
+    type: [String, Number],
+    default: "",
+  },
+  // 【新增】单一值模式下的输入框标识（用于定位输入框）
+  inputId: {
+    type: String,
+    default: "",
+  },
+  // 精度限制（仅对数值有效）
   precision: {
     type: Number,
     default: 2,
   },
+  // 是否仅允许数字（新增：适配数值输入）
+  isNumber: {
+    type: Boolean,
+    default: false,
+  },
 });
 
-const emit = defineEmits(["close"]);
+// 定义事件：支持v-model和关闭事件
+const emit = defineEmits(["update:modelValue", "close"]);
 
-// 内部状态：新增currentField维护当前绑定字段（替代props.field）
+// 内部状态
 const keyboardRef = ref(null);
 const keyboardInstance = ref(null);
 const visible = ref(false);
@@ -98,54 +116,135 @@ const isChineseMode = ref(false);
 const isOpening = ref(false);
 const keyboardWrapperRef = ref(null);
 const currentValue = ref("");
-const currentField = ref(""); // 新增：内部维护当前字段
+const currentField = ref(""); // 表单模式-当前字段名
+const currentInputId = ref(""); // 单一值模式-输入框ID
 
-// 基础布局不变
-const baseLayout = {
-  default: [
-    "1 2 3 4 5 6 7 8 9 0 {bksp}",
-    "q w e r t y u i o p",
-    "a s d f g h j k l",
-    "z x c v b n m {shift}",
-    "{space} {enter} {clear}",
-  ],
-  shift: [
-    "1 2 3 4 5 6 7 8 9 0 {bksp}",
-    "Q W E R T Y U I O P",
-    "A S D F G H J K L",
-    "Z X C V B N M {shift}",
-    "{space} {enter} {clear}",
-  ],
+// 获取数据源（兼容表单/单一值模式）
+const getCurrentDataSource = () => {
+  // 表单模式
+  if (props.form && currentField.value) {
+    return {
+      get: () => props.form[currentField.value] || "",
+      set: (val) => {
+        props.form[currentField.value] = val;
+      },
+      type: "form",
+    };
+  } 
+  // 单一值模式
+  else {
+    return {
+      get: () => props.modelValue || "",
+      set: (val) => {
+        emit("update:modelValue", val);
+      },
+      type: "single",
+    };
+  }
 };
 
-// 初始化键盘：将props.field改为currentField
-const initKeyboard = () => {
-  if (!keyboardRef.value || !currentField.value) return; // 改为currentField
+// 【新增】获取当前输入框元素（兼容两种模式）
+const getCurrentInputEl = () => {
+  // 表单模式：通过placeholder定位
+  if (currentField.value) {
+    return document.querySelector(
+      `.login-input input[placeholder*="${currentField.value === "username" ? "账号" : "密码"}"]`
+    );
+  }
+  // 单一值模式：通过ID定位
+  else if (currentInputId.value) {
+    return document.getElementById(currentInputId.value);
+  }
+  // 兜底：获取当前聚焦的输入框
+  return document.activeElement?.tagName === "INPUT" 
+    ? document.activeElement 
+    : null;
+};
 
+// 基础布局（支持数字模式切换）
+const getBaseLayout = () => {
+  // 数字模式布局
+  if (props.isNumber) {
+    return {
+      default: [
+        "1 2 3 {bksp}",
+        "4 5 6 {clear}",
+        "7 8 9 {enter}",
+        "0 . {space}",
+      ],
+    };
+  }
+  // 普通字母布局
+  return {
+    default: [
+      "1 2 3 4 5 6 7 8 9 0 {bksp}",
+      "q w e r t y u i o p",
+      "a s d f g h j k l",
+      "z x c v b n m {shift}",
+      "{space} {enter} {clear}",
+    ],
+    shift: [
+      "1 2 3 4 5 6 7 8 9 0 {bksp}",
+      "Q W E R T Y U I O P",
+      "A S D F G H J K L",
+      "Z X C V B N M {shift}",
+      "{space} {enter} {clear}",
+    ],
+  };
+};
+
+// 初始化键盘
+const initKeyboard = () => {
+  if (!keyboardRef.value) return;
+
+  // 销毁原有实例
   if (keyboardInstance.value) {
     keyboardInstance.value.destroy();
   }
 
-  // 初始化值改为currentField
-  currentValue.value = props.form[currentField.value] || "";
+  // 初始化当前值
+  const dataSource = getCurrentDataSource();
+  currentValue.value = dataSource.get();
 
+  // 创建键盘实例
   keyboardInstance.value = new Keyboard(keyboardRef.value, {
     onChange: (input) => {
-      currentValue.value = input;
-      // 同步到表单：改为currentField
-      props.form[currentField.value] = input;
+      // 数字模式：过滤非数字字符
+      let finalInput = input;
+      if (props.isNumber) {
+        finalInput = input
+          .replace(/[^0-9.]/g, "") // 仅保留数字和小数点
+          .replace(/(\.\d*)\./g, "$1") // 仅保留一个小数点
+          // 限制小数位数
+          .replace(new RegExp(`(\\d+)\\.(\\d{${props.precision}}).*$`), "$1.$2")
+          .replace(/\.$/, ""); // 移除末尾的小数点
+      }
+
+      currentValue.value = finalInput;
+      // 更新数据源
+      const dataSource = getCurrentDataSource();
+      dataSource.set(finalInput);
+      // 同步更新键盘实例的输入值
+      if (keyboardInstance.value) {
+        keyboardInstance.value.setInput(finalInput);
+      }
+      
+      // 强制触发输入框事件（核心：解决回显问题）
+      triggerInputEvent(finalInput);
     },
     onKeyPress: handleKeyPress,
     onInit: (kbd) => {
+      // 初始化时强制设置输入值
       kbd.setInput(currentValue.value);
-      if (isChineseMode.value) {
+      // 中文模式配置
+      if (isChineseMode.value && !props.isNumber) {
         kbd.setOptions({
           layoutCandidates: chineseLayout.layoutCandidates,
           enableCandidates: true,
         });
       }
     },
-    layout: baseLayout,
+    layout: getBaseLayout(),
     layoutName: "default",
     display: {
       "{bksp}": "删除",
@@ -159,32 +258,42 @@ const initKeyboard = () => {
   });
 };
 
-// 按键处理：所有props.field改为currentField
+// 按键处理
 const handleKeyPress = (button) => {
   const kbd = keyboardInstance.value;
   if (!kbd) return;
 
+  const dataSource = getCurrentDataSource();
+
   switch (button) {
     case "{bksp}":
       currentValue.value = currentValue.value.slice(0, -1);
-      props.form[currentField.value] = currentValue.value; // 改为currentField
+      dataSource.set(currentValue.value);
+      kbd.setInput(currentValue.value);
+      triggerInputEvent(currentValue.value);
       break;
     case "{shift}":
-      const newLayout =
-        kbd.options.layoutName === "default" ? "shift" : "default";
-      kbd.setOptions({ layoutName: newLayout });
+      if (!props.isNumber) {
+        const newLayout = kbd.options.layoutName === "default" ? "shift" : "default";
+        kbd.setOptions({ layoutName: newLayout });
+      }
       break;
     case "{enter}":
       handleClose();
       break;
     case "{clear}":
-      kbd.clearInput();
       currentValue.value = "";
-      props.form[currentField.value] = ""; // 改为currentField
+      dataSource.set("");
+      kbd.clearInput();
+      triggerInputEvent("");
       break;
     case "{space}":
-      currentValue.value += " ";
-      props.form[currentField.value] = currentValue.value; // 改为currentField
+      if (!props.isNumber) {
+        currentValue.value += " ";
+        dataSource.set(currentValue.value);
+        kbd.setInput(currentValue.value);
+        triggerInputEvent(currentValue.value);
+      }
       break;
     default:
       nextTick(() => {
@@ -194,8 +303,25 @@ const handleKeyPress = (button) => {
   }
 };
 
-// 切换中英文模式不变
+// 【核心】触发输入框事件（兼容所有模式）
+const triggerInputEvent = (val) => {
+  nextTick(() => {
+    const inputEl = getCurrentInputEl();
+    if (inputEl) {
+      // 强制设置输入框value
+      inputEl.value = val;
+      // 触发input事件（Vue v-model核心监听）
+      inputEl.dispatchEvent(new Event('input', { bubbles: true, cancelable: true }));
+      // 触发change事件（兜底）
+      inputEl.dispatchEvent(new Event('change', { bubbles: true, cancelable: true }));
+    }
+  });
+};
+
+// 切换中英文模式（数字模式下禁用）
 const toggleChineseMode = () => {
+  if (props.isNumber) return;
+
   isChineseMode.value = !isChineseMode.value;
   const kbd = keyboardInstance.value;
   if (kbd) {
@@ -208,35 +334,58 @@ const toggleChineseMode = () => {
   }
 };
 
-// 关闭键盘：props.field改为currentField
+// 关闭键盘
 const handleClose = () => {
+  // 精度处理（仅对数值有效）
   if (props.precision && currentValue.value) {
-    currentValue.value = currentValue.value
-      ?.replace(new RegExp(`(\\d+)\\.(\\d{${props.precision}}).*$`), "$1.$2")
-      .replace(/\.$/, "");
-    props.form[currentField.value] = currentValue.value; // 改为currentField
+    let finalVal = currentValue.value;
+    if (props.isNumber) {
+      finalVal = finalVal
+        .replace(new RegExp(`(\\d+)\\.(\\d{${props.precision}}).*$`), "$1.$2")
+        .replace(/\.$/, "");
+    }
+    currentValue.value = finalVal;
+    const dataSource = getCurrentDataSource();
+    dataSource.set(finalVal);
+    triggerInputEvent(finalVal);
   }
+
   visible.value = false;
   emit("close");
 };
 
-// 打开键盘：修改为给currentField赋值（不再修改props）
-const open = (field) => {
-  if (!field) return;
+// 【重载open方法】支持两种模式：
+// 1. 表单模式：open('username') 
+// 2. 单一值模式：open(null, 'input-planName')
+const open = (field, inputId) => {
+  // 表单模式
+  if (field) {
+    currentField.value = field;
+    currentInputId.value = "";
+    // 初始化字段值
+    if (props.form) {
+      props.form[field] = props.form[field] || "";
+    }
+  }
+  // 单一值模式
+  else if (inputId || props.inputId) {
+    currentField.value = "";
+    currentInputId.value = inputId || props.inputId;
+  }
+
   isOpening.value = true;
-  currentField.value = field; // 改为内部变量赋值
   visible.value = true;
 
   nextTick(() => {
-    initKeyboard(); // 此时currentField已有值，能正常初始化
-    keyboardWrapperRef.value = document.querySelector(
-      ".virtual-keyboard-wrapper"
-    );
+    initKeyboard();
+    keyboardWrapperRef.value = document.querySelector(".virtual-keyboard-wrapper");
 
-    const inputEl = document.querySelector(
-      `.login-input input[placeholder*="${field === "username" ? "账号" : "密码"}"]`
-    );
+    // 自动聚焦输入框
+    const inputEl = getCurrentInputEl();
     if (inputEl) {
+      // 同步初始值
+      const dataSource = getCurrentDataSource();
+      inputEl.value = dataSource.get();
       inputEl.focus();
       setTimeout(() => {
         inputEl.selectionStart = inputEl.selectionEnd = inputEl.value.length;
@@ -250,7 +399,7 @@ const open = (field) => {
   }, 100);
 };
 
-// 点击外部关闭逻辑不变
+// 点击外部关闭逻辑
 const handleClickOutside = (e) => {
   if (!visible.value || isOpening.value) return;
 
@@ -259,27 +408,37 @@ const handleClickOutside = (e) => {
     document.querySelector(".virtual-keyboard-wrapper");
   if (!wrapperEl) return;
 
-  const isInput =
-    e.target.tagName === "INPUT" &&
-    e.target.classList.contains("el-input__inner");
+  const isInput = e.target.tagName === "INPUT" && e.target.classList.contains("el-input__inner");
   if (!wrapperEl.contains(e.target) && !isInput) {
     handleClose();
   }
 };
 
-// 监听表单变化：改为监听currentField对应的字段
+// 监听数据源变化
 watch(
-  () => props.form[currentField.value], // 改为currentField
-  (val) => {
-    if (visible.value && val !== currentValue.value) {
-      currentValue.value = val;
-      keyboardInstance.value?.setInput(val);
+  [() => props.form, () => props.modelValue],
+  () => {
+    if (visible.value) {
+      const dataSource = getCurrentDataSource();
+      const newVal = dataSource.get();
+      if (newVal !== currentValue.value) {
+        currentValue.value = newVal;
+        keyboardInstance.value?.setInput(newVal);
+        triggerInputEvent(newVal);
+      }
     }
   },
   { deep: true }
 );
 
-// 生命周期不变
+// 监听数字模式/精度变化
+watch([() => props.isNumber, () => props.precision], () => {
+  if (visible.value) {
+    initKeyboard();
+  }
+});
+
+// 生命周期
 onMounted(() => {
   document.addEventListener("click", handleClickOutside);
 });
@@ -291,7 +450,7 @@ onUnmounted(() => {
   document.removeEventListener("click", handleClickOutside);
 });
 
-// 暴露方法不变
+// 暴露方法
 defineExpose({
   open,
   handleClose,
