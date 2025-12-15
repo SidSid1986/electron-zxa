@@ -137,7 +137,7 @@ onUnmounted(() => {
     flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
-    border: 3px solid blue;
+    // border: 3px solid blue;
     position: relative;
 
     .point-item {

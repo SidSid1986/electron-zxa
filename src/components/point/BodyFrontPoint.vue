@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-13 14:48:09
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-15 14:23:01
+ * @LastEditTime: 2025-12-15 15:28:02
  * @FilePath: \zi-xiao-ai\src\components\point\BodyFrontPoint.vue
  * @Description: 
 -->
@@ -137,7 +137,7 @@ onUnmounted(() => {
     flex-wrap: wrap;
     align-items: center;
     justify-content: center;
-    border: 3px solid blue;
+    // border: 3px solid blue;
     position: relative;
     width: 100%;
     box-sizing: border-box;

@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-11 17:24:46
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-12 16:18:16
+ * @LastEditTime: 2025-12-15 15:49:26
  * @FilePath: \zi-xiao-ai\src\components\DrawerList.vue
  * @Description: 
 -->
@@ -79,7 +79,7 @@ const menuList = ref([
     hasBorder: false,
     role: ["super_admin"],
     icon: "icon-shezhi",
-    path: "/main",
+    path: "/deviceInfo",
   },
   {
     name: "基础参数",

@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-13 14:48:09
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-15 15:08:24
+ * @LastEditTime: 2025-12-15 15:27:37
  * @FilePath: \zi-xiao-ai\src\components\point\LegFrontPoint.vue
  * @Description: 
 -->
@@ -137,7 +137,7 @@ onUnmounted(() => {
     flex-wrap: wrap;
     align-items: center;
     justify-content: center;
-    border: 3px solid blue;
+    // border: 3px solid blue;
     position: relative;
 
     .point-item {

@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-13 14:48:09
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-15 13:34:56
+ * @LastEditTime: 2025-12-15 15:30:03
  * @FilePath: \zi-xiao-ai\src\components\point\BodyBackPoint.vue
  * @Description: 
 -->
@@ -141,12 +141,12 @@ onUnmounted(() => {
     flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
-    border: 3px solid blue;
+    // border: 3px solid blue;
     position: relative;
 
     .point-item {
       box-sizing: border-box;
-      width: 20vw;
+      width: 25vw;
       height: 6vh;
       display: flex;
       align-items: center;
@@ -191,16 +191,10 @@ onUnmounted(() => {
       transition: all 0.3s ease;
     }
 
-    .da.active {
-      background-color: #693098;
-      color: #fff;
-      border-color: #ffd700;
-    }
-
     .ming {
       position: absolute;
       top: 22vh;
-      right: 33%;
+      right: 18vw;
     }
   }
 }

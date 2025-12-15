@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-11-29 10:30:04
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-13 13:35:58
+ * @LastEditTime: 2025-12-15 15:48:55
  * @FilePath: \zi-xiao-ai\src\router\index.js
  * @Description:
  */
@@ -148,6 +148,15 @@ const routes = [
     meta: {
       requiresAuth: true,
       roles: ["admin", "super_admin"],
+    },
+  },
+  {
+    path: "/deviceInfo",
+    name: "DeviceInfo",
+    component: () => import("@/views/deviceInfo.vue"),
+    meta: {
+      requiresAuth: true,
+      roles: ["super_admin"],
     },
   },
 ];

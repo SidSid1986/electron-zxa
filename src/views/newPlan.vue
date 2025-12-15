@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-12 14:38:40
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-15 14:46:22
+ * @LastEditTime: 2025-12-15 15:26:51
  * @FilePath: \zi-xiao-ai\src\views\newPlan.vue
  * @Description: 新增灸方页面  
 -->
@@ -355,7 +355,7 @@ onUnmounted(() => {
       align-items: center;
       justify-content: center;
 
-      padding: 5vh;
+      padding: 5vh 0;
 
       .left-img {
         box-sizing: border-box;
