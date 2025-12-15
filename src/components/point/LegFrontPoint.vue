@@ -1,17 +1,9 @@
 <!--
  * @Author: Sid Li
- * @Date: 2025-12-13 14:48:31
- * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-15 13:41:18
- * @FilePath: \zi-xiao-ai\src\components\point\LegFrontPoint.vue
- * @Description: 
--->
-u<!--
- * @Author: Sid Li
  * @Date: 2025-12-13 14:48:09
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-15 13:38:53
- * @FilePath: \zi-xiao-ai\src\components\point\BodyFrontPoint.vue
+ * @LastEditTime: 2025-12-15 15:08:24
+ * @FilePath: \zi-xiao-ai\src\components\point\LegFrontPoint.vue
  * @Description: 
 -->
 <template>
@@ -22,11 +14,7 @@ u<!--
         v-for="item in pointList"
         :key="item.id"
         class="point-item"
-        :class="[
-          { da: item.name == '大椎穴' },
-          { ming: item.name == '命门穴' },
-          { active: isPointSelected(item) },
-        ]"
+        :class="[{ active: isPointSelected(item) }]"
       >
         <span>{{ item.name }}</span>
       </div>
@@ -117,7 +105,7 @@ const clearSelectedPoints = () => {
 onMounted(() => {
   console.log("组件挂载了");
   const pointData = JSON.parse(localStorage.getItem("pointData")) || [];
-  pointList.value = pointData.filter((item) => item.type == 0);
+  pointList.value = pointData.filter((item) => item.type == 1);
   // currentPlan.value.bodyType = 2;
   clearSelectedPoints(); // 挂载时清空选中状态
   console.log("筛选后的穴位列表:", pointList.value);
@@ -148,13 +136,14 @@ onUnmounted(() => {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    justify-content: space-between;
+    justify-content: center;
     border: 3px solid blue;
     position: relative;
 
     .point-item {
+      margin: 0 20px;
       box-sizing: border-box;
-      width: 20vw;
+      width: 40%;
       height: 6vh;
       display: flex;
       align-items: center;
