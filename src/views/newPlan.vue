@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-12 14:38:40
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-13 14:21:32
+ * @LastEditTime: 2025-12-15 10:44:12
  * @FilePath: \zi-xiao-ai\src\views\newPlan.vue
  * @Description: 新增灸方页面  
 -->
@@ -14,7 +14,11 @@
     <div class="point-content">
       <div class="point-content-left">
         <div class="left-img">
-          <img src="@/assets/pic/body/body2.png" alt="" />
+          <component
+            :is="currentComponent"
+            ref="bodyRef"
+            :newPlanPoint="newPlanPoint"
+          />
         </div>
       </div>
       <div class="point-content-right">
@@ -53,12 +57,18 @@
               >
                 <div
                   class="table-line"
-                  v-for="item in tableData"
-                  :key="item.id"
+                  v-for="(item, index) in tableData"
+                  :key="index"
                 >
-                  <div class="table-item">{{ item.name }}</div>
+                  <div class="table-item">{{ item.chooseName }}</div>
                   <div class="table-item">{{ item.time }}</div>
-                  <div class="table-item">{{ item.area }}</div>
+                  <div
+                    class="table-item"
+                    v-for="area in item.points"
+                    :key="area"
+                  >
+                    {{ area.name }}
+                  </div>
                   <div class="table-item">
                     <el-button class="edit-btn" type="primary">编辑</el-button>
                     <el-button class="delete-btn" type="danger">删除</el-button>
@@ -83,9 +93,17 @@
 <script setup>
 import { ref, onMounted, nextTick, onUnmounted } from "vue";
 import caseData from "@/data/caseData.json";
+// import pointData from "@/data/pointData.json";
 import { useRoute, useRouter } from "vue-router";
+import BodyFront from "@/components/body/BodyFront.vue";
+import BodyBack from "@/components/body/BodyBack.vue";
+import LegFront from "@/components/body/LegFront.vue";
+import LegBack from "@/components/body/LegBack.vue";
 
 const router = useRouter();
+
+const bodyRef = ref(null);
+const currentComponent = shallowRef(markRaw(BodyBack));
 
 // 拖拽滚动核心状态（复刻plan.vue逻辑）
 const rightIsDragging = ref(false);
@@ -100,22 +118,42 @@ const rightMaxOffset = ref(0); // 最大滚动偏移（底部边界）
 
 // 页面数据
 const name = ref("");
-const tableData = ref([
-  { id: 1, name: "灸法1", time: "10分钟", area: "头、肩、胸" },
-  { id: 2, name: "灸法2", time: "15分钟", area: "头、肩、胸" },
-  { id: 3, name: "灸法3", time: "20分钟", area: "头、肩、胸" },
-  { id: 4, name: "灸法4", time: "25分钟", area: "头、肩、胸" },
-  { id: 5, name: "灸法5", time: "30分钟", area: "头、肩、胸" },
-  { id: 6, name: "灸法6", time: "35分钟", area: "头、肩、胸" },
-  { id: 7, name: "灸法7", time: "40分钟", area: "头、肩、胸" },
-  { id: 8, name: "灸法8", time: "45分钟", area: "头、肩、胸" },
-  { id: 9, name: "灸法9", time: "50分钟", area: "头、肩、胸" },
-  { id: 10, name: "灸法10", time: "55分钟", area: "头、肩、胸" },
-  { id: 11, name: "灸法11", time: "60分钟", area: "头、肩、胸" },
-  { id: 12, name: "灸法12", time: "65分钟", area: "头、肩、胸" },
-]);
+const tableData = ref([]);
+const newPlanPoint = ref([]);
+
+const chooseBody = (item, index) => {
+  switch (item.type) {
+    case 0:
+      currentComponent.value = markRaw(BodyFront);
+      break;
+    case 1:
+      currentComponent.value = markRaw(LegFront);
+      break;
+    case 2:
+      currentComponent.value = markRaw(BodyBack);
+      break;
+    case 3:
+      currentComponent.value = markRaw(LegBack);
+      break;
+    default:
+      break;
+  }
+};
+
+// 清空选中状态的方法（仅清空points，保留其他字段）
+const clearSelectedPoints = () => {
+  localStorage.removeItem("newPlan");
+};
 
 const handleCancel = () => {
+  // 清空选中状态
+  clearSelectedPoints();
+  newPlanPoint.value = [];
+
+  //重置pointData
+  // console.log(pointData);
+  // localStorage.setItem("pointData", JSON.stringify(pointData));
+
   router.push("/plan");
 };
 
@@ -247,6 +285,13 @@ onMounted(() => {
     localStorage.getItem("newPlan") || '{"name":"默认灸方"}'
   );
   name.value = newPlan.name;
+  chooseBody(newPlan);
+
+  newPlanPoint.value = JSON.parse(localStorage.getItem("newPlan")).points;
+
+  if (newPlan.points && newPlan.points.length > 0) {
+    tableData.value.push(newPlan);
+  }
 
   // 初始化高度（延迟确保DOM渲染完成）
   setTimeout(() => {

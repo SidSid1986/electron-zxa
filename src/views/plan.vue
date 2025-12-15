@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-12 11:26:16
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-13 17:06:37
+ * @LastEditTime: 2025-12-15 10:42:11
  * @FilePath: \zi-xiao-ai\src\views\plan.vue
  * @Description: 
 -->
@@ -403,7 +403,10 @@ const confirmDialog = () => {
 };
 
 onMounted(() => {
-  localStorage.setItem("pointData", JSON.stringify(pointData));
+  const arr = JSON.parse(JSON.stringify(pointData));
+  console.log(arr);
+  localStorage.setItem("pointData", JSON.stringify(arr));
+
   setTimeout(() => {
     initLeftHeight();
     initRightHeight();

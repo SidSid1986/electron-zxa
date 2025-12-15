@@ -2,8 +2,8 @@
  * @Author: Sid Li
  * @Date: 2025-12-13 14:48:09
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-13 19:05:29
- * @FilePath: \electron-zxa\src\components\point\BodyBackPoint.vue
+ * @LastEditTime: 2025-12-15 10:46:23
+ * @FilePath: \zi-xiao-ai\src\components\point\BodyBackPoint.vue
  * @Description: 
 -->
 <template>
@@ -28,23 +28,18 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted, watch } from "vue";
-// 若使用Vue Router，引入路由实例（根据项目实际路径调整）
 import { useRouter } from "vue-router";
-import PointData from "@/data/pointData.json";
+// import PointData from "@/data/pointData.json";
+import { ElMessageBox } from "element-plus";
 
 const emit = defineEmits(["getNewPlan"]);
-// 初始化路由实例（Vue Router场景）
 const router = useRouter();
 
 // 初始化newPlan，补充points数组 + 自动添加bodyType=2
 const initNewPlan = () => {
   const storedPlan = JSON.parse(localStorage.getItem("newPlan")) || {};
-
-  // 1. 补充points数组（兼容旧数据）
   if (!storedPlan.points) storedPlan.points = [];
-  // 2. 强制添加/更新bodyType字段为2（进入页面即设置）
   storedPlan.bodyType = 2;
-
   return storedPlan;
 };
 
@@ -52,80 +47,80 @@ const initNewPlan = () => {
 const currentPlan = ref(initNewPlan());
 const pointList = ref([]);
 
+// 最大可选数量（抽离为常量，便于后续修改）
+const MAX_SELECT_COUNT = 2;
+
 // 判断穴位是否被选中
 const isPointSelected = (item) => {
   return currentPlan.value.points.some((p) => p.id === item.id);
 };
 
-// 处理穴位选择（基于treatType判断单选/多选，单选支持反选）
+// 处理穴位选择（基于treatType判断单选/多选，多选限制最多2个）
 const treatPoint = (item) => {
   const isMultiSelect = currentPlan.value.treatType === 3;
-  const isSelected = isPointSelected(item); // 先判断当前穴位是否选中
+  const isSelected = isPointSelected(item); // 当前穴位是否已选中
 
   // 统一设置status（0未选中，1选中）
   item.status = isSelected ? 0 : 1;
 
   if (isMultiSelect) {
-    // 多选模式：切换选中状态
+    // 多选模式逻辑
     if (isSelected) {
+      // 已选中 → 取消选中（不受数量限制）
       currentPlan.value.points = currentPlan.value.points.filter(
         (p) => p.id !== item.id
       );
     } else {
+      // 未选中 → 先判断当前选中数量是否达上限
+      if (currentPlan.value.points.length >= MAX_SELECT_COUNT) {
+        // 达上限 → 弹窗提示，阻止添加
+        ElMessageBox.alert(
+          `最多只能选择${MAX_SELECT_COUNT}个穴位，请先取消已选的穴位`,
+          "提示",
+          {
+            customClass: "custom-message-point",
+            confirmButtonText: "确认",
+            type: "warning", // 警告类型，视觉更友好
+          }
+        );
+        return; // 终止后续逻辑
+      }
+      // 未达上限 → 添加当前穴位
       currentPlan.value.points.push(item);
     }
   } else {
-    // 单选模式：支持反选（核心修改）
+    // 单选模式：支持反选
     if (isSelected) {
-      // 已选中当前穴位 → 清空数组（取消选中）
       currentPlan.value.points = [];
     } else {
-      // 未选中 → 替换为当前穴位
       currentPlan.value.points = [item];
     }
   }
 
-  // 同步到localStorage（包含bodyType字段）
+  // 同步到localStorage + 通知父组件
   localStorage.setItem("newPlan", JSON.stringify(currentPlan.value));
   emit("getNewPlan");
 };
 
-// 清空选中状态的方法（抽离为通用函数）
+// 清空选中状态的方法
 const clearSelectedPoints = () => {
-  console.log("222");
-  // 清空points数组
   currentPlan.value.points = [];
-  // 同步到localStorage
   localStorage.setItem("newPlan", JSON.stringify(currentPlan.value));
-  // 通知父组件更新
   emit("getNewPlan");
 };
 
 onMounted(() => {
   console.log("组件挂载了");
-  pointList.value = PointData.filter((item) => item.type == 2);
-
+  const pointData = JSON.parse(localStorage.getItem("pointData")) || [];
+  pointList.value = pointData.filter((item) => item.type == 2);
   currentPlan.value.bodyType = 2;
-  localStorage.setItem("newPlan", JSON.stringify(currentPlan.value));
-
+  clearSelectedPoints(); // 挂载时清空选中状态
   console.log("筛选后的穴位列表:", pointList.value);
-  console.log("当前计划数据:", currentPlan.value); // 可看到bodyType:2
-
-  // 【可选】路由切换时清空（Vue Router场景）
-  if (router) {
-    // 监听路由变化，离开当前页面时清空
-    router.afterEach((to, from) => {
-      // 假设当前组件对应的路由路径是 /bodyBackPoint，根据实际路径修改
-      if (from.path === "/bodyBackPoint") {
-        clearSelectedPoints();
-      }
-    });
-  }
+  console.log("当前计划数据:", currentPlan.value);
 });
 
-// 【核心】组件卸载时清空选中状态（必加）
 onUnmounted(() => {
-  clearSelectedPoints();
+  // clearSelectedPoints();
   console.log("组件卸载，已清空选中状态");
 });
 </script>
@@ -209,6 +204,47 @@ onUnmounted(() => {
       position: absolute;
       top: 22vh;
       right: 33%;
+    }
+  }
+}
+</style>
+
+<style lang="scss">
+.custom-message-point {
+  width: 40vw !important;
+  .el-message-box__title {
+    color: #693e9c !important;
+    font-weight: 600;
+    font-size: 24px;
+  }
+
+  .el-message-box__content {
+    font-size: 24px !important;
+  }
+
+  .el-message-box__btns .el-button--primary {
+    background-color: #693e9c !important;
+    border-color: #693e9c !important;
+
+    font-size: 24px !important;
+    width: 6vh !important;
+    height: 3vh !important;
+
+    &:hover {
+      background-color: #7c4eb5 !important;
+      border-color: #7c4eb5 !important;
+    }
+  }
+
+  .el-message-box__btns .el-button--default {
+    background-color: #ffffff !important;
+    border-color: #693e9c !important;
+    color: #693e9c !important;
+
+    &:hover {
+      background-color: rgba(105, 62, 156, 0.05) !important;
+      border-color: #7c4eb5 !important;
+      color: #7c4eb5 !important;
     }
   }
 }

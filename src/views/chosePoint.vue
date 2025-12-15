@@ -2,8 +2,8 @@
  * @Author: Sid Li
  * @Date: 2025-12-12 14:38:40
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-13 19:12:17
- * @FilePath: \electron-zxa\src\views\chosePoint.vue
+ * @LastEditTime: 2025-12-15 09:38:51
+ * @FilePath: \zi-xiao-ai\src\views\chosePoint.vue
  * @Description: 选择穴位页面  
 -->
 <template>
@@ -35,9 +35,27 @@
           <div class="point-point">
             <BodyBackPoint @getNewPlan="getNewPlan" />
           </div>
-          <div class="point-info"></div>
+          <div class="point-info">
+            <div class="point-info-selected">
+              <div>已选择穴位:</div>
+              <div v-for="item in newSelectedPoints" :key="item.id">
+                {{ item.name }}
+              </div>
+              <div v-if="newSelectedPoints.length === 0">暂无选择</div>
+            </div>
+
+            <div class="point-info-warning">注意:往复灸需选择两个穴位</div>
+          </div>
           <div class="point-btn">
-            <el-button type="primary" @click="backToPlan">返回</el-button>
+            <el-button type="primary" class="btn-prev" @click="backToPlan"
+              >上一步</el-button
+            >
+            <el-button type="primary" class="btn-prev" @click="cancelPlan"
+              >取消</el-button
+            >
+            <el-button type="primary" class="delete-btn" @click="confirmPlan"
+              >确定</el-button
+            >
           </div>
         </div>
       </div>
@@ -46,7 +64,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick, onUnmounted } from "vue";
+import { ref, onMounted, nextTick, onUnmounted, watch } from "vue";
 import caseData from "@/data/caseData.json";
 import { useRoute, useRouter } from "vue-router";
 import BodyFront from "@/components/body/BodyFront.vue";
@@ -55,6 +73,7 @@ import LegFront from "@/components/body/LegFront.vue";
 import LegBack from "@/components/body/LegBack.vue";
 // import BodyFrontPoint from "@/components/point/BodyFrontPoint.vue";
 import BodyBackPoint from "@/components/point/BodyBackPoint.vue";
+
 // import LegFrontPoint from "@/components/point/LegFrontPoint.vue";
 // import LegBackPoint from "@/components/point/LegBackPoint.vue";
 
@@ -64,6 +83,8 @@ const currentComponent = shallowRef(markRaw(BodyBack));
 
 const newPlanPoint = ref([]);
 const newPlanName = ref("");
+
+const newSelectedPoints = ref([]);
 
 const tabData = ref([
   {
@@ -115,7 +136,33 @@ const getNewPlan = () => {
   newPlanPoint.value = JSON.parse(localStorage.getItem("newPlan")).points;
 };
 
+watch(
+  () => newPlanPoint.value,
+  (newVal) => {
+    newSelectedPoints.value = newVal.filter((p) => p.status === 1);
+  },
+  { deep: true }
+);
+
 const backToPlan = () => {
+  router.push("/chooseType");
+};
+
+// 取消计划
+const cancelPlan = () => {
+  router.push("/plan");
+};
+
+// 确认计划
+const confirmPlan = () => {
+  if (newSelectedPoints.value.length === 0) {
+    ElMessageBox.alert("请选择至少一个穴位", "提示", {
+      customClass: "custom-message-point",
+      confirmButtonText: "确认",
+      type: "warning", // 警告类型，视觉更友好
+    });
+    return; // 终止后续逻辑
+  }
   router.push("/newPlan");
 };
 
@@ -242,9 +289,25 @@ onUnmounted(() => {});
           width: 100%;
           height: 8vh;
           display: flex;
-          align-items: center;
+          flex-direction: column;
+          align-items: flex-start;
           justify-content: center;
-          border: 1px solid red;
+          background-color: #7242ae;
+          font-size: 24px;
+          color: #fff;
+          padding: 0 3vh;
+        }
+        .point-info-selected {
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          justify-content: flex-start;
+          font-size: 24px;
+          color: #fff;
+        }
+        .point-info-warning {
+          font-size: 18px;
+          color: #fff;
         }
         .point-btn {
           box-sizing: border-box;
@@ -260,12 +323,14 @@ onUnmounted(() => {});
   }
 }
 
-:deep(.edit-btn) {
-  width: 80px;
-  height: 40px;
+:deep(.btn-prev) {
+  width: 120px;
+  height: 50px;
   font-size: 18px;
   margin-right: 10px;
   border-radius: 12px;
+  margin: 0 10vh;
+
   --el-button-text-color: #6a3a8a;
   --el-button-bg-color: #eee8f0;
   --el-button-border-color: #eee8f0;
@@ -278,18 +343,20 @@ onUnmounted(() => {});
 }
 
 :deep(.delete-btn) {
-  width: 80px;
-  height: 40px;
+  width: 120px;
+  height: 50px;
   font-size: 18px;
+  margin-right: 10px;
   border-radius: 12px;
-  --el-button-text-color: #9b5b5b;
-  --el-button-bg-color: #fdf0ec;
-  --el-button-border-color: #fdf0ec;
-  --el-button-hover-text-color: #9b5b5b;
-  --el-button-hover-bg-color: #f4e0d8;
-  --el-button-hover-border-color: #f4e0d8;
-  --el-button-active-text-color: #9b5b5b;
-  --el-button-active-bg-color: #ebd0c4;
-  --el-button-active-border-color: #ebd0c4;
+  margin: 0 10vh;
+  --el-button-text-color: #fff;
+  --el-button-bg-color: #af7dc4;
+  --el-button-border-color: #af7dc4;
+  --el-button-hover-text-color: #fff;
+  --el-button-hover-bg-color: #9a6cb8;
+  --el-button-hover-border-color: #9a6cb8;
+  --el-button-active-text-color: #fff;
+  --el-button-active-bg-color: #8a5ca0;
+  --el-button-active-border-color: #8a5ca0;
 }
 </style>

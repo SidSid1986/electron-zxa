@@ -2,8 +2,8 @@
  * @Author: Sid Li
  * @Date: 2025-12-13 14:06:46
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-13 19:00:22
- * @FilePath: \electron-zxa\src\components\body\BodyBack.vue
+ * @LastEditTime: 2025-12-15 08:58:50
+ * @FilePath: \zi-xiao-ai\src\components\body\BodyBack.vue
  * @Description: 身体正面图片组件
 -->
 <template>
