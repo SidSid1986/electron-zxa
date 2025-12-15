@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-13 14:06:46
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-15 08:58:50
+ * @LastEditTime: 2025-12-15 14:31:35
  * @FilePath: \zi-xiao-ai\src\components\body\BodyBack.vue
  * @Description: 身体正面图片组件
 -->
@@ -55,6 +55,8 @@ const pointData = ref([]);
 
 const pointDataCopy = ref([]);
 
+const pointTreat = ref([]);
+
 const replaceStatusById = (sourceArr, targetArr) => {
   // 1. 构建id->status的映射表（提升匹配效率）
   const statusMap = sourceArr.reduce((map, item) => {
@@ -75,13 +77,16 @@ const replaceStatusById = (sourceArr, targetArr) => {
 watch(
   () => props.newPlanPoint,
   (newVal) => {
+    console.log(111222);
     console.log(newVal);
-    //比较newVal和pointData，然后把pointData里面的staus修改为newVal的status
-    const updatedArr2 = replaceStatusById(newVal, pointDataCopy.value);
+    // 核心：先判断pointTreat是否初始化完成，未完成则不执行
+    if (!pointTreat.value || pointTreat.value.length === 0) {
+      console.log("pointTreat尚未初始化，跳过本次更新");
+      return;
+    }
+    const updatedArr2 = replaceStatusById(newVal, pointTreat.value);
     console.log(updatedArr2);
-
     pointData.value = updatedArr2;
-
     console.log(pointData.value);
   },
   {
@@ -94,7 +99,11 @@ onMounted(() => {
   console.log("组件挂载了");
   const pointDataJson = JSON.parse(localStorage.getItem("pointData")) || [];
   pointDataCopy.value = JSON.parse(JSON.stringify(pointDataJson));
-  pointData.value = pointDataCopy.value.filter((item) => item.type === 2);
+
+  pointTreat.value = pointDataCopy.value.filter((item) => item.type === 2);
+
+  const updatedArr2 = replaceStatusById(props.newPlanPoint, pointTreat.value);
+  pointData.value = updatedArr2;
 });
 </script>
 
@@ -107,14 +116,14 @@ onMounted(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  // background-color: #fff;
+  background-color: #fff;
   border-radius: 12px;
-  border: 1px solid green;
+  // border: 1px solid green;
 
   .bg-body-norem {
     width: 441px;
     height: 636px;
-    border: 1px solid red;
+    // border: 1px solid red;
     background: url("@/assets/pic/body/body2.png") no-repeat center center;
     background-size: cover;
     border-radius: 12px;
@@ -122,7 +131,7 @@ onMounted(() => {
   }
 
   .light-ball-item {
-    border: 2px solid green;
+    // border: 2px solid green;
     height: 100%;
     width: 100%;
     position: absolute;

@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-12 14:38:40
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-15 09:38:51
+ * @LastEditTime: 2025-12-15 13:41:38
  * @FilePath: \zi-xiao-ai\src\views\chosePoint.vue
  * @Description: 选择穴位页面  
 -->
@@ -33,7 +33,12 @@
             </div>
           </div>
           <div class="point-point">
-            <BodyBackPoint @getNewPlan="getNewPlan" />
+            <!-- <BodyBackPoint @getNewPlan="getNewPlan" /> -->
+            <component
+              :is="currentPointComponent"
+              ref="bodyPointRef"
+              @getNewPlan="getNewPlan"
+            />
           </div>
           <div class="point-info">
             <div class="point-info-selected">
@@ -71,15 +76,15 @@ import BodyFront from "@/components/body/BodyFront.vue";
 import BodyBack from "@/components/body/BodyBack.vue";
 import LegFront from "@/components/body/LegFront.vue";
 import LegBack from "@/components/body/LegBack.vue";
-// import BodyFrontPoint from "@/components/point/BodyFrontPoint.vue";
+import BodyFrontPoint from "@/components/point/BodyFrontPoint.vue";
 import BodyBackPoint from "@/components/point/BodyBackPoint.vue";
-
-// import LegFrontPoint from "@/components/point/LegFrontPoint.vue";
-// import LegBackPoint from "@/components/point/LegBackPoint.vue";
+import LegFrontPoint from "@/components/point/LegFrontPoint.vue";
+import LegBackPoint from "@/components/point/LegBackPoint.vue";
 
 const router = useRouter();
 const chooseBodyIndex = ref(0);
 const currentComponent = shallowRef(markRaw(BodyBack));
+const currentPointComponent = shallowRef(markRaw(BodyBackPoint));
 
 const newPlanPoint = ref([]);
 const newPlanName = ref("");
@@ -113,21 +118,33 @@ const chooseBody = (item, index) => {
   switch (item.type) {
     case 0:
       currentComponent.value = markRaw(BodyFront);
+      currentPointComponent.value = markRaw(BodyFrontPoint);
       break;
     case 1:
       currentComponent.value = markRaw(LegFront);
+      currentPointComponent.value = markRaw(LegFrontPoint);
       break;
     case 2:
       currentComponent.value = markRaw(BodyBack);
+      currentPointComponent.value = markRaw(BodyBackPoint);
       break;
     case 3:
       currentComponent.value = markRaw(LegBack);
+      currentPointComponent.value = markRaw(LegBackPoint);
       break;
     default:
       break;
   }
 
   chooseBodyIndex.value = index;
+
+  // ========== 核心：修改bodyType字段（保留其他字段） ==========
+  // 1. 读取localStorage中的完整newPlan（无则初始化空对象）
+  const storedPlan = JSON.parse(localStorage.getItem("newPlan")) || {};
+  // 2. 仅修改bodyType为当前item.type
+  storedPlan.bodyType = item.type;
+  // 3. 写回localStorage（保留所有原有字段，仅更新bodyType）
+  localStorage.setItem("newPlan", JSON.stringify(storedPlan));
 };
 
 // 刷新newPlan
@@ -197,7 +214,7 @@ onUnmounted(() => {});
     align-items: center;
     justify-content: center;
     background-color: #e3daec;
-    border: 1px solid #693098;
+    // border: 1px solid #693098;
 
     .plan-name {
       font-size: 36px;
@@ -213,7 +230,7 @@ onUnmounted(() => {});
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 3px solid red;
+    // border: 3px solid red;
 
     .point-content-left {
       box-sizing: border-box;
@@ -222,7 +239,7 @@ onUnmounted(() => {});
       display: flex;
       align-items: center;
       justify-content: center;
-      border: 2px solid blue;
+      // border: 2px solid blue;
       padding: 5vh 2vh;
     }
 
@@ -254,7 +271,7 @@ onUnmounted(() => {});
           display: flex;
           align-items: center;
           justify-content: space-between;
-          border: 1px solid red;
+          // border: 1px solid red;
           background-color: #f3eef4;
           padding: 10px;
           .tab-item {
@@ -282,7 +299,7 @@ onUnmounted(() => {});
           display: flex;
           align-items: center;
           justify-content: center;
-          border: 3px solid green;
+          // border: 3px solid green;
         }
         .point-info {
           box-sizing: border-box;
@@ -316,7 +333,7 @@ onUnmounted(() => {});
           display: flex;
           align-items: center;
           justify-content: center;
-          border: 1px solid red;
+          // border: 1px solid red;
         }
       }
     }

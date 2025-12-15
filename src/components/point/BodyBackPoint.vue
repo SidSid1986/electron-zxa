@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-13 14:48:09
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-15 10:46:23
+ * @LastEditTime: 2025-12-15 13:34:56
  * @FilePath: \zi-xiao-ai\src\components\point\BodyBackPoint.vue
  * @Description: 
 -->
@@ -35,16 +35,8 @@ import { ElMessageBox } from "element-plus";
 const emit = defineEmits(["getNewPlan"]);
 const router = useRouter();
 
-// 初始化newPlan，补充points数组 + 自动添加bodyType=2
-const initNewPlan = () => {
-  const storedPlan = JSON.parse(localStorage.getItem("newPlan")) || {};
-  if (!storedPlan.points) storedPlan.points = [];
-  storedPlan.bodyType = 2;
-  return storedPlan;
-};
-
 // 响应式存储当前计划
-const currentPlan = ref(initNewPlan());
+const currentPlan = ref(JSON.parse(localStorage.getItem("newPlan")));
 const pointList = ref([]);
 
 // 最大可选数量（抽离为常量，便于后续修改）
@@ -57,6 +49,7 @@ const isPointSelected = (item) => {
 
 // 处理穴位选择（基于treatType判断单选/多选，多选限制最多2个）
 const treatPoint = (item) => {
+  console.log(item);
   const isMultiSelect = currentPlan.value.treatType === 3;
   const isSelected = isPointSelected(item); // 当前穴位是否已选中
 
@@ -97,8 +90,12 @@ const treatPoint = (item) => {
     }
   }
 
-  // 同步到localStorage + 通知父组件
-  localStorage.setItem("newPlan", JSON.stringify(currentPlan.value));
+  const storedPlan = JSON.parse(localStorage.getItem("newPlan")) || {};
+  // 2. 仅替换points字段为最新的newPoints
+  storedPlan.points = currentPlan.value.points;
+  // 3. 写回localStorage（仅points变化，其他字段完全保留）
+  localStorage.setItem("newPlan", JSON.stringify(storedPlan));
+
   emit("getNewPlan");
 };
 
@@ -113,7 +110,7 @@ onMounted(() => {
   console.log("组件挂载了");
   const pointData = JSON.parse(localStorage.getItem("pointData")) || [];
   pointList.value = pointData.filter((item) => item.type == 2);
-  currentPlan.value.bodyType = 2;
+  // currentPlan.value.bodyType = 2;
   clearSelectedPoints(); // 挂载时清空选中状态
   console.log("筛选后的穴位列表:", pointList.value);
   console.log("当前计划数据:", currentPlan.value);
@@ -136,7 +133,7 @@ onUnmounted(() => {
   justify-content: flex-start;
   background-color: #fff;
   border-radius: 12px;
-  border: 1px solid green;
+  // border: 1px solid green;
   padding: 3vh;
 
   .point-item-container {

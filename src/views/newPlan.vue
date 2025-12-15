@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-12 14:38:40
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-15 10:44:12
+ * @LastEditTime: 2025-12-15 14:46:22
  * @FilePath: \zi-xiao-ai\src\views\newPlan.vue
  * @Description: 新增灸方页面  
 -->
@@ -62,13 +62,12 @@
                 >
                   <div class="table-item">{{ item.chooseName }}</div>
                   <div class="table-item">{{ item.time }}</div>
-                  <div
-                    class="table-item"
-                    v-for="area in item.points"
-                    :key="area"
-                  >
-                    {{ area.name }}
+                  <div class="table-item">
+                    <span v-for="area in item.points" :key="area">
+                      {{ area.name }}
+                    </span>
                   </div>
+
                   <div class="table-item">
                     <el-button class="edit-btn" type="primary">编辑</el-button>
                     <el-button class="delete-btn" type="danger">删除</el-button>
@@ -122,7 +121,7 @@ const tableData = ref([]);
 const newPlanPoint = ref([]);
 
 const chooseBody = (item, index) => {
-  switch (item.type) {
+  switch (item.bodyType) {
     case 0:
       currentComponent.value = markRaw(BodyFront);
       break;
@@ -285,6 +284,7 @@ onMounted(() => {
     localStorage.getItem("newPlan") || '{"name":"默认灸方"}'
   );
   name.value = newPlan.name;
+  console.log(newPlan);
   chooseBody(newPlan);
 
   newPlanPoint.value = JSON.parse(localStorage.getItem("newPlan")).points;
@@ -428,11 +428,11 @@ onUnmounted(() => {
             flex-direction: row;
             justify-content: space-between;
 
-            padding-right: 20px;
             background-color: #b487c6;
             border-radius: 12px 12px 0 0;
 
             .header-item {
+              width: 25%;
               font-size: 24px;
               font-weight: bold;
               color: #fff;
@@ -476,9 +476,10 @@ onUnmounted(() => {
               flex-direction: row;
               justify-content: space-between;
 
-              padding-right: 20px;
-
               .table-item {
+                box-sizing: border-box;
+                width: 25%;
+
                 font-size: 24px;
                 font-weight: bold;
                 color: #693098;
@@ -486,6 +487,10 @@ onUnmounted(() => {
                 line-height: 6vh;
                 width: 100%;
                 text-align: center;
+                display: flex;
+                flex-direction: row;
+                justify-content: center;
+                align-items: center;
               }
             }
           }

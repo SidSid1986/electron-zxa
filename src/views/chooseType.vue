@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-12 14:38:40
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-13 16:05:32
+ * @LastEditTime: 2025-12-15 11:20:10
  * @FilePath: \zi-xiao-ai\src\views\chooseType.vue
  * @Description: 选择灸方页面
 -->
@@ -159,10 +159,10 @@ const handleCancel = () => {
   router.push("/newPlan");
 };
 const handleSave = () => {
-  
   newPlan.value.treatType = chooseObj.value.treatType;
   newPlan.value.chooseName = chooseObj.value.chooseName;
   newPlan.value.time = chooseObj.value.time;
+  newPlan.value.bodyType = 2;
   localStorage.setItem("newPlan", JSON.stringify(newPlan.value));
   router.push("/chosePoint");
 };
