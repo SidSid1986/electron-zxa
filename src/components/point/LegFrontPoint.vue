@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-13 14:48:09
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-15 15:27:37
+ * @LastEditTime: 2025-12-15 16:38:19
  * @FilePath: \zi-xiao-ai\src\components\point\LegFrontPoint.vue
  * @Description: 
 -->
@@ -105,7 +105,7 @@ const clearSelectedPoints = () => {
 onMounted(() => {
   console.log("组件挂载了");
   const pointData = JSON.parse(localStorage.getItem("pointData")) || [];
-  pointList.value = pointData.filter((item) => item.type == 1);
+  pointList.value = pointData.filter((item) => item.bodyType == 1);
   // currentPlan.value.bodyType = 2;
   clearSelectedPoints(); // 挂载时清空选中状态
   console.log("筛选后的穴位列表:", pointList.value);

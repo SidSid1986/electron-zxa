@@ -105,7 +105,7 @@ const clearSelectedPoints = () => {
 onMounted(() => {
   console.log("组件挂载了");
   const pointData = JSON.parse(localStorage.getItem("pointData")) || [];
-  pointList.value = pointData.filter((item) => item.type == 3);
+  pointList.value = pointData.filter((item) => item.bodyType == 3);
   // currentPlan.value.bodyType = 2;
   clearSelectedPoints(); // 挂载时清空选中状态
   console.log("筛选后的穴位列表:", pointList.value);

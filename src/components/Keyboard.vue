@@ -4,6 +4,7 @@
     v-show="visible"
     :style="{
       position: 'fixed',
+      height: '35vh',
       bottom: 0,
       left: 0,
       width: '100%',
@@ -130,7 +131,7 @@ const getCurrentDataSource = () => {
       },
       type: "form",
     };
-  } 
+  }
   // 单一值模式
   else {
     return {
@@ -156,8 +157,8 @@ const getCurrentInputEl = () => {
     return document.getElementById(currentInputId.value);
   }
   // 兜底：获取当前聚焦的输入框
-  return document.activeElement?.tagName === "INPUT" 
-    ? document.activeElement 
+  return document.activeElement?.tagName === "INPUT"
+    ? document.activeElement
     : null;
 };
 
@@ -228,7 +229,7 @@ const initKeyboard = () => {
       if (keyboardInstance.value) {
         keyboardInstance.value.setInput(finalInput);
       }
-      
+
       // 强制触发输入框事件（核心：解决回显问题）
       triggerInputEvent(finalInput);
     },
@@ -274,7 +275,8 @@ const handleKeyPress = (button) => {
       break;
     case "{shift}":
       if (!props.isNumber) {
-        const newLayout = kbd.options.layoutName === "default" ? "shift" : "default";
+        const newLayout =
+          kbd.options.layoutName === "default" ? "shift" : "default";
         kbd.setOptions({ layoutName: newLayout });
       }
       break;
@@ -311,9 +313,13 @@ const triggerInputEvent = (val) => {
       // 强制设置输入框value
       inputEl.value = val;
       // 触发input事件（Vue v-model核心监听）
-      inputEl.dispatchEvent(new Event('input', { bubbles: true, cancelable: true }));
+      inputEl.dispatchEvent(
+        new Event("input", { bubbles: true, cancelable: true })
+      );
       // 触发change事件（兜底）
-      inputEl.dispatchEvent(new Event('change', { bubbles: true, cancelable: true }));
+      inputEl.dispatchEvent(
+        new Event("change", { bubbles: true, cancelable: true })
+      );
     }
   });
 };
@@ -355,7 +361,7 @@ const handleClose = () => {
 };
 
 // 【重载open方法】支持两种模式：
-// 1. 表单模式：open('username') 
+// 1. 表单模式：open('username')
 // 2. 单一值模式：open(null, 'input-planName')
 const open = (field, inputId) => {
   // 表单模式
@@ -378,7 +384,9 @@ const open = (field, inputId) => {
 
   nextTick(() => {
     initKeyboard();
-    keyboardWrapperRef.value = document.querySelector(".virtual-keyboard-wrapper");
+    keyboardWrapperRef.value = document.querySelector(
+      ".virtual-keyboard-wrapper"
+    );
 
     // 自动聚焦输入框
     const inputEl = getCurrentInputEl();
@@ -408,7 +416,9 @@ const handleClickOutside = (e) => {
     document.querySelector(".virtual-keyboard-wrapper");
   if (!wrapperEl) return;
 
-  const isInput = e.target.tagName === "INPUT" && e.target.classList.contains("el-input__inner");
+  const isInput =
+    e.target.tagName === "INPUT" &&
+    e.target.classList.contains("el-input__inner");
   if (!wrapperEl.contains(e.target) && !isInput) {
     handleClose();
   }
@@ -475,7 +485,7 @@ defineExpose({
 }
 
 :deep(.hg-button) {
-  height: 70px !important;
+  height: 5.2vh !important;
   font-size: 20px !important;
   line-height: 70px !important;
   flex: 1 !important;

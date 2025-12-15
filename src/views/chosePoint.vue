@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-12 14:38:40
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-15 13:41:38
+ * @LastEditTime: 2025-12-15 16:40:49
  * @FilePath: \zi-xiao-ai\src\views\chosePoint.vue
  * @Description: 选择穴位页面  
 -->
@@ -95,27 +95,28 @@ const tabData = ref([
   {
     id: 1,
     name: "背部",
-    type: 2,
+    bodyType: 2,
   },
   {
     id: 2,
     name: "正面",
-    type: 0,
+    bodyType: 0,
   },
   {
     id: 3,
     name: "腿-背",
-    type: 3,
+    bodyType: 3,
   },
   {
     id: 4,
     name: "腿-正",
-    type: 1,
+    bodyType: 1,
   },
 ]);
 
 const chooseBody = (item, index) => {
-  switch (item.type) {
+  console.log(item);
+  switch (item.bodyType) {
     case 0:
       currentComponent.value = markRaw(BodyFront);
       currentPointComponent.value = markRaw(BodyFrontPoint);
@@ -141,8 +142,8 @@ const chooseBody = (item, index) => {
   // ========== 核心：修改bodyType字段（保留其他字段） ==========
   // 1. 读取localStorage中的完整newPlan（无则初始化空对象）
   const storedPlan = JSON.parse(localStorage.getItem("newPlan")) || {};
-  // 2. 仅修改bodyType为当前item.type
-  storedPlan.bodyType = item.type;
+  // 2. 仅修改bodyType为当前item.bodyType
+  storedPlan.bodyType = item.bodyType;
   // 3. 写回localStorage（保留所有原有字段，仅更新bodyType）
   localStorage.setItem("newPlan", JSON.stringify(storedPlan));
 };

@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-13 14:06:46
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-15 14:40:58
+ * @LastEditTime: 2025-12-15 16:37:28
  * @FilePath: \zi-xiao-ai\src\components\body\BodyFront.vue
  * @Description: 身体正面图片组件
 -->
@@ -101,7 +101,7 @@ onMounted(() => {
   const pointDataJson = JSON.parse(localStorage.getItem("pointData")) || [];
   pointDataCopy.value = JSON.parse(JSON.stringify(pointDataJson));
 
-  pointTreat.value = pointDataCopy.value.filter((item) => item.type === 0);
+  pointTreat.value = pointDataCopy.value.filter((item) => item.bodyType === 0);
 
   const updatedArr2 = replaceStatusById(props.newPlanPoint, pointTreat.value);
   pointData.value = updatedArr2;
