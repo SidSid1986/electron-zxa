@@ -2,68 +2,73 @@
  * @Author: Sid Li
  * @Date: 2025-12-08 08:30:08
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-09 15:49:33
+ * @LastEditTime: 2025-12-16 16:55:13
  * @FilePath: \zi-xiao-ai\src\main.js
  * @Description:
  */
 import { createApp } from "vue";
 import App from "./App.vue";
 import ElementPlus from "element-plus";
-import "element-plus/dist/index.css";
+import zhCn from "element-plus/dist/locale/zh-cn.mjs";
+
+//  第一步：先导入 Element Plus 源码样式（不是编译后的 CSS）
+import "element-plus/theme-chalk/src/index.scss";
+// 第二步：立即导入自定义主题（覆盖变量，顺序绝对不能反）
+import "@/styles/element/index.scss";
+// 第三步：导入其他样式
 import "@/styles/main.scss";
-import * as ElementPlusIconsVue from "@element-plus/icons-vue";
 import "@/styles/free-icons/iconfont.css";
+
+import * as ElementPlusIconsVue from "@element-plus/icons-vue";
 import router from "@/router/index.js";
 import store from "@/store";
 import { setupRemAdaptation } from "@/utils/rem";
 import XPack_WebSocket from "@/utils/ws";
 
-// 2. 实例化 WebSocket 并配置参数（按需调整）
+// 实例化 WebSocket
 const webSocketInstance = new XPack_WebSocket(
-  6789, // 端口号
+  6789,
   {
     heartBeatEnable: false,
     messageCountEnable: true,
   }
 );
 
-// ：先执行REM适配，再挂载Vue避免重绘
-// 兼容Electron/浏览器环境，确保document存在
+// REM 适配
 if (typeof document !== "undefined") {
-  setupRemAdaptation(); // 直接执行，无需等DOMContentLoaded
+  setupRemAdaptation();
 }
 
-// 项目启动即连接WebSocket（兼容Electron/浏览器）
-// 确保WebSocket在应用启动时就建立连接
+// 连接 WebSocket
 if (typeof window !== "undefined") {
-  // 启动WS连接
   webSocketInstance.Connect();
 }
 
-//  确保DOM完全就绪后再挂载避免挂载时DOM未渲染
 function bootstrapApp() {
   const app = createApp(App);
   app.use(store);
-  app.use(ElementPlus);
+  // ✅ 关键：只注册组件，不自动导入任何样式（交给全局引入）
+  app.use(ElementPlus, { 
+    locale: zhCn,
+    importStyle: false // 彻底关闭自动样式导入
+  }); 
   app.use(router);
 
-  // 全局注册WebSocket实例（Vue3推荐的provide/inject方式）
+  // 全局注册 WebSocket
   app.provide("$ws", webSocketInstance);
 
-  // 注册图标组件
+  // 注册图标
   for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
     app.component(key, component);
   }
-  // app.use(XPack_WebSocketDefault);
-  // 挂载前确认#app存在，避免挂载失败
+
+  // 挂载应用
   const appDom = document.getElementById("app");
   if (appDom) {
     app.mount(appDom);
   } else {
-    //  DOM未加载时延迟挂载
     setTimeout(bootstrapApp, 100);
   }
 }
 
-// 启动应用
 bootstrapApp();

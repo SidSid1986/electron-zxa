@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-11 17:24:46
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-16 11:02:55
+ * @LastEditTime: 2025-12-16 11:30:07
  * @FilePath: \zi-xiao-ai\src\components\DrawerList.vue
  * @Description: 
 -->
@@ -107,7 +107,7 @@ const menuList = ref([
     hasBorder: true,
     role: ["admin", "user", "super_admin"],
     icon: "icon-shezhi",
-    path: "/main",
+    path: "/order",
   },
   {
     name: "诊断灸方",

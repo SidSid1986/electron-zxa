@@ -1,8 +1,8 @@
 import { defineConfig, loadEnv } from "vite";
 import vue from "@vitejs/plugin-vue";
 import viteImagemin from "vite-plugin-imagemin";
-import AutoImport from "unplugin-auto-import/vite"; // 启用自动导入
-import Components from "unplugin-vue-components/vite"; // 启用组件自动导入
+import AutoImport from "unplugin-auto-import/vite";
+import Components from "unplugin-vue-components/vite";
 import { ElementPlusResolver } from "unplugin-vue-components/resolvers";
 import postCssPxToRem from "postcss-pxtorem";
 import { resolve } from "path";
@@ -13,19 +13,14 @@ export default ({ mode }) => {
 
   return defineConfig({
     resolve: {
-      alias: [
-        {
-          find: "@",
-          replacement: resolve(__dirname, "./src"),
-        },
-      ],
+      alias: [{ find: "@", replacement: resolve(__dirname, "./src") }],
     },
     css: {
       preprocessorOptions: {
         scss: {
           charset: false,
           javascriptEnabled: true,
-          additionalData: `@use "@/styles/element/index.scss" as *;`,
+          // ❌ 彻底删除 additionalData，杜绝循环和路径问题
         },
       },
       postcss: {
@@ -49,22 +44,25 @@ export default ({ mode }) => {
     plugins: [
       vue(),
       viteImagemin({
-        optipng: { optimizationLevel: 7 }, // 提升图片压缩级别
+        optipng: { optimizationLevel: 7 },
         gifsicle: { optimizationLevel: 3 },
         pngquant: { quality: [0.6, 0.8] },
       }),
+      // ✅ 关键：Element Plus 插件强制使用源码，关闭自动样式注入
       ElementPlus({
         useSource: true,
+        // 关闭自动导入样式，交给 main.js 全局引入
+        importStyle: false,
       }),
-      // 自动导入Element Plus API，减少代码体积
+      // ✅ 自动导入仅导入 API，不导入样式
       AutoImport({
-        resolvers: [ElementPlusResolver()],
+        resolvers: [ElementPlusResolver({ importStyle: false })],
         imports: ["vue", "vue-router", "pinia"],
-        dts: false, // 关闭类型生成，减小体积
+        dts: false,
       }),
-      // 自动导入组件，实现按需加载
+      // ✅ 组件自动导入仅注册组件，不导入样式
       Components({
-        resolvers: [ElementPlusResolver({ importStyle: "sass" })],
+        resolvers: [ElementPlusResolver({ importStyle: false })],
         dts: false,
       }),
     ],
@@ -87,12 +85,11 @@ export default ({ mode }) => {
       assetsInlineLimit: 4096,
       assetsDir: "assets",
       outDir: "dist",
-      minify: "terser", // 使用terser压缩，效果更好
+      minify: "terser",
       terserOptions: {
-        // 新增：代码压缩配置
         compress: {
-          drop_console: true, // 移除console
-          drop_debugger: true, // 移除debugger
+          drop_console: true,
+          drop_debugger: true,
           pure_funcs: ["console.log", "console.debug"],
         },
       },
@@ -101,7 +98,6 @@ export default ({ mode }) => {
           assetFileNames: "assets/[name].[hash].[ext]",
           chunkFileNames: "assets/[name].[hash].js",
           entryFileNames: "assets/[name].[hash].js",
-          // 新增：代码分割，减小首屏加载体积
           manualChunks: {
             vue: ["vue", "vue-router", "pinia"],
             elementPlus: ["element-plus"],
@@ -109,7 +105,7 @@ export default ({ mode }) => {
           },
         },
       },
-      sourcemap: false, // 关闭sourcemap，大幅减小体积
+      sourcemap: false,
     },
     assetsInclude: ["**/*.png", "**/*.jpg", "**/*.jpeg", "**/*.gif"],
   });
