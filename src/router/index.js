@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-11-29 10:30:04
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-15 17:25:17
+ * @LastEditTime: 2025-12-16 11:02:05
  * @FilePath: \zi-xiao-ai\src\router\index.js
  * @Description:
  */
@@ -175,6 +175,15 @@ const routes = [
     meta: {
       requiresAuth: true,
       roles: ["admin", "user", "super_admin"],
+    },
+  },
+  {
+    path: "/basicAlign",
+    name: "BasicAlign",
+    component: () => import("@/views/basicAlign.vue"),
+    meta: {
+      requiresAuth: true,
+      roles: ["super_admin"],
     },
   },
 ];
