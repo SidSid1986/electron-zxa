@@ -61,7 +61,7 @@ onMounted(() => {
 }
 
 .message-title {
-  font-size: 40px;
+  font-size: 30px;
   font-weight: bold;
   color: #540e72;
   height: 5vh;
@@ -72,7 +72,7 @@ onMounted(() => {
 .message-text {
   width: 25vw;
 
-  font-size: 32px;
+  font-size: 20px;
   color: #540e72;
   height: 3vh;
   line-height: 3vh;
@@ -84,9 +84,9 @@ onMounted(() => {
 }
 
 :deep(.setting-confirm) {
-  width: 200px;
-  height: 60px;
-  font-size: 24px;
+  width: 120px;
+  height: 40px;
+  font-size: 18px;
   font-weight: bold;
   border-radius: 40px;
   margin: 0 160px;

@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-12 11:26:16
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-15 10:42:11
+ * @LastEditTime: 2025-12-17 15:54:54
  * @FilePath: \zi-xiao-ai\src\views\plan.vue
  * @Description: 
 -->
@@ -465,7 +465,7 @@ onMounted(() => {
       span {
         height: 50px;
         line-height: 50px;
-        font-size: 30px;
+        font-size: 24px;
         color: #511d6a;
         font-weight: bold;
       }
@@ -748,13 +748,13 @@ onMounted(() => {
   justify-content: flex-start;
   height: 28vh;
   .dialog-title {
-    font-size: 40px;
+    font-size: 32px;
     font-weight: bold;
     color: #511d6a;
     margin-bottom: 40px;
   }
   .dialog-text {
-    font-size: 24px;
+    font-size: 20px;
     font-weight: 500;
     color: #4c1c64;
     margin-bottom: 10px;
@@ -762,7 +762,7 @@ onMounted(() => {
 }
 
 .dialog-btn-content {
-  margin-top: 40px;
+  margin-top: 10px;
   display: flex;
   flex-direction: row;
   justify-content: center;
@@ -772,10 +772,10 @@ onMounted(() => {
 // 按钮样式优化（可选，让按钮与文字颜色协调）
 :deep(.el-dialog .title-btn) {
   width: 150px;
-  height: 60px;
+  height: 40px;
   border-radius: 40px;
   margin: 0 60px;
-  font-size: 24px;
+  font-size: 18px;
   font-weight: bold;
   --el-button-text-color: #fff;
   --el-button-bg-color: #af7dc4;

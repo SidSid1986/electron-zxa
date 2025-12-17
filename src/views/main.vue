@@ -441,15 +441,15 @@ onUnmounted(() => {
       span {
         height: 50px;
         line-height: 50px;
-        font-size: 30px;
+        font-size: 24px;
         color: #511d6a;
         font-weight: bold;
       }
 
       :deep(.title-btn) {
-        width: 120px;
-        height: 50px;
-        font-size: 24px;
+        width: 100px;
+        height: 40px;
+        font-size: 20px;
         border-radius: 40px;
         margin-left: 20px;
         --el-button-text-color: #fff;
@@ -467,8 +467,9 @@ onUnmounted(() => {
     // 左侧容器样式（保持不变）
     .left-table {
       margin-top: 10px;
-      border-left: 1px solid #b99aca;
-      border-right: 1px solid #b99aca;
+      border: 1px solid #b99aca;
+      // border-left: 1px solid #b99aca;
+      // border-right: 1px solid #b99aca;
       height: 70vh;
       overflow: hidden;
       position: relative;
@@ -492,7 +493,7 @@ onUnmounted(() => {
         transition: background-color 0.2s ease;
 
         .title {
-          font-size: 24px;
+          font-size: 18px;
           color: #511d6a;
           font-weight: 500;
           white-space: nowrap;
@@ -548,7 +549,6 @@ onUnmounted(() => {
     .right-top {
       height: 5vh;
       line-height: 5vh;
-      font-size: 24px;
       color: #511d6a;
       font-weight: bold;
       border-bottom: 1px solid #c293d5;
@@ -560,6 +560,7 @@ onUnmounted(() => {
       box-sizing: border-box;
 
       span {
+        font-size: 18px;
         color: #ffffff;
         text-align: center;
         box-sizing: border-box;
@@ -606,7 +607,7 @@ onUnmounted(() => {
       width: 100%;
       height: 5vh;
       line-height: 5vh;
-      font-size: 24px;
+      font-size: 18px;
       color: #511d6a;
       font-weight: 500;
       border-bottom: 1px solid #b99aca;
@@ -660,9 +661,9 @@ onUnmounted(() => {
       justify-content: flex-end;
       margin-top: 20px;
       :deep(.start-btn) {
-        width: 300px;
-        height: 80px;
-        font-size: 24px;
+        width: 180px;
+        height: 60px;
+        font-size: 18px;
         font-weight: bold;
         border-radius: 40px;
         --el-button-text-color: #fff;
@@ -715,13 +716,13 @@ onUnmounted(() => {
   justify-content: flex-start;
   height: 25vh;
   .dialog-title {
-    font-size: 40px;
+    font-size: 30px;
     font-weight: bold;
     color: #511d6a;
     margin-bottom: 40px;
   }
   .dialog-text {
-    font-size: 24px;
+    font-size: 20px;
     font-weight: 500;
     color: #4c1c64;
     margin-bottom: 20px;
@@ -729,7 +730,7 @@ onUnmounted(() => {
 }
 
 .dialog-btn-content {
-  margin-top: 40px;
+  margin-top: 10px;
   display: flex;
   flex-direction: row;
   justify-content: center;
@@ -738,11 +739,11 @@ onUnmounted(() => {
 
 // 按钮样式优化（可选，让按钮与文字颜色协调）
 :deep(.el-dialog .title-btn) {
-  width: 150px;
-  height: 60px;
+  width: 120px;
+  height: 50px;
   border-radius: 40px;
   margin: 0 60px;
-  font-size: 24px;
+  font-size: 18px;
   font-weight: bold;
   --el-button-text-color: #fff;
   --el-button-bg-color: #af7dc4;

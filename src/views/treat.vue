@@ -813,7 +813,7 @@ onUnmounted(() => {});
     background-color: #c293d5;
 
     span {
-      font-size: 36px;
+      font-size: 30px;
       font-weight: bold;
       color: #fff;
     }
@@ -851,7 +851,7 @@ onUnmounted(() => {});
           padding: 0 20px;
 
           .left-nav-title {
-            font-size: 36px;
+            font-size: 26px;
             font-weight: bold;
             color: #fff;
             height: 8vh;
@@ -892,7 +892,7 @@ onUnmounted(() => {});
             .left-nav-text {
               height: 3vh;
               line-height: 3vh;
-              font-size: 24px;
+              font-size: 18px;
               font-weight: bold;
               color: #fff;
             }
@@ -1023,14 +1023,14 @@ onUnmounted(() => {});
   height: 15vh;
 
   .dialog-title {
-    font-size: 40px;
+    font-size: 36px;
     font-weight: bold;
     color: #511d6a;
     margin-bottom: 40px;
   }
 
   .dialog-text {
-    font-size: 24px;
+    font-size: 20px;
     font-weight: 500;
     color: #4c1c64;
     margin-bottom: 20px;
@@ -1074,7 +1074,7 @@ onUnmounted(() => {});
 :deep(.end-btn) {
   width: 150px;
   height: 60px;
-  font-size: 24px;
+  font-size: 18px;
   font-weight: bold;
   border-radius: 20px;
   --el-button-text-color: #fff;

@@ -199,7 +199,7 @@ onMounted(() => {
 
   .content-left-img {
     position: relative;
-    height: 636px;
+    // height: 636px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -208,6 +208,7 @@ onMounted(() => {
     img {
       width: 441px;
       height: 636px;
+      border:1px solid red;
     }
   }
 

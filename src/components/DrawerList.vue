@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-11 17:24:46
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-16 11:30:07
+ * @LastEditTime: 2025-12-17 15:49:42
  * @FilePath: \zi-xiao-ai\src\components\DrawerList.vue
  * @Description: 
 -->
@@ -121,7 +121,7 @@ const menuList = ref([
     hasBorder: false,
     role: ["admin", "user", "super_admin"],
     icon: "icon-shezhi",
-    path: "/main",
+    path: "/operate",
   },
   {
     name: "回打包位",
@@ -193,12 +193,12 @@ onMounted(() => {
 }
 
 .item-name {
-  font-size: 26px;
+  font-size: 20px;
   font-weight: bold;
 }
 
 .iconfont {
-  font-size: 26px;
+  font-size: 20px;
   margin-right: 10px;
 }
 .border-left {

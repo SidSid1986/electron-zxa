@@ -468,7 +468,7 @@ onUnmounted(() => {
     justify-content: center;
     background-color: #c293d5;
     span {
-      font-size: 36px;
+      font-size: 30px;
       font-weight: bold;
       color: #fff;
     }
@@ -504,7 +504,7 @@ onUnmounted(() => {
           height: 8vh;
           padding: 0 20px;
           .left-nav-title {
-            font-size: 36px;
+            font-size: 24px;
             font-weight: bold;
             color: #fff;
             height: 8vh;
@@ -529,7 +529,7 @@ onUnmounted(() => {
             .left-nav-text {
               height: 3vh;
               line-height: 3vh;
-              font-size: 24px;
+              font-size: 20px;
               font-weight: bold;
               color: #fff;
             }
@@ -566,7 +566,7 @@ onUnmounted(() => {
           flex-direction: row;
           align-items: center;
           background-color: #fcd700;
-          font-size: 24px;
+          font-size: 20px;
           color: #111;
           .header-item {
             box-sizing: border-box;
@@ -607,7 +607,7 @@ onUnmounted(() => {
             display: flex;
             flex-direction: row;
             align-items: center;
-            font-size: 24px;
+            font-size: 18px;
             color: #511d6a;
             background-color: #ffffff;
 
@@ -634,7 +634,7 @@ onUnmounted(() => {
             flex-direction: row;
             align-items: center;
 
-            font-size: 24px;
+            font-size: 20px;
             color: #511d6a;
             .table-item {
               box-sizing: border-box;
@@ -668,7 +668,7 @@ onUnmounted(() => {
         .right-ins {
           height: 6vh;
           line-height: 6vh;
-          font-size: 20px;
+          font-size: 18px;
           color: #511d6a;
           background: #f3eef4;
           padding: 0 20px;
@@ -676,10 +676,10 @@ onUnmounted(() => {
         }
 
         .right-btn {
-          margin-top: 50px;
+          margin-top: 20px;
           height: 8vh;
           background: #ffffff;
-          padding: 0 20px;
+          padding: 0 18px;
           text-align: center;
           display: flex;
           flex-direction: row;
@@ -688,12 +688,12 @@ onUnmounted(() => {
         }
 
         :deep(.use-btn) {
-          width: 200px;
-          height: 60px;
-          font-size: 24px;
+          width: 140px;
+          height: 50px;
+          font-size: 18px;
           font-weight: bold;
           border-radius: 40px;
-          margin: 0 160px;
+          margin: 0 100px;
           --el-button-text-color: #fff;
           --el-button-bg-color: #af7dc4;
           --el-button-border-color: #af7dc4;
@@ -710,27 +710,27 @@ onUnmounted(() => {
 }
 
 .status-blue {
-  width: 150px;
-  height: 50px;
-  line-height: 50px;
+  width: 120px;
+  height: 40px;
+  line-height: 40px;
   background-color: #bdbdba;
   border-radius: 40px;
   color: #111;
 }
 .status-red {
   color: #ffffff;
-  width: 150px;
-  height: 50px;
-  line-height: 50px;
+  width: 120px;
+  height: 40px;
+  line-height: 40px;
   background-color: #de2b1f;
   border-radius: 40px;
 }
 
 .status-green {
   color: #ffffff;
-  width: 150px;
-  height: 50px;
-  line-height: 50px;
+  width: 120px;
+  height: 40px;
+  line-height: 40px;
   background-color: #6c359d;
   border-radius: 40px;
 }

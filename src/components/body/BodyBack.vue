@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-13 14:06:46
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-15 16:37:04
+ * @LastEditTime: 2025-12-17 15:58:01
  * @FilePath: \zi-xiao-ai\src\components\body\BodyBack.vue
  * @Description: 身体正面图片组件
 -->
@@ -140,8 +140,8 @@ onMounted(() => {
 
 .light-ball-red2 {
   position: absolute;
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   background-color: rgba(241, 68, 55, 0.8);
   border: 1px solid #f14437;
@@ -152,8 +152,8 @@ onMounted(() => {
 
 .light-ball-blue2 {
   position: absolute;
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   background-color: rgba(182, 142, 187, 0.8);
   border: 1px solid #b68ebb;
@@ -161,8 +161,8 @@ onMounted(() => {
 
 .light-ball-green2 {
   position: absolute;
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   background-color: rgba(88, 192, 141, 0.8);
   border: 1px solid #58c08d;

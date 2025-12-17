@@ -634,7 +634,7 @@ onUnmounted(() => {
     border-radius: 12px;
 
     .swiper-item-name {
-      font-size: 20px;
+      font-size: 16px;
       width: 50%;
       height: 5vh;
       line-height: 5vh;
@@ -643,7 +643,7 @@ onUnmounted(() => {
     }
 
     .swiper-item-point {
-      font-size: 20px;
+      font-size: 16px;
       width: 50%;
       margin: 0 auto;
       text-align: center;
@@ -658,7 +658,7 @@ onUnmounted(() => {
     text-align: center;
     height: 5vh;
     color: #693e9c;
-    font-size: 20px;
+    font-size: 16px;
   }
 
   .swiper-item-circle {
@@ -753,7 +753,7 @@ onUnmounted(() => {
         text-align: center;
         background: #6c359d;
         border-radius: 50%;
-        font-size: 24px;
+        font-size: 20px;
         font-weight: bold;
         color: #ffffff;
       }

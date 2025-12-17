@@ -20,19 +20,20 @@ export default ({ mode }) => {
         scss: {
           charset: false,
           javascriptEnabled: true,
-          // ❌ 彻底删除 additionalData，杜绝循环和路径问题
         },
       },
       postcss: {
         plugins: [
           postCssPxToRem({
-            rootValue: 192,
+            rootValue: 10,
+
             propList: ["*", "!border"],
+
             selectorBlackList: ["norem"],
             unitPrecision: 5,
             replace: true,
             mediaQuery: true,
-            minPixelValue: 0,
+            minPixelValue: 2,
           }),
         ],
       },

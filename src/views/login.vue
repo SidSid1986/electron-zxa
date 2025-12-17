@@ -266,7 +266,7 @@ const handleLogin = async () => {
       border-radius: 20px;
 
       box-shadow: 0px 6px 16px 2px rgba(0, 0, 0, 0.18);
-      padding: 60px 100px;
+      padding: 60px 60px;
       width: 100%;
       height: 100%;
       display: flex;
@@ -275,7 +275,7 @@ const handleLogin = async () => {
       justify-content: center;
 
       .right-pic-title {
-        font-size: 36px;
+        font-size: 34px;
         font-weight: bold;
         color: #511d6a;
         margin-bottom: 50px;

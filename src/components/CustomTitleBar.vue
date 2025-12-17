@@ -88,7 +88,9 @@ onUnmounted(() => {
   right: 0;
   z-index: 9999;
   user-select: none;
-  transition: opacity 0.3s, transform 0.3s;
+  transition:
+    opacity 0.3s,
+    transform 0.3s;
   box-sizing: border-box;
 }
 
@@ -104,8 +106,8 @@ onUnmounted(() => {
   align-items: center;
 
   img {
-    width: 40px;
-    height: 40px;
+    width: 30px;
+    height: 30px;
     margin-right: 10px;
   }
 }
@@ -117,7 +119,7 @@ onUnmounted(() => {
 }
 
 .window-title {
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 500;
 }
 
@@ -142,7 +144,7 @@ onUnmounted(() => {
   transition: background-color 0.2s;
   margin-left: 20px;
   i {
-    font-size: 24px;
+    font-size: 20px;
   }
 }
 

@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-12 16:15:42
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-17 10:04:49
+ * @LastEditTime: 2025-12-17 15:52:38
  * @FilePath: \zi-xiao-ai\src\views\order.vue
  * @Description: 
 -->
@@ -174,7 +174,7 @@
             label="时长"
           />
           <el-table-column
-            width="150"
+            width="180"
             align="center"
             property="point"
             label="穴位"
@@ -512,7 +512,7 @@ onMounted(() => {
 }
 
 .device-title {
-  font-size: 36px;
+  font-size: 30px;
   font-weight: bold;
   color: #4d1166;
   height: 8vh;
@@ -525,7 +525,7 @@ onMounted(() => {
   width: 80%;
   box-sizing: border-box;
   height: 6vh;
-  font-size: 18px;
+  font-size: 16px;
   color: #4d1166;
   display: flex;
   flex-direction: row;
@@ -621,7 +621,7 @@ onMounted(() => {
 
 .name-tag {
   display: inline-block;
-  font-size: 16px;
+  font-size: 14px;
   background: #9b28ae;
   padding: 3px 8px;
   border-radius: 20px;
@@ -630,7 +630,7 @@ onMounted(() => {
 
 .point-tag {
   margin: 0 5px;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: bold;
 }
 
@@ -652,7 +652,7 @@ onMounted(() => {
 :deep(.detail-btn) {
   color: #9033e9 !important;
   font-weight: bold;
-  font-size: 16px;
+  font-size: 14px;
   height: 50px;
 
   &:hover {
@@ -677,7 +677,7 @@ onMounted(() => {
   // background: linear-gradient(135deg, #794fba 0%, #9033e9 100%) !important;
   background: #9033e9 !important;
   color: #ffffff !important;
-  font-size: 24px !important;
+  font-size: 18px !important;
   font-weight: bold !important;
   height: 5vh !important;
   text-align: center !important;
@@ -720,7 +720,7 @@ onMounted(() => {
       padding: 0 !important; // 清除单元格内边距
       vertical-align: middle !important;
       border: none !important; // 清除单元格边框（可选，看需求）
-      font-size: 24px;
+      font-size: 18px;
     }
 
     /* 斑马纹 */
@@ -789,7 +789,7 @@ onMounted(() => {
   .el-dialog__header {
     height: 3vh !important;
     line-height: 3vh !important;
-    font-size: 24px !important;
+    font-size: 18px !important;
     font-weight: bold !important;
     color: #ffffff !important;
     background: #9033e9 !important;
