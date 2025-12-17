@@ -275,7 +275,7 @@ const handleLogin = async () => {
       justify-content: center;
 
       .right-pic-title {
-        font-size: 34px;
+        font-size: 30px;
         font-weight: bold;
         color: #511d6a;
         margin-bottom: 50px;
@@ -286,7 +286,7 @@ const handleLogin = async () => {
 
 // 登录表单样式
 .login-form {
-  margin-top: 20px;
+  // margin-top: 20px;
   padding: 0 10px;
   width: 100%;
 }

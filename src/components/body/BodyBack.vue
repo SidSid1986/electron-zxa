@@ -2,8 +2,8 @@
  * @Author: Sid Li
  * @Date: 2025-12-13 14:06:46
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-17 15:58:01
- * @FilePath: \zi-xiao-ai\src\components\body\BodyBack.vue
+ * @LastEditTime: 2025-12-17 23:58:02
+ * @FilePath: \electron-zxa\src\components\body\BodyBack.vue
  * @Description: 身体正面图片组件
 -->
 <template>
@@ -117,13 +117,14 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   background-color: #fff;
+
   border-radius: 12px;
   // border: 1px solid green;
 
   .bg-body-norem {
-    width: 441px;
-    height: 636px;
-    // border: 1px solid red;
+    width: 441px !important;
+    height: 636px !important;
+
     background: url("@/assets/pic/body/body2.png") no-repeat center center;
     background-size: cover;
     border-radius: 12px;

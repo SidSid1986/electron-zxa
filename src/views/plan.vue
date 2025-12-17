@@ -2,8 +2,8 @@
  * @Author: Sid Li
  * @Date: 2025-12-12 11:26:16
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-17 15:54:54
- * @FilePath: \zi-xiao-ai\src\views\plan.vue
+ * @LastEditTime: 2025-12-17 23:41:10
+ * @FilePath: \electron-zxa\src\views\plan.vue
  * @Description: 
 -->
 <template>
@@ -573,7 +573,7 @@ onMounted(() => {
       .edit-btn {
         width: 120px;
         height: 50px;
-        font-size: 24px;
+        font-size: 20px;
         border-radius: 40px;
         --el-button-text-color: #fff;
         --el-button-bg-color: #af7dc4;
@@ -751,7 +751,7 @@ onMounted(() => {
     font-size: 32px;
     font-weight: bold;
     color: #511d6a;
-    margin-bottom: 40px;
+    margin-bottom: 20px;
   }
   .dialog-text {
     font-size: 20px;

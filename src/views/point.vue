@@ -13,12 +13,14 @@
               <span class="left-nav-text">定穴中</span>
             </div>
           </div>
-          <component
-            :is="currentComponent"
-            ref="bodyRef"
-            :newPlanPoint="newPlanPoint"
-            :currentPoint="currentPoint"
-          />
+          <div class="body-content">
+            <component
+              :is="currentComponent"
+              ref="bodyRef"
+              :newPlanPoint="newPlanPoint"
+              :currentPoint="currentPoint"
+            />
+          </div>
         </div>
       </div>
       <div class="point-content-right">
@@ -429,9 +431,9 @@ const getPointWs = () => {
     // 核心修正：检查当前行所有穴位的完成状态
     const currentRow = newPlan[rowIndex];
     // 统计当前行未完成的穴位数量（status=0 或 status=1）
-    const unfinishedPoints = currentRow.points.filter(p => p.status !== 2);
+    const unfinishedPoints = currentRow.points.filter((p) => p.status !== 2);
     // 查找当前行下一个未完成的穴位
-    const nextPointIndex = currentRow.points.findIndex(p => p.status === 0);
+    const nextPointIndex = currentRow.points.findIndex((p) => p.status === 0);
 
     if (unfinishedPoints.length > 0 && nextPointIndex > -1) {
       // 情况1：当前行还有未完成的穴位（1个或2个），继续处理当前行的下一个穴位
@@ -446,16 +448,21 @@ const getPointWs = () => {
       newPlanPoint.value = currentRow.points;
       // 更新当前行的身体部位显示
       chooseBody(currentRow.points[nextPointIndex]);
-      console.log("当前行还有未完成穴位，切换到同组下一个:", currentRow.points[nextPointIndex].name);
+      console.log(
+        "当前行还有未完成穴位，切换到同组下一个:",
+        currentRow.points[nextPointIndex].name
+      );
     } else {
       // 情况2：当前行所有穴位已完成（1个或2个都完成），查找下一组
       const nextRowIndex = newPlan.findIndex(
-        (row, idx) => idx > rowIndex && row.points.some(p => p.status === 0)
+        (row, idx) => idx > rowIndex && row.points.some((p) => p.status === 0)
       );
 
       if (nextRowIndex > -1) {
         // 切换到下一组第一个未完成穴位
-        const firstUnfinished = newPlan[nextRowIndex].points.findIndex(p => p.status === 0);
+        const firstUnfinished = newPlan[nextRowIndex].points.findIndex(
+          (p) => p.status === 0
+        );
         newPlan[nextRowIndex].points[firstUnfinished].status = 1;
         currentPoint.value = {
           ...newPlan[nextRowIndex].points[firstUnfinished],
@@ -468,7 +475,10 @@ const getPointWs = () => {
         newPlanPoint.value = newPlan[nextRowIndex].points;
         // 更新身体部位显示
         chooseBody(newPlan[nextRowIndex].points[firstUnfinished]);
-        console.log("当前行完成，切换到下一行:", newPlan[nextRowIndex].points[firstUnfinished].name);
+        console.log(
+          "当前行完成，切换到下一行:",
+          newPlan[nextRowIndex].points[firstUnfinished].name
+        );
       } else {
         // 所有穴位都已完成
         stopDrag();
@@ -559,13 +569,15 @@ onUnmounted(() => {
     height: 90vh;
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: space-between;
+    padding: 0 4vh;
 
     .point-content-left {
       box-sizing: border-box;
-      width: 35%;
+      width: 38%;
       height: 100%;
-      padding: 20px 10px 20px 20px;
+      height: 86vh;
+      // padding: 20px 10px 20px 20px;
 
       .point-content-left-border {
         box-sizing: border-box;
@@ -617,14 +629,23 @@ onUnmounted(() => {
             }
           }
         }
+
+        .body-content {
+          box-sizing: border-box;
+          width: 100%;
+          height: 80vh;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
       }
     }
 
     .point-content-right {
       box-sizing: border-box;
-      width: 65%;
+      width: 58%;
       height: 100%;
-      padding: 20px 20px 20px 10px;
+      height: 86vh;
 
       .point-content-right-border {
         box-sizing: border-box;

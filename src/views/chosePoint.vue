@@ -2,8 +2,8 @@
  * @Author: Sid Li
  * @Date: 2025-12-12 14:38:40
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-15 16:40:49
- * @FilePath: \zi-xiao-ai\src\views\chosePoint.vue
+ * @LastEditTime: 2025-12-17 23:48:10
+ * @FilePath: \electron-zxa\src\views\chosePoint.vue
  * @Description: 选择穴位页面  
 -->
 <template>

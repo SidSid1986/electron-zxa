@@ -223,17 +223,18 @@ let audio = null;
 async function loadMusicList() {
   try {
     if (isDev) {
-      // 开发模式逻辑不变
-      // const musicFiles = import.meta.glob("/public/music/*.mp3", {
-      const musicFiles = import.meta.glob("@/assets/music/*.mp3?url", {
+      // 开发模式（Electron开发/纯Web开发）统一用这个逻辑
+      // 关键：路径改为 Vite 能识别的绝对路径（以 /@ 开头 或 /src 开头）
+      const musicFiles = import.meta.glob("@/assets/music/*.mp3", {
         eager: true,
+        import: "default", // 显式指定导入default（Vite新版需加）
       });
-      console.debug("import.meta.glob result keys:", Object.keys(musicFiles));
+      console.debug("import.meta.glob匹配结果:", Object.keys(musicFiles));
       const arr = Object.entries(musicFiles).map(([filePath, mod]) => {
         const fileName = filePath.split("/").pop();
         const songName = fileName.replace(".mp3", "");
-        // const songUrl = `/music/${fileName}`;
-        const songUrl = mod.default;
+        // Vite会自动处理资源路径，直接用mod（已加import: "default"）
+        const songUrl = mod;
         return { name: songName, url: songUrl };
       });
       songList.splice(0, songList.length, ...arr);
@@ -253,16 +254,14 @@ async function loadMusicList() {
         songList.splice(0, songList.length);
       }
     } else {
-      // 纯 Web 环境
-      // const musicFiles = import.meta.glob("/public/music/*.mp3", {
-      const musicFiles = import.meta.glob("/src/assets/music/*.mp3?url", {
+      const musicFiles = import.meta.glob("@/assets/music/*.mp3", {
         eager: true,
+        import: "default",
       });
       const arr = Object.entries(musicFiles).map(([filePath, mod]) => {
         const fileName = filePath.split("/").pop();
         const songName = fileName.replace(".mp3", "");
-        // const songUrl = `/music/${fileName}`;
-        const songUrl = mod.default;
+        const songUrl = mod;
         return { name: songName, url: songUrl };
       });
       songList.splice(0, songList.length, ...arr);

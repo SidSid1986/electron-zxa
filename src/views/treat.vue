@@ -27,12 +27,14 @@
             </div>
           </div>
 
-          <component
-            :is="currentComponent"
-            ref="bodyRef"
-            :newPlanPoint="newPlanPoint"
-            :currentPoint="currentPoint"
-          />
+          <div class="body-content">
+            <component
+              :is="currentComponent"
+              ref="bodyRef"
+              :newPlanPoint="newPlanPoint"
+              :currentPoint="currentPoint"
+            />
+          </div>
         </div>
       </div>
       <div class="point-content-right">
@@ -272,7 +274,6 @@ const generateWsCommandArray = (flatPoints) => {
   });
 };
 
- 
 // 父组件 - flattenPlanData函数
 const flattenPlanData = (planList) => {
   const flatPoints = [];
@@ -288,7 +289,9 @@ const flattenPlanData = (planList) => {
     points.forEach((pointItem, pointIndex) => {
       const timeInSeconds = (parseInt(time) || 1) * 60; // 1→60秒
       // 新增：秒数转 分:秒
-      const minutes = Math.floor(timeInSeconds / 60).toString().padStart(2, "0");
+      const minutes = Math.floor(timeInSeconds / 60)
+        .toString()
+        .padStart(2, "0");
       const seconds = (timeInSeconds % 60).toString().padStart(2, "0");
       flatPoints.push({
         ...pointItem,
@@ -304,7 +307,7 @@ const flattenPlanData = (planList) => {
         // 修复time1：00:分:秒
         time1: `00:${minutes}:${seconds}`,
         // time2保持不变（分:秒）
-        time2: `${minutes}:${seconds}`
+        time2: `${minutes}:${seconds}`,
       });
     });
   });
@@ -433,7 +436,7 @@ const usePoint = () => {
       swiperInstance.value.slideTo(pageIndex);
     }
   });
-  
+
   testIndex.value = nextIndex;
 };
 // 父组件 - 处理倒计时结束事件
@@ -442,7 +445,8 @@ const countdownEnd = (item) => {
   const pointLength = flatPoints.length;
 
   // 前置判断：已结束所有治疗
-  if (testIndex.value >= pointLength - 1) { // 最后一个穴位
+  if (testIndex.value >= pointLength - 1) {
+    // 最后一个穴位
     if (treatSwiperRef.value) {
       treatSwiperRef.value.stopCountdown();
     }
@@ -850,13 +854,14 @@ onUnmounted(() => {});
     height: 90vh;
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: space-between;
+    padding: 0 4vh;
 
     .point-content-left {
       box-sizing: border-box;
       width: 35%;
-      height: 100%;
-      padding: 20px 10px 20px 20px;
+
+      height: 86vh;
 
       .point-content-left-border {
         box-sizing: border-box;
@@ -923,14 +928,24 @@ onUnmounted(() => {});
             }
           }
         }
+
+        .body-content {
+          box-sizing: border-box;
+          width: 100%;
+          height: 80vh;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: flex-start;
+        }
       }
     }
 
     .point-content-right {
       box-sizing: border-box;
-      width: 65%;
-      height: 100%;
-      padding: 20px 20px 20px 10px;
+      width: 63%;
+
+      height: 86vh;
 
       .point-content-right-border {
         box-sizing: border-box;
