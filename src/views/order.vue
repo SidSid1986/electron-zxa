@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-12 16:15:42
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-16 17:07:48
+ * @LastEditTime: 2025-12-17 10:04:49
  * @FilePath: \zi-xiao-ai\src\views\order.vue
  * @Description: 
 -->
@@ -123,14 +123,116 @@
         />
       </div>
     </div>
+
+    <el-dialog
+      class="order-table-dialog"
+      :show-close="false"
+      v-model="dialogTableVisible"
+      title=""
+    >
+      <template #header="{ close, titleId, titleClass }">
+        <div class="my-header">
+          <h4 :id="titleId" :class="titleClass">诊断灸方详情</h4>
+          <el-icon @click="close" class="el-icon--left"><CloseBold /></el-icon>
+          <!-- <el-icon @click="close" class="el-icon--left"
+            ><CircleCloseFilled
+          /></el-icon> -->
+        </div>
+      </template>
+      <div class="detail-text">
+        <div><span>订单编号:</span> {{ orderInfo.id }}</div>
+        <div><span>顾客姓名:</span> {{ orderInfo.name }}</div>
+        <div><span>顾客电话:</span> {{ orderInfo.phone }}</div>
+        <div><span>创建时间:</span> {{ orderInfo.createTime }}</div>
+        <div><span>预估时长:</span> {{ orderInfo.time }}小时</div>
+        <div><span>实际时长:</span> {{ orderInfo.finalTime }}</div>
+        <div>
+          <span>完成状态:</span>
+          {{ orderInfo.status === 0 ? "未完成" : "已完成" }}
+        </div>
+      </div>
+      <div>
+        <el-table border class="dialog-table" :data="orderInfo.plan">
+          <el-table-column
+            align="center"
+            property="id"
+            label="序号"
+            width="50"
+          />
+          <el-table-column align="center" property="name" label="灸法">
+            <template #default="scope">
+              <span class="name-tag">
+                {{ scope.row.name }}
+              </span>
+            </template>
+          </el-table-column>
+
+          <el-table-column
+            width="80"
+            align="center"
+            property="time"
+            label="时长"
+          />
+          <el-table-column
+            width="150"
+            align="center"
+            property="point"
+            label="穴位"
+          >
+            <template #default="scope">
+              <el-tag
+                class="point-tag"
+                round
+                effect="plain"
+                v-for="(item, index) in scope.row.point"
+                :key="index"
+              >
+                {{ item }}
+              </el-tag>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
+import { createTablePopper } from "element-plus/es/components/table/src/util.mjs";
 import { ref, onMounted, computed, watch } from "vue";
 import { useRouter } from "vue-router";
 
 const router = useRouter();
+
+const orderInfo = ref({
+  id: 1,
+  name: "bob",
+  phone: "13800000001",
+  createTime: "2025-12-16 10:00",
+  time: 4,
+  finalTime: 1,
+  status: 0,
+  plan: [
+    {
+      id: 11,
+      name: "回旋灸",
+      time: 1,
+      point: ["大椎穴"],
+    },
+    {
+      id: 12,
+      name: "回旋灸",
+      time: 1,
+      point: ["风门穴"],
+    },
+    {
+      id: 13,
+      name: "往复灸",
+      time: 1,
+      point: ["风门穴", "肺俞穴"],
+    },
+  ],
+});
 
 // 搜索条件
 const searchPhone = ref("");
@@ -140,6 +242,7 @@ const pageSize = ref(10);
 const size = ref("large");
 const timeStart = ref("");
 const timeEnd = ref("");
+const dialogTableVisible = ref(false);
 
 // 模拟数据（保持不变）
 const tableData = ref([
@@ -384,6 +487,7 @@ const handleBatchDelete = () => {
 const viewDetail = (row) => {
   console.log("查看详情:", row);
   // 可以跳转到详情页或打开弹窗
+  dialogTableVisible.value = true;
 };
 
 const backMain = () => {
@@ -515,9 +619,26 @@ onMounted(() => {
   }
 }
 
+.name-tag {
+  display: inline-block;
+  font-size: 16px;
+  background: #9b28ae;
+  padding: 3px 8px;
+  border-radius: 20px;
+  color: #ffffff;
+}
+
+.point-tag {
+  margin: 0 5px;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+// 搜索输入框样式穿透
 :deep(.search-input) {
   height: 50px;
   width: 7vw;
+
   .el-input__wrapper {
     border-color: #9033e9;
 
@@ -527,6 +648,7 @@ onMounted(() => {
   }
 }
 
+// 详情按钮样式穿透
 :deep(.detail-btn) {
   color: #9033e9 !important;
   font-weight: bold;
@@ -539,6 +661,7 @@ onMounted(() => {
   }
 }
 
+// 状态标签样式穿透
 :deep(.status-tag) {
   font-weight: bold;
   border-radius: 4px;
@@ -562,6 +685,7 @@ onMounted(() => {
   overflow: hidden;
   border: none !important;
   padding: 0 !important;
+
   &::after {
     content: "";
     position: absolute;
@@ -578,6 +702,7 @@ onMounted(() => {
 .order-table {
   border-radius: 20px !important;
   overflow: hidden !important;
+
   // 清除表格容器的默认内边距
   .el-table__header,
   .el-table__body {
@@ -631,10 +756,13 @@ onMounted(() => {
     // }
   }
 }
+
+// 时间输入框样式
 .time-input {
   height: 50px !important;
 }
 
+// 状态选择器样式
 .status-select {
   .el-input__wrapper {
     border-color: #9033e9;
@@ -643,10 +771,88 @@ onMounted(() => {
       border-color: #4d1166;
     }
   }
+
   width: 5vw;
   height: 50px !important;
+
   .el-select__wrapper {
     height: 50px !important;
+  }
+}
+
+.order-table-dialog {
+  width: 35vw;
+  height: 55vh;
+  padding: 0;
+  border-radius: 20px !important;
+  overflow: hidden;
+  .el-dialog__header {
+    height: 3vh !important;
+    line-height: 3vh !important;
+    font-size: 24px !important;
+    font-weight: bold !important;
+    color: #ffffff !important;
+    background: #9033e9 !important;
+  }
+  .el-dialog__body {
+    // border: 1px solid red;
+    padding: 2vh;
+    height: 50vh;
+    box-sizing: border-box;
+
+    .detail-text {
+      background-color: #f6f9f6;
+      padding: 1vh;
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 10px;
+      span {
+        color: #999999;
+        margin-right: 10px;
+      }
+    }
+  }
+}
+.my-header {
+  padding: 0 20px;
+  height: 4vh !important;
+  line-height: 4vh !important;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  .el-dialog__title {
+    color: #ffffff;
+  }
+  .el-icon--left {
+    cursor: pointer;
+    font-size: 14px;
+    height: 2vh;
+    width: 2vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #9e80dc;
+    border-radius: 50%;
+  }
+}
+
+.dialog-table {
+  max-height: 27vh;
+  width: 100%;
+  border-radius: 20px !important;
+  border: 1px solid #e0ddec !important;
+
+  .el-table__row {
+    height: 4vh !important;
+    line-height: 4vh !important;
+    box-sizing: border-box;
+    td {
+      height: 4vh !important;
+      line-height: 4vh !important;
+      padding: 0 !important; // 清除单元格内边距
+      vertical-align: middle !important;
+    }
   }
 }
 
