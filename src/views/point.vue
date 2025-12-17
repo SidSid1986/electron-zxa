@@ -13,7 +13,12 @@
               <span class="left-nav-text">定穴中</span>
             </div>
           </div>
-          <FuXie :picType="picType" :picUrl="picUrl" :tableData="tableData" />
+          <!-- <BodyCom :picType="picType" :picUrl="picUrl" :tableData="tableData" /> -->
+          <component
+            :is="currentComponent"
+            ref="bodyRef"
+            :newPlanPoint="newPlanPoint"
+          />
         </div>
       </div>
       <div class="point-content-right">
@@ -122,12 +127,19 @@ import { ref, onMounted, computed, nextTick, onUnmounted } from "vue";
 import caseData from "@/data/caseData.json";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useRoute, useRouter } from "vue-router";
-import FuXie from "@/components/FuXie.vue";
+import BodyCom from "@/components/BodyCom.vue";
+
+import BodyFront from "@/components/body/BodyFront.vue";
+import BodyBack from "@/components/body/BodyBack.vue";
+import LegFront from "@/components/body/LegFront.vue";
+import LegBack from "@/components/body/LegBack.vue";
 
 import BodyPic from "@/assets/pic/body/body0.png";
 import LegPic from "@/assets/pic/body/body1.png";
 
 const $ws = inject("$ws");
+
+const currentComponent = shallowRef(markRaw(BodyBack));
 
 const router = useRouter();
 const route = useRoute();
@@ -156,30 +168,33 @@ const tableContentHeight = ref(0);
 const tableContainerHeight = ref(0);
 const tableMaxOffset = ref(0);
 
+const chooseBody = (item, index) => {
+  switch (item.bodyType) {
+    case 0:
+      currentComponent.value = markRaw(BodyFront);
+      break;
+    case 1:
+      currentComponent.value = markRaw(LegFront);
+      break;
+    case 2:
+      currentComponent.value = markRaw(BodyBack);
+      break;
+    case 3:
+      currentComponent.value = markRaw(LegBack);
+      break;
+    default:
+      break;
+  }
+};
+
 const getPoint = (id) => {
   const caseDataCopy = JSON.parse(JSON.stringify(caseData));
+
+  console.log(caseDataCopy);
 
   selectedCase.value = caseDataCopy.find((item) => {
     return item.id * 1 === id * 1;
   });
-
-  // 初始化第一个定穴状态为正在定穴
-  selectedCase.value.plan[0].status = 1;
-
-  selectedObj.value = selectedCase.value.plan[0];
-
-  picType.value = selectedCase.value.plan[0].type;
-  picUrl.value = selectedCase.value.plan[0].type === 0 ? BodyPic : LegPic;
-  // switch (selectedCase.value.plan[0].type) {
-  //   case 0:
-  //     picUrl.value = BodyPic;
-  //     break;
-  //   case 1:
-  //     picUrl.value = LegPic;
-  //     break;
-  //   default:
-  //     break;
-  // }
 
   tableData.value = selectedCase.value.plan;
 

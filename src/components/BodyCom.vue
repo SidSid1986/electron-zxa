@@ -137,7 +137,7 @@ const forceUpdate = ref(0);
 watch(
   () => props.picType,
   (newType) => {
-    console.log("FuXie组件：picType更新为", newType);
+    console.log("Body组件：picType更新为", newType);
     // 强制更新组件
     // 通过更新一个空的响应式变量触发重新渲染
     forceUpdate.value++;
@@ -150,7 +150,7 @@ watch(
 watch(
   () => props.tableData,
   (newVal) => {
-    console.log("FuXie组件：tableData更新", newVal);
+    console.log("Body组件：tableData更新", newVal);
     if (!newVal || newVal.length === 0) return;
 
     // 匹配穴位名称

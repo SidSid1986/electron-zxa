@@ -26,7 +26,7 @@
               <span class="left-nav-text">已结束 </span>
             </div>
           </div>
-          <FuXie :picType="picType" :picUrl="picUrl" :tableData="tableData" />
+          <BodyCom :picType="picType" :picUrl="picUrl" :tableData="tableData" />
         </div>
       </div>
       <div class="point-content-right">
@@ -151,7 +151,7 @@ import { ref, onMounted, watch, nextTick, computed, onUnmounted } from "vue";
 import caseData from "@/data/caseData.json";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useRoute, useRouter } from "vue-router";
-import FuXie from "@/components/FuXie.vue";
+import BodyCom from "@/components/BodyCom.vue";
 import TreatSwiper from "@/components/TreatSwiper.vue";
 import TemperatureModal from "@/components/TemperatureModal.vue";
 import VolumeModal from "@/components/VolumeModal.vue";

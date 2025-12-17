@@ -5,73 +5,57 @@
     "isReady": true,
     "plan": [
       {
-        "name": "悬停灸",
-        "treatType": 0,
+        "name": "腹泻针灸1",
+        "treatType": 2,
+        "chooseName": "回旋灸",
         "time": 1,
-        "point": "天枢穴(左)",
-        "status": 0,
-        "type": 0,
-        "x": 0.0,
-        "y": 0.0,
-        "z": 0.0,
-        "rx": 0.0,
-        "ry": 0.0,
-        "rz": 0.0
-      },
+        "bodyType": 2,
+        "points": [
+          {
+            "id": 1,
+            "bodyType": 2,
+            "name": "风门穴(左)",
+            "x": 0,
+            "y": 0,
+            "z": 0,
+            "rx": 0,
+            "ry": 0,
+            "rz": 0,
+            "status": 1,
+            "top": 180,
+            "left": 174
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "name": "腹泻针灸2",
+    "isReady": true,
+    "plan": [
       {
-        "name": "悬停灸",
-        "treatType": 0,
+        "name": "腹泻针灸2",
+        "treatType": 2,
+        "chooseName": "回旋灸",
         "time": 1,
-        "point": "天枢穴(右)",
-        "status": 0,
-        "type": 0,
-        "x": 0.0,
-        "y": 0.0,
-        "z": 0.0,
-        "rx": 0.0,
-        "ry": 0.0,
-        "rz": 0.0
-      },
-      {
-        "name": "悬停灸",
-        "treatType": 0,
-        "time": 1,
-        "point": "神阙穴",
-        "status": 0,
-        "type": 0,
-        "x": 0.0,
-        "y": 0.0,
-        "z": 0.0,
-        "rx": 0.0,
-        "ry": 0.0,
-        "rz": 0.0
-      },
-      {
-        "name": "悬停灸",
-        "treatType": 0,
-        "time": 1,
-        "point": "上巨虚穴(左)",
-        "status": 0,
-        "type": 1,
-        "x": 0.0,
-        "y": 0.0,
-        "z": 0.0,
-        "rx": 0.0,
-        "ry": 0.0,
-        "rz": 0.0
-      },
-      {
-        "name": "悬停灸",
-        "time": 1,
-        "point": "上巨虚穴(右)",
-        "status": 0,
-        "type": 1,
-        "x": 0.0,
-        "y": 0.0,
-        "z": 0.0,
-        "rx": 0.0,
-        "ry": 0.0,
-        "rz": 0.0
+        "bodyType": 2,
+        "points": [
+          {
+            "id": 2,
+            "bodyType": 2,
+            "name": "风门穴(右)",
+            "x": 0,
+            "y": 0,
+            "z": 0,
+            "rx": 0,
+            "ry": 0,
+            "rz": 0,
+            "status": 1,
+            "top": 180,
+            "left": 174
+          }
+        ]
       }
     ]
   }

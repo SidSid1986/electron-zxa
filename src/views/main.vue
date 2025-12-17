@@ -78,10 +78,12 @@
               }"
             >
               <span>
-                <span class="right-name">{{ item.name }}</span>
+                <span class="right-name">{{ item.chooseName }}</span>
               </span>
               <span>{{ item.time }}</span>
-              <span>{{ item.point }}</span>
+              <span v-for="(area, areaIndex) in item.point" :key="areaIndex">{{
+                area.name
+              }}</span>
             </div>
           </div>
         </div>
@@ -145,7 +147,8 @@
 <script setup>
 import { ref, onMounted, onUnmounted, nextTick, watch } from "vue";
 import { useRouter } from "vue-router";
-import { getCaseData, getCaseById } from "@/utils/caseDataManager";
+import caseData from "@/data/caseData.json";
+// import { getCaseData, getCaseById } from "@/utils/caseDataManager";
 import DrawerList from "@/components/DrawerList.vue";
 import Top from "@/components/Top.vue";
 
@@ -169,7 +172,7 @@ const watchUserInfo = () => {
 const dialogVisible = ref(false);
 const selectedCaseId = ref(1);
 const selectedPlan = ref([]);
-const caseArr = ref(getCaseData());
+const caseArr = ref([]);
 
 // 左侧/右侧拖拽滚动相关状态
 const isDragging = ref(false);
@@ -192,6 +195,11 @@ const rightContentHeight = ref(0);
 const rightContainerHeight = ref(0);
 const rightMaxOffset = ref(0);
 const drawerVisible = ref(false);
+
+const getCaseList = () => {
+  caseArr.value = JSON.parse(JSON.stringify(caseData));
+};
+
 const openMenu = () => {
   drawerVisible.value = true;
 };
@@ -362,8 +370,11 @@ const handleRightWheel = (e) => {
 
 const handleClick = (id) => {
   selectedCaseId.value = id;
-  const selectedItem = getCaseById(id);
+
+  const selectedItem = caseArr.value.find((item) => item.id === id);
+  console.log(selectedItem);
   selectedPlan.value = selectedItem?.plan || [];
+
   rightDragOffset.value = 0;
   nextTick(() => {
     setTimeout(initRightHeight, 50);
@@ -384,8 +395,7 @@ onMounted(() => {
     initRightHeight();
   }, 100);
   window.addEventListener("resize", initRightHeight);
-  const selectedItem = getCaseById(selectedCaseId.value);
-  selectedPlan.value = selectedItem?.plan || [];
+  getCaseList();
 
   // 监听用户信息变化
   watchUserInfo();
