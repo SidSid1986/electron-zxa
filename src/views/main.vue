@@ -81,9 +81,11 @@
                 <span class="right-name">{{ item.chooseName }}</span>
               </span>
               <span>{{ item.time }}</span>
-              <span v-for="(area, areaIndex) in item.point" :key="areaIndex">{{
-                area.name
-              }}</span>
+              <span>
+                <span v-for="(area, areaIndex) in item.points" :key="areaIndex">
+                  {{ area.name }}</span
+                >
+              </span>
             </div>
           </div>
         </div>
@@ -151,6 +153,7 @@ import caseData from "@/data/caseData.json";
 // import { getCaseData, getCaseById } from "@/utils/caseDataManager";
 import DrawerList from "@/components/DrawerList.vue";
 import Top from "@/components/Top.vue";
+import pointData from "@/data/pointData.json";
 
 const router = useRouter();
 
@@ -198,6 +201,8 @@ const drawerVisible = ref(false);
 
 const getCaseList = () => {
   caseArr.value = JSON.parse(JSON.stringify(caseData));
+  // 初始化右侧定穴列表
+  selectedPlan.value = caseArr.value[0].plan;
 };
 
 const openMenu = () => {
@@ -390,6 +395,9 @@ const cancelDialog = () => {
 };
 
 onMounted(() => {
+  const arr = JSON.parse(JSON.stringify(pointData));
+  console.log(arr);
+  localStorage.setItem("pointData", JSON.stringify(arr));
   setTimeout(() => {
     initLeftHeight();
     initRightHeight();

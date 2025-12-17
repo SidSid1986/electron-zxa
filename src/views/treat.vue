@@ -26,7 +26,13 @@
               <span class="left-nav-text">已结束 </span>
             </div>
           </div>
-          <BodyCom :picType="picType" :picUrl="picUrl" :tableData="tableData" />
+
+          <component
+            :is="currentComponent"
+            ref="bodyRef"
+            :newPlanPoint="newPlanPoint"
+            :currentPoint="currentPoint"
+          />
         </div>
       </div>
       <div class="point-content-right">
@@ -147,7 +153,17 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch, nextTick, computed, onUnmounted } from "vue";
+import {
+  ref,
+  onMounted,
+  watch,
+  nextTick,
+  computed,
+  onUnmounted,
+  shallowRef,
+  markRaw,
+  inject,
+} from "vue";
 import caseData from "@/data/caseData.json";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useRoute, useRouter } from "vue-router";
@@ -158,6 +174,12 @@ import VolumeModal from "@/components/VolumeModal.vue";
 import MusicPlayer from "@/components/MusicPlayer.vue";
 import BodyPic from "@/assets/pic/body/body0.png";
 import LegPic from "@/assets/pic/body/body1.png";
+
+import BodyFront from "@/components/body/BodyFront.vue";
+import BodyBack from "@/components/body/BodyBack.vue";
+import LegFront from "@/components/body/LegFront.vue";
+import LegBack from "@/components/body/LegBack.vue";
+const currentComponent = shallowRef(markRaw(BodyBack));
 
 const $ws = inject("$ws");
 
@@ -193,66 +215,104 @@ const picType = ref(-1);
 const picUrl = ref("");
 const selectedCaseId = ref("");
 const selectedCase = ref({});
-const tableData = ref([]);
+const tableData = ref([]); // 改为：扁平化的单个穴位数组
 const selectedObj = ref({});
 const testIndex = ref(-1);
 const treatSwiperRef = ref(null);
 const swiperInstance = ref(null);
 const wsCommandArray = ref([]);
+const newPlanPoint = ref([]);
+const currentPoint = ref({}); // 当前选中的单个穴位
 
 // 计算属性：判断是否还有未完成的穴位
 const hasUnfinishedPoints = computed(() => {
-  const planList = selectedCase.value.plan || [];
-  return planList.some((item) => item.status !== 2);
+  return tableData.value.some((item) => item.status !== 2);
 });
 
-const generateWsCommandArray = (data) => {
-  // 校验入参
-  if (!data || !Array.isArray(data.plan) || data.plan.length === 0) {
-    console.error("无效的plan数据");
+// 选择身体组件（适配单个穴位的bodyType）
+const chooseBody = (pointItem) => {
+  if (!pointItem) return;
+  switch (pointItem.bodyType) {
+    case 0:
+      currentComponent.value = markRaw(BodyFront);
+      break;
+    case 1:
+      currentComponent.value = markRaw(LegFront);
+      break;
+    case 2:
+      currentComponent.value = markRaw(BodyBack);
+      break;
+    case 3:
+      currentComponent.value = markRaw(LegBack);
+      break;
+    default:
+      break;
+  }
+};
+
+// 生成WS指令数组（适配新数据结构：每个穴位生成指令）
+const generateWsCommandArray = (flatPoints) => {
+  if (!flatPoints || !Array.isArray(flatPoints)) {
+    console.error("无效的穴位数据");
     return [];
   }
 
-  // 遍历plan，组装每个穴位的WS指令
-  const wsCommandArray = data.plan.map((item, index) => {
-    // 提取坐标值
+  return flatPoints.map((item, index) => {
     const { x, y, z, rx, ry, rz } = item;
-    // 拼接args中的pose字符串
     const poseStr = `pose={${x},${y},${z},${rx},${ry},${rz}}`;
-    // 组装完整的WS指令
     return {
-      // req_id: `0001${index + 1}`, // 每个指令的req_id区分（也可固定为00011，根据你的需求调整）
       command: "MovJ_vertical",
       args: `pose='${poseStr}'`,
-      //  穴位信息
-      // pointInfo: {
-      //   name: item.name,
-      //   point: item.point,
-      //   index: index,
-      // },
+      pointInfo: {
+        name: item.name,
+        point: item.name, // 子组件用point字段显示穴位名
+        index: index,
+      },
     };
   });
-
-  return wsCommandArray;
 };
 
+ 
+// 父组件 - flattenPlanData函数
+const flattenPlanData = (planList) => {
+  const flatPoints = [];
+  planList.forEach((groupItem) => {
+    const {
+      points = [],
+      name: groupName,
+      treatType,
+      chooseName,
+      time,
+      bodyType: groupBodyType,
+    } = groupItem;
+    points.forEach((pointItem, pointIndex) => {
+      const timeInSeconds = (parseInt(time) || 1) * 60; // 1→60秒
+      // 新增：秒数转 分:秒
+      const minutes = Math.floor(timeInSeconds / 60).toString().padStart(2, "0");
+      const seconds = (timeInSeconds % 60).toString().padStart(2, "0");
+      flatPoints.push({
+        ...pointItem,
+        groupName: groupName,
+        treatType: treatType,
+        chooseName: chooseName,
+        time: timeInSeconds,
+        bodyType: pointItem.bodyType || groupBodyType,
+        point: pointItem.name,
+        status: 0,
+        isActive: false,
+        uniqueId: `${groupName}-${treatType}-${pointIndex}-${pointItem.name}`,
+        // 修复time1：00:分:秒
+        time1: `00:${minutes}:${seconds}`,
+        // time2保持不变（分:秒）
+        time2: `${minutes}:${seconds}`
+      });
+    });
+  });
+  return flatPoints;
+};
+// 获取穴位数据（适配新数据结构）
 const getPoint = (id) => {
-  // const caseDataCopy = JSON.parse(JSON.stringify(caseData));
-  // selectedCase.value = caseDataCopy.find((item) => item.id * 1 === id * 1);
-
-  // console.log(selectedCase.value);
-
   selectedCase.value = JSON.parse(localStorage.getItem("selectedCase"));
-  console.log(selectedCase.value);
-
-  wsCommandArray.value = generateWsCommandArray(selectedCase.value);
-
-  console.log(wsCommandArray.value[0]);
-
-  sendWsMessage(wsCommandArray.value[0]);
-  // let data = {"req_id":"00011","command": "MovJ_vertical","args": "pose='pose={500,-100,500,180,0,90}'"};
-  // sendWsMessage(data);
-
   if (
     !selectedCase.value ||
     !selectedCase.value.plan ||
@@ -262,36 +322,48 @@ const getPoint = (id) => {
     return;
   }
 
-  // 初始化第一个穴位 + 修复默认时长为1分钟（核心！）
+  // 1. 扁平化处理plan数据（拆分为单个穴位数组）
   const planList = selectedCase.value.plan;
+  const flatPoints = flattenPlanData(planList);
+  if (flatPoints.length === 0) {
+    ElMessage.error("未找到有效穴位");
+    return;
+  }
 
-  planList.forEach((item) => {
-    // 如果time未定义/为0/为1，强制设为1分钟（60秒）
-    if (!item.time || item.time === 0 || item.time === 1) {
-      item.time = 60; // 1分钟 = 60秒（匹配子组件的秒级计算）
-    }
-  });
+  // 2. 初始化第一个穴位
+  flatPoints[0].status = 1;
+  flatPoints[0].isActive = true;
+  selectedObj.value = flatPoints[0];
+  currentPoint.value = flatPoints[0];
+  newPlanPoint.value = [flatPoints[0]]; // 适配组件传参
+  chooseBody(flatPoints[0]);
 
-  planList[0].status = 1;
-  planList[0].isActive = true;
+  // 3. 初始化图片类型
+  picType.value = flatPoints[0].bodyType;
+  picUrl.value = [0, 2].includes(flatPoints[0].bodyType) ? BodyPic : LegPic;
 
-  selectedObj.value = planList[0];
-  picType.value = planList[0].type;
-  picUrl.value = planList[0].type === 0 ? BodyPic : LegPic;
+  // 4. 赋值给tableData（子组件数据源）
+  tableData.value = JSON.parse(JSON.stringify(flatPoints));
 
-  tableData.value = JSON.parse(JSON.stringify(planList));
+  // 5. 生成WS指令数组（基于单个穴位）
+  wsCommandArray.value = generateWsCommandArray(flatPoints);
+  // 发送第一个穴位的WS指令
+  if (wsCommandArray.value.length > 0) {
+    sendWsMessage(wsCommandArray.value[0]);
+  }
 
-  // 标记治疗已开始
+  // 6. 标记治疗状态
   hasTreatmentStarted.value = true;
   isTreating.value = true;
-  isPsuse.value = false; // 初始为未暂停
-  isTreatmentEnded.value = false; // 重置结束标记
+  isPsuse.value = false;
+  isTreatmentEnded.value = false;
   testIndex.value = 0;
 
-  // 初始化Swiper
+  // 7. 启动倒计时
   nextTick(() => {
     if (swiperInstance.value) {
-      swiperInstance.value.slideTo(planList[0].type);
+      // 初始索引0 → 分页索引0（第一页3个）
+      swiperInstance.value.slideTo(Math.floor(testIndex.value / 3));
     }
     if (treatSwiperRef.value) {
       treatSwiperRef.value.startCountdown(0);
@@ -299,38 +371,37 @@ const getPoint = (id) => {
   });
 };
 
-// 自动切换穴位
+// 父组件 - 自动切换穴位
 const usePoint = () => {
-  const planList = selectedCase.value.plan || [];
-  const planLength = planList.length;
+  const flatPoints = tableData.value;
+  const pointLength = flatPoints.length;
 
-  if (planLength === 0) {
-    ElMessage.warning("无穴位计划可执行");
+  if (pointLength === 0) {
+    ElMessage.warning("无穴位可执行");
     return;
   }
 
-  // 1. 标记当前穴位为已完成
-  if (testIndex.value < planLength) {
-    planList[testIndex.value].status = 2;
-    planList[testIndex.value].isActive = false;
+  // 标记当前穴位为已完成
+  if (testIndex.value < pointLength) {
+    flatPoints[testIndex.value].status = 2;
+    flatPoints[testIndex.value].isActive = false;
   }
 
-  // 2. 计算下一个索引
+  // 计算下一个索引
   const nextIndex = testIndex.value + 1;
 
-  // 3. 最后一个穴位
-  if (nextIndex >= planLength) {
-    tableData.value = JSON.parse(JSON.stringify(planList));
+  // 最后一个穴位
+  if (nextIndex >= pointLength) {
     isTreating.value = false;
-    isPsuse.value = true; // 标记为暂停状态，显示继续按钮
-    isTreatmentEnded.value = true; // 标记为治疗完成
+    isPsuse.value = true;
+    isTreatmentEnded.value = true;
     ElMessage.info("已执行完所有穴位，结束治疗");
     testIndex.value = -1;
     return;
   }
 
-  // 4. 更新状态
-  planList.forEach((item, idx) => {
+  // 更新下一个穴位状态
+  flatPoints.forEach((item, idx) => {
     if (idx === nextIndex) {
       item.status = 1;
       item.isActive = true;
@@ -340,40 +411,38 @@ const usePoint = () => {
     }
   });
 
-  selectedObj.value = planList[nextIndex];
-  picType.value = planList[nextIndex].type;
-  picUrl.value = planList[nextIndex].type === 0 ? BodyPic : LegPic;
+  // 更新选中状态和图片
+  selectedObj.value = flatPoints[nextIndex];
+  currentPoint.value = flatPoints[nextIndex];
+  newPlanPoint.value = [flatPoints[nextIndex]];
+  picType.value = flatPoints[nextIndex].bodyType;
+  picUrl.value = [0, 2].includes(flatPoints[nextIndex].bodyType)
+    ? BodyPic
+    : LegPic;
+  chooseBody(flatPoints[nextIndex]);
 
-  // 5. 同步Swiper
-  nextTick(() => {
-    if (swiperInstance.value) {
-      swiperInstance.value.slideTo(planList[nextIndex].type);
-    }
-  });
-
-  // 6. 更新数据源
-  testIndex.value = nextIndex;
-  tableData.value = JSON.parse(JSON.stringify(planList));
-
-  console.log(`自动切换到索引${nextIndex}，type=${planList[nextIndex].type}`);
-};
-
-// 处理倒计时结束事件
-const countdownEnd = (item) => {
-  const planList = selectedCase.value.plan || [];
-  const planLength = planList.length;
-
-  console.log("数据顺序");
-  console.log(testIndex.value);
-
-  if (testIndex.value + 1 >= planLength) {
-    return;
+  // 发送WS指令
+  if (wsCommandArray.value[nextIndex]) {
+    sendWsMessage(wsCommandArray.value[nextIndex]);
   }
 
-  sendWsMessage(wsCommandArray.value[testIndex.value + 1]);
+  // 移除切页延迟，直接切页
+  nextTick(() => {
+    if (swiperInstance.value) {
+      const pageIndex = Math.floor(nextIndex / 3);
+      swiperInstance.value.slideTo(pageIndex);
+    }
+  });
+  
+  testIndex.value = nextIndex;
+};
+// 父组件 - 处理倒计时结束事件
+const countdownEnd = (item) => {
+  const flatPoints = tableData.value;
+  const pointLength = flatPoints.length;
 
   // 前置判断：已结束所有治疗
-  if (testIndex.value >= planLength || !isTreating.value) {
+  if (testIndex.value >= pointLength - 1) { // 最后一个穴位
     if (treatSwiperRef.value) {
       treatSwiperRef.value.stopCountdown();
     }
@@ -387,129 +456,98 @@ const countdownEnd = (item) => {
     ).then(() => {
       testIndex.value = -1;
       isTreating.value = false;
-      isPsuse.value = true; // 保持暂停状态，显示继续按钮
-      isTreatmentEnded.value = true; // 标记为治疗完成
-      planList.forEach((item) => {
+      isPsuse.value = true;
+      isTreatmentEnded.value = true;
+      flatPoints.forEach((item) => {
         item.isActive = false;
       });
-      tableData.value = JSON.parse(JSON.stringify(planList));
     });
     return;
   }
 
-  // 调用切换逻辑
-  usePoint();
-
-  // 再次判断：最后一个穴位
-  if (testIndex.value >= planLength) {
-    if (treatSwiperRef.value) {
-      treatSwiperRef.value.stopCountdown();
-    }
-    isTreating.value = false;
-    isPsuse.value = true; // 保持暂停状态
-    isTreatmentEnded.value = true; // 标记为治疗完成
-    ElMessageBox.alert(
-      "<strong><i style='font-size: 24px; color: #6c359d; text-align: center; display: block;font-weight: bold;font-style: normal;'>治疗结束</i></strong>",
-      "提醒",
-      {
-        dangerouslyUseHTMLString: true,
-        confirmButtonText: "确定",
-      }
-    );
-    return;
-  }
-
-  // 非最后一个穴位，正常启动
+  // 优化延迟：500ms 足够渲染最后1秒，且不影响流程
   setTimeout(() => {
+    // 切换到下一个穴位
+    usePoint();
+
+    // 启动下一个倒计时（无额外延迟，避免流程中断）
     if (treatSwiperRef.value && isTreating.value) {
       treatSwiperRef.value.startCountdown(testIndex.value);
       console.log(`自动启动第${testIndex.value}个穴位的倒计时`);
     }
-  }, 50);
+  }, 500); // 1000ms → 500ms，平衡渲染和流程
 };
+// 父组件 handleSwiperChange 函数（删除bodyType关联，改为分页索引）
+const handleSwiperChange = (swiperPageIndex) => {
+  const flatPoints = tableData.value;
+  if (flatPoints.length === 0) return;
 
-// 处理手动切换Swiper
-const handleSwiperChange = (swiperIndex) => {
-  const planList = selectedCase.value.plan || [];
-  if (planList.length === 0) return;
-
-  const targetType = swiperIndex;
-  picType.value = targetType;
-  picUrl.value = targetType === 0 ? BodyPic : LegPic;
-  console.log(`手动切换Swiper到索引${swiperIndex}，同步picType=${targetType}`);
-
-  // 同步testIndex
-  const currentItem = planList.find(
-    (item) => item.type === targetType && item.status === 1
+  // 分页索引→该页的第一个穴位索引
+  const pageStartIndex = swiperPageIndex * 3;
+  // 找到该页第一个未完成的穴位
+  const currentItem = flatPoints.find(
+    (item, idx) =>
+      idx >= pageStartIndex && idx < pageStartIndex + 3 && item.status === 1
   );
   if (currentItem) {
-    testIndex.value = planList.indexOf(currentItem);
+    testIndex.value = flatPoints.indexOf(currentItem);
   }
 };
 
-// 处理时长更新事件
+// 处理时长更新事件（适配扁平化数据）
 const handleUpdateSwiperData = (newSwiperData) => {
   tableData.value = JSON.parse(JSON.stringify(newSwiperData));
-  if (selectedCase.value.plan) {
-    selectedCase.value.plan = JSON.parse(JSON.stringify(newSwiperData));
-  }
 
+  // 更新选中穴位的时长
   const updatedItem = newSwiperData.find(
-    (item) =>
-      item.name === selectedObj.value.name &&
-      item.point === selectedObj.value.point
+    (item) => item.name === currentPoint.value.name
   );
   if (updatedItem) {
     const timeNum = parseInt(updatedItem.time) || 0;
-    selectedObj.value.time = updatedItem.time;
-    selectedObj.value.time1 = `00:${timeNum.toString().padStart(2, "0")}:00`;
-    selectedObj.value.time2 = `${timeNum.toString().padStart(2, "0")}:00`;
+    currentPoint.value.time = updatedItem.time;
+    currentPoint.value.time1 = `00:${timeNum.toString().padStart(2, "0")}:00`;
+    currentPoint.value.time2 = `${timeNum.toString().padStart(2, "0")}:00`;
   }
 
   ElMessage.success("时长已更新");
 };
 
+// 暂停治疗
 const pauseTreat = () => {
-  // 1. 标记全局暂停
   isPsuse.value = true;
-  // 2. 暂停子组件倒计时
   if (treatSwiperRef.value) {
     treatSwiperRef.value.pauseCountdown();
   }
   ElMessage.info("治疗已暂停");
 };
 
-// 暂停当前倒计时
+// 暂停当前倒计时（修改时长时）
 const pauseEdit = () => {
-  // 1. 标记全局暂停
   isPsuse.value = true;
-  // 2. 暂停子组件倒计时（原逻辑保留）
   if (treatSwiperRef.value) {
     treatSwiperRef.value.pauseCountdown();
   }
 };
 
-// 恢复继续当前倒计时
+// 继续治疗（适配扁平化数据）
 const continueTreat = () => {
-  // 如果所有穴位都已完成，提示用户
   if (!hasUnfinishedPoints.value) {
     ElMessage.info("所有穴位已治疗完成，无法继续");
     return;
   }
 
   isPsuse.value = false;
-  isTreating.value = true; // 重新开启治疗状态
-  const planList = selectedCase.value.plan || [];
-  const planLength = planList.length;
+  isTreating.value = true;
+  const flatPoints = tableData.value;
+  const pointLength = flatPoints.length;
 
-  if (testIndex.value >= planLength) {
+  if (testIndex.value >= pointLength) {
     // 找到第一个未完成的穴位重新启动
-    const firstUnfinished = planList.findIndex((item) => item.status !== 2);
+    const firstUnfinished = flatPoints.findIndex((item) => item.status !== 2);
     if (firstUnfinished > -1) {
       testIndex.value = firstUnfinished;
-      planList[firstUnfinished].status = 1;
-      planList[firstUnfinished].isActive = true;
-      tableData.value = JSON.parse(JSON.stringify(planList));
+      flatPoints[firstUnfinished].status = 1;
+      flatPoints[firstUnfinished].isActive = true;
 
       if (treatSwiperRef.value) {
         treatSwiperRef.value.startCountdown(firstUnfinished);
@@ -524,8 +562,7 @@ const continueTreat = () => {
   }
 };
 
-// 结束当前治疗
-// 父组件 point.vue 的 endTreat 方法
+// 结束当前治疗（适配扁平化数据）
 const endTreat = () => {
   isPsuse.value = true;
   ElMessageBox.confirm("确定要结束当前治疗吗？", "提示", {
@@ -535,18 +572,16 @@ const endTreat = () => {
     type: "warning",
   })
     .then(() => {
-      // 1. 原有逻辑
       isTreating.value = false;
       isTreatmentEnded.value = true;
 
-      // 2.  标记当前激活穴位为 ended 并保留 isActive
+      // 标记所有激活穴位为已结束
       if (treatSwiperRef.value) {
         treatSwiperRef.value.stopCountdown();
         treatSwiperRef.value.treatData.forEach((page) => {
           page.forEach((item) => {
             if (item.isActive) {
-              item.status = "ended"; // 设为已结束
-              // 保留 isActive = true，确保红色边框显示
+              item.status = "ended";
             } else {
               item.status = "idle";
               item.isActive = false;
@@ -555,16 +590,15 @@ const endTreat = () => {
         });
       }
 
-      // 3. 原有逻辑
-      const planList = selectedCase.value.plan || [];
-      planList.forEach((item) => {
+      // 重置所有穴位状态
+      const flatPoints = tableData.value;
+      flatPoints.forEach((item) => {
         if (item.status !== 2) {
           item.status = 0;
           item.isActive = false;
         }
       });
       testIndex.value = -1;
-      tableData.value = JSON.parse(JSON.stringify(planList));
 
       ElMessage.success("治疗已结束");
     })
@@ -574,7 +608,7 @@ const endTreat = () => {
     });
 };
 
-// 重新启动治疗
+// 重新启动治疗（适配扁平化数据）
 const restartTreat = () => {
   ElMessageBox.confirm("确定要重新启动整个灸疗方案吗？", "提示", {
     confirmButtonText: "确定",
@@ -583,31 +617,33 @@ const restartTreat = () => {
     type: "warning",
   })
     .then(() => {
-      // 1. 重置所有治疗状态
+      // 重置状态
       isTreatmentEnded.value = false;
       isPsuse.value = false;
       isTreating.value = true;
 
-      // 2. 重置所有穴位状态
-      const planList = selectedCase.value.plan || [];
-      planList.forEach((item, idx) => {
-        item.status = idx === 0 ? 1 : 0; // 第一个穴位设为治疗中，其余为未开始
+      // 重置所有穴位状态
+      const flatPoints = tableData.value;
+      flatPoints.forEach((item, idx) => {
+        item.status = idx === 0 ? 1 : 0;
         item.isActive = idx === 0;
       });
 
-      // 3. 重置选中的穴位和图片
-      selectedObj.value = planList[0];
-      picType.value = planList[0].type;
-      picUrl.value = planList[0].type === 0 ? BodyPic : LegPic;
+      // 重置选中状态
+      selectedObj.value = flatPoints[0];
+      currentPoint.value = flatPoints[0];
+      newPlanPoint.value = [flatPoints[0]];
+      picType.value = flatPoints[0].bodyType;
+      picUrl.value = [0, 2].includes(flatPoints[0].bodyType) ? BodyPic : LegPic;
+      chooseBody(flatPoints[0]);
 
-      // 4. 重置索引并更新数据
+      // 重置索引
       testIndex.value = 0;
-      tableData.value = JSON.parse(JSON.stringify(planList));
 
-      // 5. 重启Swiper和倒计时
+      // 🔥 核心修复：切到分页索引0（第一页），而非bodyType
       nextTick(() => {
         if (swiperInstance.value) {
-          swiperInstance.value.slideTo(planList[0].type);
+          swiperInstance.value.slideTo(0); // 强制切回第一页
         }
         if (treatSwiperRef.value) {
           treatSwiperRef.value.startCountdown(0);
@@ -634,9 +670,8 @@ const openTempModal = () => {
   }
 };
 
-// 打开音量弹窗（传递音乐播放器当前音量）
+// 打开音量弹窗
 const openVolumeModal = () => {
-  // 优先获取音乐播放器的当前音量，没有则用全局音量
   const initVol = musicPlayerRef.value?.musicVolume || currentVolume.value;
   if (volumeModalRef.value) {
     volumeModalRef.value.openModal(initVol);
@@ -656,13 +691,11 @@ const handleTempUpdate = (temp) => {
   console.log("当前温度:", temp + "°C");
 };
 
-// 音量更新处理（ 同步到音乐播放器+Electron系统音量）
+// 音量更新处理
 const handleVolumeUpdate = (volume) => {
   currentVolume.value = volume * 1;
 
-  // console.log("当前音量:", volume + "%");
-
-  // 1. Electron环境：控制系统音量（loudness）
+  // 1. Electron环境：控制系统音量
   if (isElectronEnv.value) {
     import("@/utils/volume")
       .then(({ setVol }) => {
@@ -673,22 +706,21 @@ const handleVolumeUpdate = (volume) => {
       });
   }
 
-  // 2. 同步音量到音乐播放器（无论什么环境）
+  // 2. 同步到音乐播放器
   if (musicPlayerRef.value) {
     musicPlayerRef.value.setMusicVolume(volume);
   }
 };
 
-// 同步音乐播放器的音量变化到全局
+// 同步音乐播放器音量到全局
 const handleMusicVolumeUpdate = (volume) => {
   currentVolume.value = volume * 1;
-  // 同步到音量弹窗（如果弹窗打开）
   if (volumeModalRef.value?.visible) {
     volumeModalRef.value.volume = volume;
   }
 };
 
-// 接收子组件的播放状态更新
+// 接收音乐播放状态更新
 const handlePlayingUpdate = (playingState) => {
   isMusicPlaying.value = playingState;
 };
@@ -698,13 +730,12 @@ const handleCurrentSongUpdate = (song) => {
   currentPlayingSong.value = song;
 };
 
-// 演示模式
+// 父组件 - switchDemoMode函数
 const switchDemoMode = () => {
   isPsuse.value = true;
   if (treatSwiperRef.value) {
     treatSwiperRef.value.pauseCountdown();
   }
-  // 1. 提示用户演示模式是临时的
   ElMessageBox.confirm(
     "演示模式：所有穴位时长临时改为8秒（点击正常模式恢复1分钟）！",
     "演示模式",
@@ -716,54 +747,48 @@ const switchDemoMode = () => {
     }
   )
     .then(() => {
-      // 2. 直接修改tableData为8秒（临时生效）
+      // 演示模式：直接设为8秒（无需×60）
       tableData.value.forEach((item) => {
-        item.time = 8; // 8秒（子组件按秒计算）
-        item.time1 = "00:8:00";
-        item.time2 = "00:8";
+        item.time = 8; // 8秒
+        item.time1 = "00:08:00";
+        item.time2 = "00:08";
       });
-
-      // 3. 同步更新selectedCase（运行时数据）
+      // 同步selectedCase
       if (selectedCase.value.plan) {
-        selectedCase.value.plan.forEach((item) => {
-          item.time = 8;
+        selectedCase.value.plan.forEach((groupItem) => {
+          groupItem.points.forEach((pointItem) => {
+            pointItem.time = 8;
+          });
         });
       }
-
-      // 4. 强制更新当前选中穴位的显示
-      if (selectedObj.value) {
-        selectedObj.value.time = 8;
-        selectedObj.value.time1 = "00:8:00";
-        selectedObj.value.time2 = "00:8";
-      }
-
-      // 5. 强制启动/重启倒计时
+      // 重启治疗
       nextTick(() => {
-        if (isPsuse.value) {
-          // continueTreat();
-          restartTreat();
+        restartTreat();
+        // 🔥 补充：强制切回第一页
+        if (swiperInstance.value) {
+          swiperInstance.value.slideTo(0);
         }
         if (treatSwiperRef.value) {
           treatSwiperRef.value.stopCountdown();
           treatSwiperRef.value.startCountdown(testIndex.value);
         }
       });
-
       ElMessage.success("已切换到演示模式（8秒），刷新页面恢复1分钟！");
     })
     .catch(() => {
       ElMessage.info("已取消演示模式切换");
     });
 };
-
+// 发送WS消息
 const sendWsMessage = (data) => {
-  $ws.SendMessage(`${data.command}`, `${data.args}`, (data) => {
-    console.log(data);
+  if (!$ws) return;
+  $ws.SendMessage(`${data.command}`, `${data.args}`, (res) => {
+    console.log("WS响应:", res);
   });
 };
 
+// 恢复正常模式（刷新页面）
 const refreshNormal = () => {
-  //刷新页面
   window.location.reload();
 };
 
@@ -962,18 +987,14 @@ onUnmounted(() => {});
 /* 音乐图标样式 + 旋转动画 */
 .music-icon {
   cursor: pointer;
-  /* 保持图标比例 */
   object-fit: contain;
-  /* 初始状态不旋转 */
   transition: transform 0.3s ease;
 }
 
-/*   播放中时旋转 */
 .music-icon.rotating {
   animation: rotate 3s linear infinite;
 }
 
-/* 旋转动画 */
 @keyframes rotate {
   from {
     transform: rotate(0deg);
@@ -1104,7 +1125,6 @@ onUnmounted(() => {});
   font-size: 20px !important;
 
   .el-message-box__container {
-    /* border: 1px solid red; */
     display: flex;
     flex-direction: row;
     align-items: center;

@@ -13,11 +13,11 @@
               <span class="left-nav-text">定穴中</span>
             </div>
           </div>
-          <!-- <BodyCom :picType="picType" :picUrl="picUrl" :tableData="tableData" /> -->
           <component
             :is="currentComponent"
             ref="bodyRef"
             :newPlanPoint="newPlanPoint"
+            :currentPoint="currentPoint"
           />
         </div>
       </div>
@@ -62,39 +62,53 @@
                       class="table-item-left"
                       v-show="index == selectedAutoIndex"
                     ></div>
-                    <div class="table-line-name">{{ item.name }}</div>
+                    <div class="table-line-name">{{ item.chooseName }}</div>
                   </div>
                   <div class="table-item table-item-border">
                     {{ item.time }}
                   </div>
                   <div class="table-item table-item-border">
-                    {{ item.point }}
-                  </div>
-                  <!-- 定穴状态 0 未定穴 1 正在定穴 2 已定穴 -->
-                  <div class="table-item">
-                    <span
-                      :class="
-                        item.status == 1
-                          ? 'status-red'
-                          : item.status == 0
-                            ? 'status-blue'
-                            : 'status-green'
-                      "
-                      >{{
-                        item.status == 0
-                          ? "未定穴"
-                          : item.status == 1
-                            ? "正在定穴"
-                            : "已定穴"
-                      }}</span
+                    <div
+                      v-for="(area, areaIndex) in item.points"
+                      :key="areaIndex"
+                      class="point-name-item"
                     >
+                      {{ area.name }}
+                    </div>
+                  </div>
+                  <!-- 多穴位分别显示状态 -->
+                  <div class="table-item">
+                    <div
+                      v-for="(point, pointIndex) in item.points"
+                      :key="pointIndex"
+                      class="point-status-item"
+                    >
+                      <span
+                        :class="[
+                          point.status === 1
+                            ? 'status-red'
+                            : point.status === 0
+                              ? 'status-blue'
+                              : 'status-green',
+                        ]"
+                      >
+                        {{
+                          point.status === 0
+                            ? "未定穴"
+                            : point.status === 1
+                              ? "正在定穴"
+                              : "已定穴"
+                        }}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
           <div class="right-ins">
-            移动摇杆，讲红点制动到指定穴位后，点击下方【使用此穴位】按钮
+            移动摇杆，将红点制动到指定穴位后，点击下方【使用此穴位】按钮<br />
+            当前定穴：{{ currentPoint.name || "请选择穴位" }}
           </div>
 
           <div class="right-btn">
@@ -103,8 +117,9 @@
             >
             <el-button
               class="use-btn"
-              @click="usePoint(selectedAutoIndex)"
+              @click="useCurrentPoint()"
               type="primary"
+              :disabled="!currentPoint.id"
               >使用此穴位</el-button
             >
           </div>
@@ -123,7 +138,16 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, nextTick, onUnmounted } from "vue";
+import {
+  ref,
+  onMounted,
+  computed,
+  nextTick,
+  onUnmounted,
+  inject,
+  shallowRef,
+  markRaw,
+} from "vue";
 import caseData from "@/data/caseData.json";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useRoute, useRouter } from "vue-router";
@@ -168,7 +192,39 @@ const tableContentHeight = ref(0);
 const tableContainerHeight = ref(0);
 const tableMaxOffset = ref(0);
 
-const chooseBody = (item, index) => {
+const newPlanPoint = ref([]);
+
+// 当前选中的单个穴位
+const currentPoint = ref({
+  id: "",
+  name: "",
+  rowIndex: -1,
+  pointIndex: -1,
+});
+
+// 初始化数据：第一个穴位组的第一个穴位设为正在定穴
+const initTableData = (plan) => {
+  const newPlan = JSON.parse(JSON.stringify(plan));
+  // 初始化所有穴位为未定穴
+  newPlan.forEach((row) => {
+    row.points.forEach((point) => {
+      point.status = 0;
+    });
+  });
+  // 第一个穴位组的第一个穴位设为正在定穴
+  if (newPlan.length > 0 && newPlan[0].points.length > 0) {
+    newPlan[0].points[0].status = 1;
+    // 默认选中第一个穴位
+    currentPoint.value = {
+      ...newPlan[0].points[0],
+      rowIndex: 0,
+      pointIndex: 0,
+    };
+  }
+  return newPlan;
+};
+
+const chooseBody = (item) => {
   switch (item.bodyType) {
     case 0:
       currentComponent.value = markRaw(BodyFront);
@@ -190,13 +246,17 @@ const chooseBody = (item, index) => {
 const getPoint = (id) => {
   const caseDataCopy = JSON.parse(JSON.stringify(caseData));
 
-  console.log(caseDataCopy);
-
   selectedCase.value = caseDataCopy.find((item) => {
     return item.id * 1 === id * 1;
   });
 
-  tableData.value = selectedCase.value.plan;
+  // 初始化数据
+  tableData.value = initTableData(selectedCase.value.plan);
+  console.log("初始化后表格数据:", tableData.value);
+
+  newPlanPoint.value = tableData.value[0].points;
+  chooseBody(newPlanPoint.value[0]);
+  console.log(newPlanPoint.value);
 
   nextTick(() => {
     setTimeout(calcTableScrollHeight, 50);
@@ -297,14 +357,10 @@ const handleCancel = () => {
 
 const parseStringToNumberArray = (str) => {
   try {
-    // 1. 去除首尾的 {} 符号
     const cleanedStr = str.replace(/^\{|\}$/g, "");
-    // 2. 按逗号分割成字符串数组
     const strArray = cleanedStr.split(",");
-    // 3. 转换为数值类型（Number）
     const numArray = strArray.map((item) => {
       const num = parseFloat(item.trim());
-      // 校验是否为有效数字
       if (isNaN(num)) {
         throw new Error(`无效的数值: ${item}`);
       }
@@ -313,7 +369,7 @@ const parseStringToNumberArray = (str) => {
     return numArray;
   } catch (error) {
     console.error("字符串转数组失败:", error.message);
-    return []; // 转换失败返回空数组
+    return [];
   }
 };
 
@@ -328,37 +384,38 @@ const stopDrag = () => {
   });
 };
 
+// 使用当前选中的单个穴位
+const useCurrentPoint = () => {
+  if (!currentPoint.value.id) {
+    ElMessage.warning("请先选择要定穴的穴位");
+    return;
+  }
+
+  getPointWs();
+};
+
 const getPointWs = () => {
-  // 校验WS是否已连接
   if (!$ws.Status) {
     console.log("WebSocket未连接，请稍候重试");
     return;
   }
   console.log("正在请求连接设备...");
 
-  // 发送设备连接指令
-
   const sendResult = $ws.SendMessage("GetPose", "", (data) => {
     console.log(data);
     const numArray = parseStringToNumberArray(data.result.message);
-    console.log("ceshi");
     if (numArray.length !== 6) {
       console.error("数据长度错误，无法更新:", numArray);
       return;
     }
 
-    // 1. 获取基础数据
-    const planList = selectedCase.value.plan;
-    const planLength = planList.length;
-    const index = currentOperateIndex.value; // 当前操作的索引
+    const { rowIndex, pointIndex } = currentPoint.value;
+    const newPlan = JSON.parse(JSON.stringify(tableData.value));
 
-    console.log("转换后的数组:", numArray);
-    console.log("更新前的plan项:", planList[selectedAutoIndex.value]);
-
-    // 2. 深拷贝并更新坐标数据
-    const newPlan = JSON.parse(JSON.stringify(planList));
-    newPlan[selectedAutoIndex.value] = {
-      ...newPlan[selectedAutoIndex.value],
+    // 更新当前选中穴位的状态和坐标
+    newPlan[rowIndex].points[pointIndex] = {
+      ...newPlan[rowIndex].points[pointIndex],
+      status: 2, // 标记为已定穴
       x: numArray[0],
       y: numArray[1],
       z: numArray[2],
@@ -367,89 +424,95 @@ const getPointWs = () => {
       rz: numArray[5],
     };
 
-    // 3. 核心业务逻辑：判断是否是最后一个穴位
-    if (index === planLength - 1) {
-      // 处理最后一个穴位的逻辑
-      newPlan[index].status = 2; // 标记为已使用
-      picType.value = newPlan[index].type;
-      picUrl.value = picType.value === 0 ? BodyPic : LegPic;
-      selectedObj.value = newPlan[index];
+    console.log("更新穴位坐标:", newPlan[rowIndex].points[pointIndex]);
 
-      console.log("finish：最后一个穴位处理完成，保留当前图片");
+    // 核心修正：检查当前行所有穴位的完成状态
+    const currentRow = newPlan[rowIndex];
+    // 统计当前行未完成的穴位数量（status=0 或 status=1）
+    const unfinishedPoints = currentRow.points.filter(p => p.status !== 2);
+    // 查找当前行下一个未完成的穴位
+    const nextPointIndex = currentRow.points.findIndex(p => p.status === 0);
 
-      // 4. 更新数据并触发视图刷新
-      tableData.value = [];
-      nextTick(() => {
-        selectedCase.value.plan = newPlan;
-        tableData.value = [...newPlan];
-        //停止拖拽
+    if (unfinishedPoints.length > 0 && nextPointIndex > -1) {
+      // 情况1：当前行还有未完成的穴位（1个或2个），继续处理当前行的下一个穴位
+      currentRow.points[nextPointIndex].status = 1;
+      // 更新当前选中穴位（仍在当前行）
+      currentPoint.value = {
+        ...currentRow.points[nextPointIndex],
+        rowIndex,
+        pointIndex: nextPointIndex,
+      };
+      // 同步更新newPlanPoint为当前行的穴位列表（关键修正）
+      newPlanPoint.value = currentRow.points;
+      // 更新当前行的身体部位显示
+      chooseBody(currentRow.points[nextPointIndex]);
+      console.log("当前行还有未完成穴位，切换到同组下一个:", currentRow.points[nextPointIndex].name);
+    } else {
+      // 情况2：当前行所有穴位已完成（1个或2个都完成），查找下一组
+      const nextRowIndex = newPlan.findIndex(
+        (row, idx) => idx > rowIndex && row.points.some(p => p.status === 0)
+      );
+
+      if (nextRowIndex > -1) {
+        // 切换到下一组第一个未完成穴位
+        const firstUnfinished = newPlan[nextRowIndex].points.findIndex(p => p.status === 0);
+        newPlan[nextRowIndex].points[firstUnfinished].status = 1;
+        currentPoint.value = {
+          ...newPlan[nextRowIndex].points[firstUnfinished],
+          rowIndex: nextRowIndex,
+          pointIndex: firstUnfinished,
+        };
+        selectedAutoIndex.value = nextRowIndex;
+
+        // 更新newPlanPoint为下一行的穴位列表
+        newPlanPoint.value = newPlan[nextRowIndex].points;
+        // 更新身体部位显示
+        chooseBody(newPlan[nextRowIndex].points[firstUnfinished]);
+        console.log("当前行完成，切换到下一行:", newPlan[nextRowIndex].points[firstUnfinished].name);
+      } else {
+        // 所有穴位都已完成
         stopDrag();
-
-        selectedCase.value.plan.forEach((item) => {
-          item.status = 0;
-        });
         localStorage.setItem(
           "selectedCase",
-          JSON.stringify(selectedCase.value)
+          JSON.stringify({
+            ...selectedCase.value,
+            plan: newPlan,
+          })
         );
 
-        // 显示弹窗并跳转页面
+        // 显示弹窗并跳转
         dialogVisible.value = true;
         setTimeout(() => {
           dialogVisible.value = false;
           router.push({ path: "/setting" });
         }, 2000);
-      });
-    } else {
-      // 处理非最后一个穴位的逻辑
-      newPlan[index].status = 2; // 当前穴位标记为已使用
-      newPlan[index + 1].status = 1; // 下一个穴位标记为正在定穴
-
-      // 更新选中索引和图片信息
-      selectedAutoIndex.value = index + 1;
-      picType.value = newPlan[index + 1].type;
-      selectedObj.value = newPlan[index + 1];
-      picUrl.value = picType.value === 0 ? BodyPic : LegPic;
-
-      // 5. 更新数据并触发视图刷新
-      tableData.value = [];
-      nextTick(() => {
-        selectedCase.value.plan = newPlan;
-        tableData.value = [...newPlan];
-
-        console.log(
-          "更新后的plan项:",
-          selectedCase.value.plan[selectedAutoIndex.value]
-        );
-        console.log("更新后的tableData:", tableData.value);
-      });
+      }
     }
+
+    // 更新表格数据
+    tableData.value = newPlan;
+    selectedCase.value.plan = newPlan;
+
+    ElMessage.success(`成功定穴：${currentPoint.value.name}`);
   });
-  // 发送失败的兜底处理
+
   if (!sendResult) {
     console.log("指令发送失败，请检查连接");
     return;
   }
 };
 
-const usePoint = (index) => {
-  // 记录当前操作的索引（传递给消息处理函数）
-  currentOperateIndex.value = index;
-
-  getPointWs();
-};
-
 onMounted(() => {
   console.log("组件挂载了");
-  startDrag(); // 开始拖拽
+  startDrag();
   selectedCaseId.value = route.query.id;
   getPoint(selectedCaseId.value);
 
-  // nextTick(() => {
-  //   setTimeout(calcTableScrollHeight, 100);
-  // });
+  nextTick(() => {
+    setTimeout(calcTableScrollHeight, 100);
+  });
 
-  // window.addEventListener("resize", calcTableScrollHeight);
+  window.addEventListener("resize", calcTableScrollHeight);
 });
 
 onUnmounted(() => {
@@ -469,11 +532,11 @@ onUnmounted(() => {
   align-items: center;
   justify-content: flex-start;
   width: 100vw;
-  // height: 96vh;
   height: 100vh;
   margin: 0;
   padding: 0;
   padding-top: 4vh;
+
   .point-nav {
     box-sizing: border-box;
     width: 100%;
@@ -482,12 +545,14 @@ onUnmounted(() => {
     align-items: center;
     justify-content: center;
     background-color: #c293d5;
+
     span {
       font-size: 30px;
       font-weight: bold;
       color: #fff;
     }
   }
+
   .point-content {
     box-sizing: border-box;
     width: 100%;
@@ -501,6 +566,7 @@ onUnmounted(() => {
       width: 35%;
       height: 100%;
       padding: 20px 10px 20px 20px;
+
       .point-content-left-border {
         box-sizing: border-box;
         width: 100%;
@@ -514,10 +580,10 @@ onUnmounted(() => {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          align-items: center;
           background-color: #c293d5;
           height: 8vh;
           padding: 0 20px;
+
           .left-nav-title {
             font-size: 24px;
             font-weight: bold;
@@ -525,6 +591,7 @@ onUnmounted(() => {
             height: 8vh;
             line-height: 8vh;
           }
+
           .left-nav-text-box {
             height: 8vh;
             min-width: 25%;
@@ -583,6 +650,7 @@ onUnmounted(() => {
           background-color: #fcd700;
           font-size: 20px;
           color: #111;
+
           .header-item {
             box-sizing: border-box;
             height: 100%;
@@ -593,6 +661,7 @@ onUnmounted(() => {
             text-align: center;
             padding: 0 4px;
           }
+
           .item-border {
             border-right: 2px solid #ffffff;
           }
@@ -605,9 +674,11 @@ onUnmounted(() => {
           overflow: hidden;
           position: relative;
           cursor: grab;
+
           &:active {
             cursor: grabbing;
           }
+
           -webkit-tap-highlight-color: transparent;
 
           .table-scroll-content {
@@ -618,13 +689,15 @@ onUnmounted(() => {
           .right-table-content {
             box-sizing: border-box;
             width: 100%;
-            height: 10vh;
+            height: auto;
+            min-height: 10vh;
             display: flex;
             flex-direction: row;
             align-items: center;
             font-size: 18px;
             color: #511d6a;
             background-color: #ffffff;
+            padding: 8px 0;
 
             .table-item {
               box-sizing: border-box;
@@ -635,22 +708,48 @@ onUnmounted(() => {
               justify-content: center;
               text-align: center;
               background-color: #ffffff;
+              flex-wrap: wrap;
             }
+
             .table-item-border {
               border-right: 2px solid #af7dc4;
+            }
+
+            // 穴位名称项
+            .point-name-item {
+              width: 100%;
+              margin: 4px 0;
+              font-size: 16px;
+            }
+
+            // 穴位状态项
+            .point-status-item {
+              width: 100%;
+              margin: 4px 0;
+
+              span {
+                cursor: pointer;
+                transition: all 0.2s;
+
+                &:hover {
+                  transform: scale(1.05);
+                }
+              }
             }
           }
 
           .table-item-border-index {
             box-sizing: border-box;
             width: 100%;
-            height: 10vh;
+            height: auto;
+            min-height: 10vh;
             display: flex;
             flex-direction: row;
             align-items: center;
-
             font-size: 20px;
             color: #511d6a;
+            padding: 8px 0;
+
             .table-item {
               box-sizing: border-box;
               height: 100%;
@@ -660,14 +759,39 @@ onUnmounted(() => {
               justify-content: center;
               text-align: center;
               background-color: #f3ebf4;
+              flex-wrap: wrap;
             }
+
             .table-item-border {
               border-right: 2px solid #af7dc4;
+            }
+
+            // 穴位名称项
+            .point-name-item {
+              width: 100%;
+              margin: 4px 0;
+              font-size: 16px;
+            }
+
+            // 穴位状态项
+            .point-status-item {
+              width: 100%;
+              margin: 4px 0;
+
+              span {
+                cursor: pointer;
+                transition: all 0.2s;
+
+                &:hover {
+                  transform: scale(1.05);
+                }
+              }
             }
           }
 
           .table-item-first {
             justify-content: flex-start !important;
+
             .table-line-name {
               margin-left: 40%;
             }
@@ -681,12 +805,13 @@ onUnmounted(() => {
         }
 
         .right-ins {
-          height: 6vh;
-          line-height: 6vh;
+          height: auto;
+          min-height: 6vh;
+          line-height: 1.5;
           font-size: 18px;
           color: #511d6a;
           background: #f3eef4;
-          padding: 0 20px;
+          padding: 10px 20px;
           text-align: center;
         }
 
@@ -718,47 +843,57 @@ onUnmounted(() => {
           --el-button-active-text-color: #fff;
           --el-button-active-bg-color: #8a5ca0;
           --el-button-active-border-color: #8a5ca0;
+
+          &:disabled {
+            --el-button-bg-color: #ccc;
+            --el-button-border-color: #ccc;
+            cursor: not-allowed;
+          }
         }
       }
     }
   }
 }
 
+// 状态样式
 .status-blue {
+  display: inline-block;
   width: 120px;
   height: 40px;
   line-height: 40px;
   background-color: #bdbdba;
   border-radius: 40px;
   color: #111;
+  text-align: center;
 }
+
 .status-red {
-  color: #ffffff;
+  display: inline-block;
   width: 120px;
   height: 40px;
   line-height: 40px;
   background-color: #de2b1f;
   border-radius: 40px;
+  color: #ffffff;
+  text-align: center;
 }
 
 .status-green {
-  color: #ffffff;
+  display: inline-block;
   width: 120px;
   height: 40px;
   line-height: 40px;
   background-color: #6c359d;
   border-radius: 40px;
+  color: #ffffff;
+  text-align: center;
 }
 
-// Dialog 整体文字样式：居中 + 颜色 #D4BFE1
+// Dialog 样式
 :deep(.el-dialog__body) {
-  // 让内部所有文本居中
   text-align: center;
-  // 移除默认内边距，自定义更美观的间距
   padding: 30px 20px !important;
   background-color: #d4bfe1;
-
-  // 所有直接文本节点和 div 内文字的颜色
 }
 
 .dialog-content {
@@ -767,26 +902,20 @@ onUnmounted(() => {
   align-items: center;
   justify-content: flex-start;
   height: 15vh;
+
   .dialog-title {
     font-size: 40px;
     font-weight: bold;
     color: #511d6a;
     margin-bottom: 40px;
   }
+
   .dialog-text {
     font-size: 24px;
     font-weight: 500;
     color: #4c1c64;
     margin-bottom: 20px;
   }
-}
-
-.dialog-btn-content {
-  margin-top: 40px;
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
 }
 
 :deep(.el-dialog) {
@@ -802,17 +931,18 @@ onUnmounted(() => {
   color: #ffffff !important;
 }
 
-// 隐藏所有浏览器的滚动条
+// 隐藏滚动条
 ::-webkit-scrollbar {
   display: none;
 }
+
 * {
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE/Edge */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
   touch-action: pan-y;
   margin: 0;
   padding: 0;
   font-family: "Microsoft YaHei", sans-serif;
-  box-sizing: border-box !important; /* 强制所有元素使用border-box */
+  box-sizing: border-box !important;
 }
 </style>
