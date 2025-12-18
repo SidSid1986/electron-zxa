@@ -558,7 +558,7 @@ const handleUpdateSwiperData = (newSwiperData) => {
   });
   // 2. 强制保持暂停状态
   isPsuse.value = true;
-  ElMessage.success("时长已更新，非激活项已同步显示新值");
+  // ElMessage.success("时长已更新，非激活项已同步显示新值");
 };
 
 // 暂停治疗

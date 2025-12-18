@@ -57,7 +57,35 @@
     </swiper>
     <span class="custom-swiper-button-next" @click="goNext"></span>
 
-    
+    <el-dialog
+      v-model="durationDialogVisible"
+      title="修改倒计时时长"
+      width="500px"
+    >
+      <el-input
+        v-model="durationInputValue"
+        :placeholder="`请输入${isDemoMode ? '秒数' : '分钟数'}`"
+        type="number"
+        min="1"
+        @focus="() => keyboardRef.open(null, 'input-duration')"
+        @click.stop
+      />
+      <template #footer>
+        <el-button @click="durationDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleDurationConfirm"
+          >确定</el-button
+        >
+      </template>
+    </el-dialog>
+
+    <!-- 虚拟键盘（和方案名称输入完全一致） -->
+    <Keyboard
+      ref="keyboardRef"
+      v-model="durationInputValue"
+      inputId="input-duration"
+      :is-number="true"
+      :precision="0"
+    />
   </div>
 </template>
 
@@ -75,6 +103,12 @@ const swiperInstance = ref(null);
 const isComponentMounted = ref(false);
 const countdownTimers = ref({});
 const remainingSecondsMap = ref({});
+
+const keyboardRef = ref(null);
+const durationDialogVisible = ref(false); // Dialog显隐
+const durationInputValue = ref(""); // 输入框值
+const currentEditItem = ref(null); // 当前修改的item（仅存储，无复杂逻辑）
+const isDemoMode = computed(() => props.isDemoMode);
 
 const props = defineProps({
   swiperData: {
@@ -294,87 +328,73 @@ const editTime = (item) => {
   emit("pauseEdit", item);
   pauseCountdown();
 
-  // 1. 根据模式动态配置输入框
-  const isDemo = props.isDemoMode;
-  const inputLabel = isDemo ? "秒" : "分钟"; // 输入单位
-  const inputPattern = isDemo ? /^\d+$/ : /^\d+$/; // 仅数字（演示模式秒，正常模式分钟）
-  const inputErrorMsg = isDemo
-    ? "请输入有效的正整数（秒）"
-    : "请输入有效的正整数（分钟）";
-  // 计算默认值：演示模式显示秒，正常模式显示分钟
-  const defaultValue = isDemo
+  // 1. 存储当前item（和原逻辑一致）
+  currentEditItem.value = item;
+  // 2. 初始化输入值（和原逻辑完全一致）
+  durationInputValue.value = isDemoMode.value
     ? (item.time || 60).toString()
     : Math.floor((item.time || 60) / 60).toString();
+  // 3. 打开Dialog（替代原ElMessageBox）
+  durationDialogVisible.value = true;
+};
 
-  ElMessageBox.prompt(`请输入时长（单位：${inputLabel}）`, "修改倒计时时长", {
-    inputPattern: inputPattern,
-    inputErrorMessage: inputErrorMsg,
-    inputValue: defaultValue,
-    confirmButtonText: "确认",
-    cancelButtonText: "取消",
-  })
-    .then(({ value }) => {
-      // 2. 根据模式计算总秒数
-      const inputVal = parseInt(value.trim()) || (isDemo ? 8 : 1); // 兜底值：演示8秒，正常1分钟
-      const newTimeInSeconds = isDemo
-        ? inputVal // 演示模式：输入直接是秒
-        : inputVal * 60; // 正常模式：输入分钟转秒
+const handleDurationConfirm = () => {
+  // 原弹窗的then回调逻辑，一行不改
+  const inputVal =
+    parseInt(durationInputValue.value.trim()) || (isDemoMode.value ? 8 : 1);
+  const newTimeInSeconds = isDemoMode.value ? inputVal : inputVal * 60;
 
-      // 3. 格式化时间显示（统一为 分:秒 格式）
-      const minutes = Math.floor(newTimeInSeconds / 60);
-      const seconds = newTimeInSeconds % 60;
-      const minutesStr = minutes.toString().padStart(2, "0");
-      const secondsStr = seconds.toString().padStart(2, "0");
-      const newTime1 = `00:${minutesStr}:${secondsStr}`; // 激活项显示
-      const newTime2 = `${minutesStr}:${secondsStr}`; // 非激活项显示
+  const minutes = Math.floor(newTimeInSeconds / 60);
+  const seconds = newTimeInSeconds % 60;
+  const minutesStr = minutes.toString().padStart(2, "0");
+  const secondsStr = seconds.toString().padStart(2, "0");
+  const newTime1 = `00:${minutesStr}:${secondsStr}`;
+  const newTime2 = `${minutesStr}:${secondsStr}`;
 
-      // 4. 更新父组件数据（逻辑不变，仅传总秒数）
-      const newSwiperData = JSON.parse(JSON.stringify(props.swiperData)).map(
-        (d) => {
-          if (d.uniqueKey === item.uniqueKey) {
-            return {
-              ...d,
-              time: newTimeInSeconds,
-              time1: newTime1,
-              time2: newTime2,
-              totalSeconds: newTimeInSeconds,
-              remainingSeconds: newTimeInSeconds,
-            };
-          }
-          return d;
-        }
-      );
-      emit("updateSwiperData", newSwiperData);
+  const newSwiperData = JSON.parse(JSON.stringify(props.swiperData)).map(
+    (d) => {
+      if (d.uniqueKey === currentEditItem.value.uniqueKey) {
+        // 原逻辑，不修改
+        return {
+          ...d,
+          time: newTimeInSeconds,
+          time1: newTime1,
+          time2: newTime2,
+          totalSeconds: newTimeInSeconds,
+          remainingSeconds: newTimeInSeconds,
+        };
+      }
+      return d;
+    }
+  );
+  emit("updateSwiperData", newSwiperData);
 
-      // 5. 刷新子组件本地数据
-      nextTick(() => {
-        const formatted = formatData(newSwiperData, props.activeIndex);
-        treatData.value = groupByPageSize(formatted, 3);
+  nextTick(() => {
+    const formatted = formatData(newSwiperData, props.activeIndex);
+    treatData.value = groupByPageSize(formatted, 3);
 
-        const targetItem = treatData.value
-          .flat()
-          .find((i) => i.uniqueKey === item.uniqueKey);
-        if (targetItem) {
-          targetItem.time = newTimeInSeconds;
-          targetItem.totalSeconds = newTimeInSeconds;
-          targetItem.time1 = newTime1;
-          targetItem.time2 = newTime2;
-          targetItem.remainingSeconds = newTimeInSeconds;
-          targetItem.status = "paused";
-          targetItem.isActive = true;
-          remainingSecondsMap.value[targetItem.uniqueKey] = newTimeInSeconds;
-        }
-      });
+    const targetItem = treatData.value
+      .flat()
+      .find((i) => i.uniqueKey === currentEditItem.value.uniqueKey);
+    if (targetItem) {
+      targetItem.time = newTimeInSeconds;
+      targetItem.totalSeconds = newTimeInSeconds;
+      targetItem.time1 = newTime1;
+      targetItem.time2 = newTime2;
+      targetItem.remainingSeconds = newTimeInSeconds;
+      targetItem.status = "paused";
+      targetItem.isActive = true;
+      remainingSecondsMap.value[targetItem.uniqueKey] = newTimeInSeconds;
+    }
+  });
 
-      // 6. 动态提示文案
-      const tipText = isDemo
-        ? `已将${item.point}时长修改为 ${inputVal} 秒`
-        : `已将${item.point}时长修改为 ${inputVal} 分钟（${newTimeInSeconds} 秒）`;
-      ElMessage.success(tipText);
-    })
-    .catch(() => {
-      ElMessage.info("已取消修改时长");
-    });
+  const tipText = isDemoMode.value
+    ? `已将${currentEditItem.value.point}时长修改为 ${inputVal} 秒`
+    : `已将${currentEditItem.value.point}时长修改为 ${inputVal} 分钟（${newTimeInSeconds} 秒）`;
+  ElMessage.success(tipText);
+
+  // 关闭Dialog
+  durationDialogVisible.value = false;
 };
 
 // 其他辅助方法
