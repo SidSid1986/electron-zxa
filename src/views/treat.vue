@@ -102,6 +102,7 @@
               :isTreating="isTreating"
               @countdownEnd="countdownEnd"
               @pauseEdit="pauseEdit"
+              :isDemoMode="isDemoMode"
             />
           </div>
           <div class="btn-content">
@@ -181,6 +182,7 @@ import LegBack from "@/components/body/LegBack.vue";
 const currentComponent = shallowRef(markRaw(BodyBack));
 
 const $ws = inject("$ws");
+const isDemoMode = ref(false);
 
 // 组件引用
 const tempModalRef = ref(null);
@@ -786,11 +788,13 @@ const handleCurrentSongUpdate = (song) => {
 };
 
 // 父组件 - switchDemoMode函数
+// 父组件中：修复演示模式切换逻辑
 const switchDemoMode = () => {
   isPsuse.value = true;
   if (treatSwiperRef.value) {
-    treatSwiperRef.value.pauseCountdown();
+    treatSwiperRef.value.pauseCountdown(); // 先暂停倒计时
   }
+
   ElMessageBox.confirm(
     "演示模式：所有穴位时长临时改为8秒（点击正常模式恢复1分钟）！",
     "演示模式",
@@ -802,37 +806,49 @@ const switchDemoMode = () => {
     }
   )
     .then(() => {
-      // 演示模式：直接设为8秒（无需×60）
-      tableData.value.forEach((item) => {
-        item.time = 8; // 8秒
-        item.time1 = "00:08:00";
-        item.time2 = "00:08";
-      });
-      // 同步newPlanPoint
-      newPlanPoint.value = JSON.parse(JSON.stringify(tableData.value));
-      // 同步selectedCase
-      if (selectedCase.value.plan) {
-        selectedCase.value.plan.forEach((groupItem) => {
-          groupItem.points.forEach((pointItem) => {
-            pointItem.time = 8;
-          });
-        });
-      }
-      // 重启治疗
+      // 1. 标记演示模式（先赋值，确保子组件能拿到）
+      isDemoMode.value = true;
+
+      // 2. 深度修改tableData：替换数组（触发子组件watch），且格式正确
+      const newTableData = JSON.parse(JSON.stringify(tableData.value)).map(
+        (item) => ({
+          ...item,
+          time: 8, // 演示模式：时长设为8秒（核心）
+          time1: "00:00:08", // 激活项显示格式：00:分:秒
+          time2: "00:08", // 非激活项显示格式：分:秒
+          totalSeconds: 8, // 子组件依赖的总秒数
+          remainingSeconds: 8, // 剩余秒数重置为8
+        })
+      );
+      tableData.value = newTableData; // 替换数组，触发子组件watch
+
+      // 3. 同步更新newPlanPoint（确保身体部位组件拿到最新数据）
+      newPlanPoint.value = JSON.parse(JSON.stringify(newTableData));
+
+      // 4. 重启治疗，确保倒计时按8秒运行
       nextTick(() => {
-        restartTreat();
-        // 补充：强制切回第一页
+        // 重置索引和状态
+        testIndex.value = 0;
+        isTreating.value = true;
+        isPsuse.value = false;
+        isTreatmentEnded.value = false;
+
+        // 切回第一页
         if (swiperInstance.value) {
           swiperInstance.value.slideTo(0);
         }
+
+        // 重启子组件倒计时（关键：重新启动8秒倒计时）
         if (treatSwiperRef.value) {
-          treatSwiperRef.value.stopCountdown();
-          treatSwiperRef.value.startCountdown(testIndex.value);
+          treatSwiperRef.value.stopCountdown(); // 先停止旧的
+          treatSwiperRef.value.startCountdown(0); // 启动第0个穴位的8秒倒计时
         }
       });
-      ElMessage.success("已切换到演示模式（8秒），刷新页面恢复1分钟！");
+
+      ElMessage.success("已切换到演示模式（所有穴位时长改为8秒）");
     })
     .catch(() => {
+      isDemoMode.value = false; // 取消则回到正常模式
       ElMessage.info("已取消演示模式切换");
     });
 };
@@ -847,6 +863,7 @@ const sendWsMessage = (data) => {
 
 // 恢复正常模式（刷新页面）
 const refreshNormal = () => {
+  isDemoMode.value = false;
   window.location.reload();
 };
 
