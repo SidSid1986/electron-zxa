@@ -1,8 +1,8 @@
 <template>
   <div class="container">
-    <div class="point-nav">
+    <!-- <div class="point-nav">
       <span>定穴</span>
-    </div>
+    </div> -->
     <div class="point-content">
       <div class="point-content-left">
         <div class="point-content-left-border">
@@ -386,7 +386,7 @@ const usePoint = () => {
 
   // 标记当前穴位为已完成
   if (testIndex.value < pointLength) {
-    flatPoints[testIndex.value].status = 2;
+    flatPoints[testIndex.value].status = 2; // 已完成
     flatPoints[testIndex.value].isActive = false;
   }
 
@@ -403,13 +403,13 @@ const usePoint = () => {
     return;
   }
 
-  // 更新下一个穴位状态
+  // 核心修复：更新下一个穴位状态为“运行中”
   flatPoints.forEach((item, idx) => {
     if (idx === nextIndex) {
-      item.status = 1;
+      item.status = 1; // 运行中
       item.isActive = true;
     } else if (item.status !== 2) {
-      item.status = 0;
+      item.status = 0; // 未开始
       item.isActive = false;
     }
   });
@@ -429,7 +429,7 @@ const usePoint = () => {
     sendWsMessage(wsCommandArray.value[nextIndex]);
   }
 
-  // 移除切页延迟，直接切页
+  // 切页
   nextTick(() => {
     if (swiperInstance.value) {
       const pageIndex = Math.floor(nextIndex / 3);
@@ -444,9 +444,7 @@ const countdownEnd = (item) => {
   const flatPoints = tableData.value;
   const pointLength = flatPoints.length;
 
-  // 前置判断：已结束所有治疗
   if (testIndex.value >= pointLength - 1) {
-    // 最后一个穴位
     if (treatSwiperRef.value) {
       treatSwiperRef.value.stopCountdown();
     }
@@ -469,17 +467,18 @@ const countdownEnd = (item) => {
     return;
   }
 
-  // 优化延迟：500ms 足够渲染最后1秒，且不影响流程
   setTimeout(() => {
     // 切换到下一个穴位
     usePoint();
 
-    // 启动下一个倒计时（无额外延迟，避免流程中断）
-    if (treatSwiperRef.value && isTreating.value) {
-      treatSwiperRef.value.startCountdown(testIndex.value);
-      console.log(`自动启动第${testIndex.value}个穴位的倒计时`);
-    }
-  }, 500); // 1000ms → 500ms，平衡渲染和流程
+    // 核心修复：强制启动下一个穴位的倒计时
+    nextTick(() => {
+      if (treatSwiperRef.value && isTreating.value && !isPsuse.value) {
+        treatSwiperRef.value.startCountdown(testIndex.value);
+        console.log(`启动第${testIndex.value}个穴位倒计时`);
+      }
+    });
+  }, 500);
 };
 // 父组件 handleSwiperChange 函数（删除bodyType关联，改为分页索引）
 const handleSwiperChange = (swiperPageIndex) => {
@@ -500,19 +499,10 @@ const handleSwiperChange = (swiperPageIndex) => {
 
 // 处理时长更新事件（适配扁平化数据）
 const handleUpdateSwiperData = (newSwiperData) => {
+  // 1. 深拷贝更新数据，确保子组件能读到新值
   tableData.value = JSON.parse(JSON.stringify(newSwiperData));
-
-  // 更新选中穴位的时长
-  const updatedItem = newSwiperData.find(
-    (item) => item.name === currentPoint.value.name
-  );
-  if (updatedItem) {
-    const timeNum = parseInt(updatedItem.time) || 0;
-    currentPoint.value.time = updatedItem.time;
-    currentPoint.value.time1 = `00:${timeNum.toString().padStart(2, "0")}:00`;
-    currentPoint.value.time2 = `${timeNum.toString().padStart(2, "0")}:00`;
-  }
-
+  // 2. 强制保持暂停状态（显示红圈+继续按钮）
+  isPsuse.value = true;
   ElMessage.success("时长已更新");
 };
 
@@ -546,13 +536,11 @@ const continueTreat = () => {
   const pointLength = flatPoints.length;
 
   if (testIndex.value >= pointLength) {
-    // 找到第一个未完成的穴位重新启动
     const firstUnfinished = flatPoints.findIndex((item) => item.status !== 2);
     if (firstUnfinished > -1) {
       testIndex.value = firstUnfinished;
       flatPoints[firstUnfinished].status = 1;
       flatPoints[firstUnfinished].isActive = true;
-
       if (treatSwiperRef.value) {
         treatSwiperRef.value.startCountdown(firstUnfinished);
       }
@@ -560,9 +548,9 @@ const continueTreat = () => {
     return;
   }
 
+  // 核心：调用子组件的 resumeCountdown 恢复暂停的倒计时
   if (treatSwiperRef.value) {
     treatSwiperRef.value.resumeCountdown();
-    ElMessage.info("治疗已继续");
   }
 };
 

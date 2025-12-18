@@ -14,36 +14,34 @@
       <swiper-slide
         class="page-slide"
         v-for="(pageData, pageIndex) in treatData"
-        :key="`page-${pageIndex}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`"
+        :key="`page-${pageIndex}`"
       >
         <div
           class="swiper-item"
           v-for="(item, itemIndex) in pageData"
-          :key="item.renderKey"
+          :key="item.uniqueKey"
           @click="detailIconClick(item, itemIndex)"
         >
           <div class="swiper-item-title">
-            <div class="swiper-item-name">{{ item.name }}</div>
+            <div class="swiper-item-name">{{ item.chooseName }}</div>
             <div class="swiper-item-point">{{ item.point }}</div>
           </div>
           <div class="swiper-item-time">时长:{{ item.time1 }}</div>
           <div class="swiper-item-circle">
             <div class="circle-bg">
               <div class="circle-content">
+                <!-- 运行中：白圈 -->
                 <div
                   v-if="item.isActive && item.status === 'running'"
                   class="light-border"
                 ></div>
+                <!-- 暂停/结束：红圈（核心：恢复暂停状态的红圈） -->
                 <div
-                  v-if="
-                    item.isActive &&
-                    (item.status === 'ended' || item.status === 'paused')
-                  "
+                  v-if="item.isActive && (item.status === 'paused' || item.status === 'ended')"
                   class="light-border-red"
                 ></div>
                 <div class="circle-text">
-                  <!-- 🔥 替换为手动倒计时显示 -->
-                  <span v-if="item.isActive && item.status === 'running'">
+                  <span v-if="item.isActive">
                     {{ formatTime(item.remainingSeconds) }}
                   </span>
                   <span v-else>
@@ -69,17 +67,15 @@ import { Navigation } from "swiper/modules";
 import "swiper/css/navigation";
 import { ElMessage, ElMessageBox } from "element-plus";
 
-// 基础配置
 const modules = [Navigation];
 const treatData = ref([]);
 const swiperInstance = ref(null);
 const isComponentMounted = ref(false);
+const countdownTimers = ref({});
+const remainingSecondsMap = ref({});
 
-// 手动倒计时核心状态
-const countdownTimers = ref({}); // 存储每个穴位的定时器 { uniqueKey: intervalId }
-const remainingSecondsMap = ref({}); // 存储每个穴位的剩余秒数 { uniqueKey: number }
+const isPsuse = ref(false);
 
-// Props定义
 const props = defineProps({
   swiperData: {
     type: Array,
@@ -104,30 +100,26 @@ const emit = defineEmits([
   "pauseEdit",
 ]);
 
-// 格式化时间为 00:00 格式
+// 格式化时间
 const formatTime = (seconds) => {
-  const mins = Math.floor(seconds / 60)
-    .toString()
-    .padStart(2, "0");
+  const mins = Math.floor(seconds / 60).toString().padStart(2, "0");
   const secs = (seconds % 60).toString().padStart(2, "0");
   return `${mins}:${secs}`;
 };
 
-// 格式化数据（新增remainingSeconds字段）
+// 格式化数据（确保状态和时长字段完整）
 const formatData = (data, activeIndex) => {
   return data.map((item, index) => {
-    const timeNum = parseInt(item.time) || 60; // 单位：秒
+    const timeNum = parseInt(item.time) || 60;
     const uniqueKey = item.uniqueId || `${item.name}-${item.point}`;
     const hasValidTime = timeNum > 0;
-
-    // 秒数转 分:秒
-    const minutes = Math.floor(timeNum / 60)
-      .toString()
-      .padStart(2, "0");
+    const minutes = Math.floor(timeNum / 60).toString().padStart(2, "0");
     const seconds = (timeNum % 60).toString().padStart(2, "0");
 
-    // 初始化剩余秒数
-    remainingSecondsMap.value[uniqueKey] = timeNum;
+    // 初始化剩余秒数（优先用已存在的，避免覆盖修改后的值）
+    if (!remainingSecondsMap.value[uniqueKey]) {
+      remainingSecondsMap.value[uniqueKey] = timeNum;
+    }
 
     return {
       ...item,
@@ -137,14 +129,13 @@ const formatData = (data, activeIndex) => {
       totalSeconds: timeNum,
       remainingSeconds: remainingSecondsMap.value[uniqueKey],
       isActive: index === activeIndex,
-      status: "idle",
+      status: index === activeIndex ? "paused" : "idle", // 激活项默认暂停
       hasValidTime,
-      renderKey: 1,
     };
   });
 };
 
-// 按数量分页
+// 分页
 const groupByPageSize = (data, pageSize = 3) => {
   const pages = [];
   for (let i = 0; i < data.length; i += pageSize) {
@@ -153,106 +144,84 @@ const groupByPageSize = (data, pageSize = 3) => {
   return pages;
 };
 
-// 🔥 手动启动倒计时
+// 启动倒计时（仅手动触发）
 const startCountdown = (targetIndex) => {
   if (!props.isTreating || targetIndex === -1) return;
-  if (!isComponentMounted.value) return;
-
   const allItems = treatData.value.flat();
   const targetItem = allItems[targetIndex];
-
-  if (
-    !targetItem ||
-    !targetItem.hasValidTime ||
-    targetItem.status === "ended"
-  ) {
-    if (targetItem) {
-      if (targetItem.status === "ended") {
-        ElMessage.info(`${targetItem.name} 已完成，无需重复启动`);
-      } else {
-        ElMessage.warning(`${targetItem.name} 时长为0，无法启动倒计时`);
-      }
-    }
+  
+  if (!targetItem || !targetItem.hasValidTime || targetItem.status === "ended") {
     return;
   }
 
-  // 停止当前所有倒计时
-  Object.keys(countdownTimers.value).forEach((key) => {
+  // 1. 停止所有其他定时器
+  Object.keys(countdownTimers.value).forEach(key => {
     clearInterval(countdownTimers.value[key]);
     delete countdownTimers.value[key];
   });
 
-  // 重置目标穴位状态
-  targetItem.status = "running";
-  targetItem.isActive = true;
-  remainingSecondsMap.value[targetItem.uniqueKey] = targetItem.totalSeconds;
-  targetItem.remainingSeconds = remainingSecondsMap.value[targetItem.uniqueKey];
-
-  // 重置其他穴位状态
-  allItems.forEach((item) => {
-    if (item.uniqueKey !== targetItem.uniqueKey) {
-      item.isActive = false;
+  // 2. 重置所有穴位状态（仅当前激活项为运行中）
+  allItems.forEach(item => {
+    if (item.uniqueKey === targetItem.uniqueKey) {
+      item.status = "running"; // 运行中 → 绿圈
+      item.isActive = true;
+    } else {
       item.status = "idle";
+      item.isActive = false;
     }
   });
 
-  // 启动手动倒计时
+  // 3. 初始化剩余时间（用总时长）
+  if (targetItem.remainingSeconds <= 0) {
+    targetItem.remainingSeconds = targetItem.totalSeconds;
+    remainingSecondsMap.value[targetItem.uniqueKey] = targetItem.totalSeconds;
+  }
+
+  // 4. 启动定时器
   countdownTimers.value[targetItem.uniqueKey] = setInterval(() => {
-    // 确保组件已挂载且治疗中
-    if (!isComponentMounted.value || !props.isTreating) {
+    if (!isComponentMounted.value || !props.isTreating || isPsuse.value) {
       clearInterval(countdownTimers.value[targetItem.uniqueKey]);
       delete countdownTimers.value[targetItem.uniqueKey];
+      targetItem.status = "paused"; // 暂停 → 红圈
       return;
     }
 
-    // 剩余秒数减1
     remainingSecondsMap.value[targetItem.uniqueKey] -= 1;
-    targetItem.remainingSeconds =
-      remainingSecondsMap.value[targetItem.uniqueKey];
+    targetItem.remainingSeconds = remainingSecondsMap.value[targetItem.uniqueKey];
 
-    // 倒计时结束
-    if (remainingSecondsMap.value[targetItem.uniqueKey] <= 0) {
+    if (targetItem.remainingSeconds <= 0) {
       clearInterval(countdownTimers.value[targetItem.uniqueKey]);
       delete countdownTimers.value[targetItem.uniqueKey];
-
-      targetItem.status = "ended";
+      targetItem.status = "ended"; // 结束 → 红圈
       targetItem.remainingSeconds = 0;
-
-      // 延迟触发父组件事件
       setTimeout(() => {
         emit("countdownEnd", targetItem);
-        ElMessage.success(`${targetItem.point} 倒计时已结束`);
       }, 100);
     }
-  }, 1000); // 精准1秒触发，无丢帧
+  }, 1000);
 };
 
-// 🔥 手动暂停倒计时
+// 暂停倒计时（保留剩余时间）
 const pauseCountdown = () => {
   const activeKey = Object.keys(countdownTimers.value)[0];
   if (!activeKey) return;
 
-  // 清除定时器
   clearInterval(countdownTimers.value[activeKey]);
   delete countdownTimers.value[activeKey];
 
-  // 更新状态
-  const targetItem = treatData.value
-    .flat()
-    .find((item) => item.uniqueKey === activeKey);
+  const targetItem = treatData.value.flat().find(item => item.uniqueKey === activeKey);
   if (targetItem) {
-    targetItem.status = "paused";
+    targetItem.status = "paused"; // 明确标记暂停
   }
 };
 
-// 🔥 手动继续倒计时
+// 继续倒计时（核心：找到暂停状态的激活项）
 const resumeCountdown = () => {
   const allItems = treatData.value.flat();
-  const activeItem = allItems.find(
-    (item) => item.isActive && item.status === "paused"
-  );
+  // 精准找到：激活+暂停状态的穴位
+  const activeItem = allItems.find(item => item.isActive && item.status === "paused");
 
-  if (!activeItem || !props.isTreating) {
+  if (!activeItem) {
     ElMessage.warning("暂无暂停的倒计时可继续");
     return;
   }
@@ -262,7 +231,7 @@ const resumeCountdown = () => {
     return;
   }
 
-  // 重新启动倒计时
+  // 启动倒计时（用修改后的剩余时间）
   activeItem.status = "running";
   countdownTimers.value[activeItem.uniqueKey] = setInterval(() => {
     if (!isComponentMounted.value || !props.isTreating) {
@@ -272,55 +241,40 @@ const resumeCountdown = () => {
     }
 
     remainingSecondsMap.value[activeItem.uniqueKey] -= 1;
-    activeItem.remainingSeconds =
-      remainingSecondsMap.value[activeItem.uniqueKey];
+    activeItem.remainingSeconds = remainingSecondsMap.value[activeItem.uniqueKey];
 
-    if (remainingSecondsMap.value[activeItem.uniqueKey] <= 0) {
+    if (activeItem.remainingSeconds <= 0) {
       clearInterval(countdownTimers.value[activeItem.uniqueKey]);
       delete countdownTimers.value[activeItem.uniqueKey];
-
       activeItem.status = "ended";
       activeItem.remainingSeconds = 0;
-
       setTimeout(() => {
         emit("countdownEnd", activeItem);
-        ElMessage.success(`${activeItem.point} 倒计时已结束`);
       }, 100);
     }
   }, 1000);
+  ElMessage.info("倒计时已恢复");
 };
 
 // 停止所有倒计时
 const stopCountdown = () => {
-  // 清除所有定时器
-  Object.keys(countdownTimers.value).forEach((key) => {
+  Object.keys(countdownTimers.value).forEach(key => {
     clearInterval(countdownTimers.value[key]);
     delete countdownTimers.value[key];
   });
-
-  // 重置状态
-  treatData.value.flat().forEach((item) => {
+  treatData.value.flat().forEach(item => {
     item.status = "idle";
     item.isActive = false;
     item.remainingSeconds = item.totalSeconds;
     remainingSecondsMap.value[item.uniqueKey] = item.totalSeconds;
-    item.renderKey += 1;
   });
 };
 
-// 修改时长
+// 核心：修改时长方法（修复数值更新+状态保留）
 const editTime = (item) => {
+  // 1. 先暂停并清除定时器
   emit("pauseEdit", item);
-
-  // 暂停当前倒计时
-  if (countdownTimers.value[item.uniqueKey]) {
-    clearInterval(countdownTimers.value[item.uniqueKey]);
-    delete countdownTimers.value[item.uniqueKey];
-  }
-
-  const originalTime = item.time;
-  const originalRemaining = remainingSecondsMap.value[item.uniqueKey];
-  const originalStatus = item.status;
+  pauseCountdown();
 
   ElMessageBox.prompt("请输入时长（单位：秒）", "修改倒计时时长", {
     inputPattern: /^\d+$/,
@@ -331,88 +285,41 @@ const editTime = (item) => {
   })
     .then(({ value }) => {
       const newTime = parseInt(value.trim()) || 60;
-      const minutes = Math.floor(newTime / 60)
-        .toString()
-        .padStart(2, "0");
+      const minutes = Math.floor(newTime / 60).toString().padStart(2, "0");
       const seconds = (newTime % 60).toString().padStart(2, "0");
 
-      // 通知父组件
-      const newSwiperData = props.swiperData.map((d) =>
-        d.uniqueKey === item.uniqueKey ? { ...d, time: newTime } : d
-      );
+      // 2. 更新父组件数据（确保数值同步）
+      const newSwiperData = JSON.parse(JSON.stringify(props.swiperData)).map(d => {
+        if (d.uniqueKey === item.uniqueKey) {
+          return { 
+            ...d, 
+            time: newTime,
+            time1: `00:${minutes}:${seconds}`,
+            time2: `${minutes}:${seconds}`,
+            totalSeconds: newTime
+          };
+        }
+        return d;
+      });
       emit("updateSwiperData", newSwiperData);
 
-      // 更新本地数据
-      item.time = newTime;
-      item.totalSeconds = newTime;
-      item.time1 = `00:${minutes}:${seconds}`;
-      item.time2 = `${minutes}:${seconds}`;
-      remainingSecondsMap.value[item.uniqueKey] = newTime;
-      item.remainingSeconds = newTime;
-      item.renderKey += 1;
-
-      // 重新启动倒计时
-      if (props.isTreating && newTime > 0) {
-        item.status = "running";
-        countdownTimers.value[item.uniqueKey] = setInterval(() => {
-          if (!isComponentMounted.value || !props.isTreating) return;
-
-          remainingSecondsMap.value[item.uniqueKey] -= 1;
-          item.remainingSeconds = remainingSecondsMap.value[item.uniqueKey];
-
-          if (item.remainingSeconds <= 0) {
-            clearInterval(countdownTimers.value[item.uniqueKey]);
-            delete countdownTimers.value[item.uniqueKey];
-
-            item.status = "ended";
-            item.remainingSeconds = 0;
-
-            setTimeout(() => {
-              emit("countdownEnd", item);
-              ElMessage.success(`${item.point} 倒计时已结束`);
-            }, 100);
-          }
-        }, 1000);
+      // 3. 更新子组件本地数据（核心：保留激活+暂停状态）
+      const allItems = treatData.value.flat();
+      const targetItem = allItems.find(i => i.uniqueKey === item.uniqueKey);
+      if (targetItem) {
+        targetItem.time = newTime;
+        targetItem.totalSeconds = newTime;
+        targetItem.time1 = `00:${minutes}:${seconds}`;
+        targetItem.time2 = `${minutes}:${seconds}`;
+        targetItem.remainingSeconds = newTime; // 剩余时间设为新值
+        targetItem.status = "paused"; // 强制暂停（显示红圈）
+        targetItem.isActive = true; // 保持激活
+        remainingSecondsMap.value[targetItem.uniqueKey] = newTime;
       }
 
-      ElMessage.success(`已将${item.name}时长修改为 ${newTime} 秒`);
+      ElMessage.success(`已将${item.point}时长修改为 ${newTime} 秒，点击继续恢复倒计时`);
     })
     .catch(() => {
-      // 恢复原始状态
-      remainingSecondsMap.value[item.uniqueKey] = originalRemaining;
-      item.remainingSeconds = originalRemaining;
-      item.renderKey += 1;
-
-      // 恢复倒计时
-      if (
-        props.isTreating &&
-        originalRemaining > 0 &&
-        originalStatus === "running"
-      ) {
-        item.status = "running";
-        countdownTimers.value[item.uniqueKey] = setInterval(() => {
-          if (!isComponentMounted.value || !props.isTreating) return;
-
-          remainingSecondsMap.value[item.uniqueKey] -= 1;
-          item.remainingSeconds = remainingSecondsMap.value[item.uniqueKey];
-
-          if (item.remainingSeconds <= 0) {
-            clearInterval(countdownTimers.value[item.uniqueKey]);
-            delete countdownTimers.value[item.uniqueKey];
-
-            item.status = "ended";
-            item.remainingSeconds = 0;
-
-            setTimeout(() => {
-              emit("countdownEnd", item);
-              ElMessage.success(`${item.point} 倒计时已结束`);
-            }, 100);
-          }
-        }, 1000);
-      } else if (originalStatus === "paused") {
-        item.status = "paused";
-      }
-
       ElMessage.info("已取消修改时长");
     });
 };
@@ -430,10 +337,7 @@ const goPrev = () => {
 };
 
 const goNext = () => {
-  if (
-    swiperInstance.value &&
-    swiperInstance.value.activeIndex < treatData.value.length - 1
-  ) {
+  if (swiperInstance.value && swiperInstance.value.activeIndex < treatData.value.length - 1) {
     swiperInstance.value.slideNext();
   }
 };
@@ -446,73 +350,49 @@ const onSlideChange = (swiper) => {
   emit("swiperChange", swiper.activeIndex);
 };
 
-// 监听数据变化
+// 监听数据变化（仅更新数据，不自动启动）
 watch(
   () => props.swiperData,
   (newVal) => {
     if (!newVal.length) return;
     const formatted = formatData(newVal, props.activeIndex);
     treatData.value = groupByPageSize(formatted, 3);
-
-    if (
-      isComponentMounted.value &&
-      props.isTreating &&
-      props.activeIndex > -1
-    ) {
-      nextTick(() => {
-        const targetItem = treatData.value.flat()[props.activeIndex];
-        if (targetItem && targetItem.hasValidTime) {
-          startCountdown(props.activeIndex);
-        }
-      });
-    }
   },
   { immediate: true, deep: true }
 );
 
-// 监听激活索引变化
+// 监听激活索引（仅更新状态，不自动启动）
 watch(
   () => props.activeIndex,
   (newIndex) => {
-    if (isComponentMounted.value && props.isTreating && newIndex > -1) {
-      nextTick(() => {
-        const targetItem = treatData.value.flat()[newIndex];
-        if (targetItem && targetItem.hasValidTime) {
-          startCountdown(newIndex);
-        }
-      });
-    } else if (newIndex === -1) {
+    if (newIndex === -1) {
       stopCountdown();
+      return;
     }
+    // 仅标记激活状态，不启动倒计时
+    const allItems = treatData.value.flat();
+    allItems.forEach((item, idx) => {
+      item.isActive = idx === newIndex;
+      if (item.isActive && item.status === "idle") {
+        item.status = "paused"; // 激活项默认暂停
+      }
+    });
   },
   { immediate: true }
 );
 
-// 监听治疗状态变化
-watch(
-  () => props.isTreating,
-  (newVal) => {
-    if (!newVal) {
-      stopCountdown();
-    }
-  }
-);
-
-// 组件生命周期
 onMounted(() => {
   isComponentMounted.value = true;
 });
 
 onUnmounted(() => {
-  // 清除所有定时器
-  Object.keys(countdownTimers.value).forEach((key) => {
+  Object.keys(countdownTimers.value).forEach(key => {
     clearInterval(countdownTimers.value[key]);
   });
   countdownTimers.value = {};
   remainingSecondsMap.value = {};
 });
 
-// 暴露方法给父组件
 defineExpose({
   startCountdown,
   pauseCountdown,
@@ -522,6 +402,8 @@ defineExpose({
   swiperInstance,
 });
 </script>
+
+
 
 <style scoped lang="scss">
 .swiper-main {

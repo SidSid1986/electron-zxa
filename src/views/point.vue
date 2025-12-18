@@ -27,10 +27,10 @@
         <div class="point-content-right-border">
           <div class="right-table-border">
             <div class="right-table-header">
-              <div class="header-item item-border">灸法</div>
-              <div class="header-item item-border">时长</div>
-              <div class="header-item item-border">穴位</div>
-              <div class="header-item">定穴状态</div>
+              <div class="header-item1 item-border">灸法</div>
+              <div class="header-item2 item-border">时长</div>
+              <div class="header-item3 item-border">穴位</div>
+              <div class="header-item4">定穴状态</div>
             </div>
 
             <div
@@ -59,17 +59,17 @@
                       : 'right-table-content'
                   "
                 >
-                  <div class="table-item-first table-item table-item-border">
+                  <div class="table-item-first table-item1 table-item-border">
                     <div
                       class="table-item-left"
                       v-show="index == selectedAutoIndex"
                     ></div>
                     <div class="table-line-name">{{ item.chooseName }}</div>
                   </div>
-                  <div class="table-item table-item-border">
+                  <div class="table-item2 table-item-border">
                     {{ item.time }}
                   </div>
-                  <div class="table-item table-item-border">
+                  <div class="table-item3 table-item-border">
                     <div
                       v-for="(area, areaIndex) in item.points"
                       :key="areaIndex"
@@ -79,7 +79,7 @@
                     </div>
                   </div>
                   <!-- 多穴位分别显示状态 -->
-                  <div class="table-item">
+                  <div class="table-item4">
                     <div
                       v-for="(point, pointIndex) in item.points"
                       :key="pointIndex"
@@ -656,7 +656,7 @@ onUnmounted(() => {
         background-color: #ffffff;
 
         .right-table-border {
-          padding: 20px 20px 60px 20px;
+          // padding: 20px 20px 60px 20px;
           box-sizing: border-box;
           width: 100%;
           background-color: #fbfcf9;
@@ -672,7 +672,7 @@ onUnmounted(() => {
           font-size: 20px;
           color: #111;
 
-          .header-item {
+          .header-item1 {
             box-sizing: border-box;
             height: 100%;
             flex: 1;
@@ -680,11 +680,36 @@ onUnmounted(() => {
             align-items: center;
             justify-content: center;
             text-align: center;
-            padding: 0 4px;
           }
-
+          .header-item2 {
+            box-sizing: border-box;
+            height: 100%;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+          }
+          .header-item3 {
+            box-sizing: border-box;
+            height: 100%;
+            flex: 2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+          }
+          .header-item4 {
+            box-sizing: border-box;
+            height: 100%;
+            flex: 2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+          }
           .item-border {
-            border-right: 2px solid #ffffff;
+            border-right: 1px solid #ffffff;
           }
         }
 
@@ -719,7 +744,7 @@ onUnmounted(() => {
             color: #511d6a;
             background-color: #ffffff;
 
-            .table-item {
+            .table-item1 {
               box-sizing: border-box;
               height: 8vh;
               flex: 1;
@@ -729,9 +754,39 @@ onUnmounted(() => {
               text-align: center;
               background-color: #ffffff;
             }
+            .table-item2 {
+              box-sizing: border-box;
+              height: 8vh;
+              flex: 1;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              text-align: center;
+              background-color: #ffffff;
+            }
+            .table-item3 {
+              box-sizing: border-box;
+              height: 8vh;
+              flex: 2;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              text-align: center;
+              background-color: #ffffff;
+            }
+            .table-item4 {
+              box-sizing: border-box;
+              height: 8vh;
+              flex: 2;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              text-align: center;
+              background-color: #ffffff;
+            }
 
             .table-item-border {
-              border-right: 2px solid #af7dc4;
+              border-right: 1px solid #af7dc4;
             }
 
             // 穴位名称项
@@ -768,7 +823,7 @@ onUnmounted(() => {
             font-size: 20px;
             color: #511d6a;
 
-            .table-item {
+            .table-item1 {
               box-sizing: border-box;
               height: 8vh;
               flex: 1;
@@ -778,9 +833,39 @@ onUnmounted(() => {
               text-align: center;
               background-color: #f3ebf4;
             }
+            .table-item2 {
+              box-sizing: border-box;
+              height: 8vh;
+              flex: 1;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              text-align: center;
+              background-color: #f3ebf4;
+            }
+            .table-item3 {
+              box-sizing: border-box;
+              height: 8vh;
+              flex: 2;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              text-align: center;
+              background-color: #f3ebf4;
+            }
+            .table-item4 {
+              box-sizing: border-box;
+              height: 8vh;
+              flex: 2;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              text-align: center;
+              background-color: #f3ebf4;
+            }
 
             .table-item-border {
-              border-right: 2px solid #af7dc4;
+              border-right: 1px solid #af7dc4;
             }
 
             // 穴位名称项
