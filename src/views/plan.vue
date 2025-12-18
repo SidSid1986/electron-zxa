@@ -2,8 +2,8 @@
  * @Author: Sid Li
  * @Date: 2025-12-12 11:26:16
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-17 23:41:10
- * @FilePath: \electron-zxa\src\views\plan.vue
+ * @LastEditTime: 2025-12-18 08:53:05
+ * @FilePath: \zi-xiao-ai\src\views\plan.vue
  * @Description: 
 -->
 <template>
@@ -97,7 +97,15 @@
                 <span class="right-name">{{ item.name }}</span>
               </span>
               <span>{{ item.time }}分钟</span>
-              <span>{{ item.point }}</span>
+              <span>
+                <span
+                  class="no-border"
+                  v-for="(area, areaIndex) in item.points"
+                  :key="areaIndex"
+                >
+                  {{ area.name }}&nbsp;&nbsp;
+                </span>
+              </span>
             </div>
           </div>
         </div>
@@ -490,8 +498,9 @@ onMounted(() => {
 
     // 左侧容器样式（保持不变）
     .left-table {
-      border-left: 1px solid #b99aca;
-      border-right: 1px solid #b99aca;
+      border: 1px solid #b99aca;
+      // border-left: 1px solid #b99aca;
+      // border-right: 1px solid #b99aca;
       height: 70vh;
       overflow: hidden;
       position: relative;
@@ -518,7 +527,7 @@ onMounted(() => {
         justify-content: space-between;
 
         .title {
-          font-size: 24px;
+          font-size: 18px;
           color: #511d6a;
           font-weight: 500;
           white-space: nowrap;
@@ -573,7 +582,7 @@ onMounted(() => {
       .edit-btn {
         width: 120px;
         height: 50px;
-        font-size: 20px;
+        font-size: 18px;
         border-radius: 40px;
         --el-button-text-color: #fff;
         --el-button-bg-color: #af7dc4;
@@ -599,7 +608,7 @@ onMounted(() => {
     .right-top {
       height: 5vh;
       line-height: 5vh;
-      font-size: 24px;
+      font-size: 20px;
       color: #511d6a;
       font-weight: bold;
       border-bottom: 1px solid #c293d5;
@@ -657,7 +666,7 @@ onMounted(() => {
       width: 100%;
       height: 5vh;
       line-height: 5vh;
-      font-size: 24px;
+      font-size: 18px;
       color: #511d6a;
       font-weight: 500;
       border-bottom: 1px solid #b99aca;
@@ -695,6 +704,10 @@ onMounted(() => {
         width: 50%;
         border-right: none;
         text-align: center;
+      }
+
+      .no-border {
+        border: none;
       }
     }
 

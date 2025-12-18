@@ -574,7 +574,7 @@ onUnmounted(() => {
 
     .point-content-left {
       box-sizing: border-box;
-      width: 38%;
+      width: 30%;
       height: 100%;
       height: 86vh;
       // padding: 20px 10px 20px 20px;
@@ -643,7 +643,7 @@ onUnmounted(() => {
 
     .point-content-right {
       box-sizing: border-box;
-      width: 58%;
+      width: 66%;
       height: 100%;
       height: 86vh;
 
@@ -710,26 +710,24 @@ onUnmounted(() => {
           .right-table-content {
             box-sizing: border-box;
             width: 100%;
-            height: auto;
-            min-height: 10vh;
+            height: 100%;
+
             display: flex;
             flex-direction: row;
             align-items: center;
             font-size: 18px;
             color: #511d6a;
             background-color: #ffffff;
-            padding: 8px 0;
 
             .table-item {
               box-sizing: border-box;
-              height: 100%;
+              height: 8vh;
               flex: 1;
               display: flex;
               align-items: center;
               justify-content: center;
               text-align: center;
               background-color: #ffffff;
-              flex-wrap: wrap;
             }
 
             .table-item-border {
@@ -763,24 +761,22 @@ onUnmounted(() => {
             box-sizing: border-box;
             width: 100%;
             height: auto;
-            min-height: 10vh;
+
             display: flex;
             flex-direction: row;
             align-items: center;
             font-size: 20px;
             color: #511d6a;
-            padding: 8px 0;
 
             .table-item {
               box-sizing: border-box;
-              height: 100%;
+              height: 8vh;
               flex: 1;
               display: flex;
               align-items: center;
               justify-content: center;
               text-align: center;
               background-color: #f3ebf4;
-              flex-wrap: wrap;
             }
 
             .table-item-border {
@@ -879,9 +875,11 @@ onUnmounted(() => {
 // 状态样式
 .status-blue {
   display: inline-block;
-  width: 120px;
-  height: 40px;
-  line-height: 40px;
+  width: 80px;
+  height: 30px;
+  line-height: 30px;
+  font-size: 16px;
+
   background-color: #bdbdba;
   border-radius: 40px;
   color: #111;
@@ -890,20 +888,23 @@ onUnmounted(() => {
 
 .status-red {
   display: inline-block;
-  width: 120px;
-  height: 40px;
-  line-height: 40px;
+  width: 80px;
+  height: 30px;
+  line-height: 30px;
   background-color: #de2b1f;
   border-radius: 40px;
   color: #ffffff;
   text-align: center;
+  font-size: 16px;
 }
 
 .status-green {
   display: inline-block;
-  width: 120px;
-  height: 40px;
-  line-height: 40px;
+  width: 80px;
+  height: 30px;
+  line-height: 30px;
+  font-size: 16px;
+
   background-color: #6c359d;
   border-radius: 40px;
   color: #ffffff;

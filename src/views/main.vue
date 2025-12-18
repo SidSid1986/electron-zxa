@@ -82,9 +82,13 @@
               </span>
               <span>{{ item.time }}</span>
               <span>
-                <span v-for="(area, areaIndex) in item.points" :key="areaIndex">
-                  {{ area.name }}</span
+                <span
+                  class="no-border"
+                  v-for="(area, areaIndex) in item.points"
+                  :key="areaIndex"
                 >
+                  {{ area.name }}&nbsp;&nbsp;
+                </span>
               </span>
             </div>
           </div>
@@ -663,6 +667,10 @@ onUnmounted(() => {
         width: 50%;
         border-right: none;
         text-align: center;
+      }
+
+      .no-border {
+        border: none;
       }
     }
 
