@@ -37,15 +37,15 @@
                 ></div>
                 <!-- 暂停/结束：红圈（核心：恢复暂停状态的红圈） -->
                 <div
-                  v-if="item.isActive && (item.status === 'paused' || item.status === 'ended')"
+                  v-if="
+                    item.isActive &&
+                    (item.status === 'paused' || item.status === 'ended')
+                  "
                   class="light-border-red"
                 ></div>
                 <div class="circle-text">
-                  <span v-if="item.isActive">
+                  <span>
                     {{ formatTime(item.remainingSeconds) }}
-                  </span>
-                  <span v-else>
-                    {{ item.time2 }}
                   </span>
                 </div>
               </div>
@@ -74,8 +74,6 @@ const isComponentMounted = ref(false);
 const countdownTimers = ref({});
 const remainingSecondsMap = ref({});
 
-const isPsuse = ref(false);
-
 const props = defineProps({
   swiperData: {
     type: Array,
@@ -102,19 +100,23 @@ const emit = defineEmits([
 
 // 格式化时间
 const formatTime = (seconds) => {
-  const mins = Math.floor(seconds / 60).toString().padStart(2, "0");
+  const mins = Math.floor(seconds / 60)
+    .toString()
+    .padStart(2, "0");
   const secs = (seconds % 60).toString().padStart(2, "0");
   return `${mins}:${secs}`;
 };
 
-// 格式化数据（确保状态和时长字段完整）
+// 【核心修复1】格式化数据：完全使用传入的time1/time2，不重新计算
 const formatData = (data, activeIndex) => {
   return data.map((item, index) => {
     const timeNum = parseInt(item.time) || 60;
     const uniqueKey = item.uniqueId || `${item.name}-${item.point}`;
     const hasValidTime = timeNum > 0;
-    const minutes = Math.floor(timeNum / 60).toString().padStart(2, "0");
-    const seconds = (timeNum % 60).toString().padStart(2, "0");
+
+    // 优先使用props传入的time1/time2（修改后的值），绝对不重新计算
+    const time1 = item.time1 || `00:01:00`; // 默认1分钟
+    const time2 = item.time2 || `01:00`; // 默认1分钟
 
     // 初始化剩余秒数（优先用已存在的，避免覆盖修改后的值）
     if (!remainingSecondsMap.value[uniqueKey]) {
@@ -124,12 +126,12 @@ const formatData = (data, activeIndex) => {
     return {
       ...item,
       uniqueKey,
-      time1: hasValidTime ? `00:${minutes}:${seconds}` : "00:00:00",
-      time2: hasValidTime ? `${minutes}:${seconds}` : "00:00",
+      time1: time1, // 直接用传入的（修改后的值）
+      time2: time2, // 直接用传入的（修改后的值）
       totalSeconds: timeNum,
       remainingSeconds: remainingSecondsMap.value[uniqueKey],
       isActive: index === activeIndex,
-      status: index === activeIndex ? "paused" : "idle", // 激活项默认暂停
+      status: index === activeIndex ? "paused" : "idle",
       hasValidTime,
     };
   });
@@ -149,19 +151,23 @@ const startCountdown = (targetIndex) => {
   if (!props.isTreating || targetIndex === -1) return;
   const allItems = treatData.value.flat();
   const targetItem = allItems[targetIndex];
-  
-  if (!targetItem || !targetItem.hasValidTime || targetItem.status === "ended") {
+
+  if (
+    !targetItem ||
+    !targetItem.hasValidTime ||
+    targetItem.status === "ended"
+  ) {
     return;
   }
 
   // 1. 停止所有其他定时器
-  Object.keys(countdownTimers.value).forEach(key => {
+  Object.keys(countdownTimers.value).forEach((key) => {
     clearInterval(countdownTimers.value[key]);
     delete countdownTimers.value[key];
   });
 
   // 2. 重置所有穴位状态（仅当前激活项为运行中）
-  allItems.forEach(item => {
+  allItems.forEach((item) => {
     if (item.uniqueKey === targetItem.uniqueKey) {
       item.status = "running"; // 运行中 → 绿圈
       item.isActive = true;
@@ -179,7 +185,7 @@ const startCountdown = (targetIndex) => {
 
   // 4. 启动定时器
   countdownTimers.value[targetItem.uniqueKey] = setInterval(() => {
-    if (!isComponentMounted.value || !props.isTreating || isPsuse.value) {
+    if (!isComponentMounted.value || !props.isTreating) {
       clearInterval(countdownTimers.value[targetItem.uniqueKey]);
       delete countdownTimers.value[targetItem.uniqueKey];
       targetItem.status = "paused"; // 暂停 → 红圈
@@ -187,7 +193,8 @@ const startCountdown = (targetIndex) => {
     }
 
     remainingSecondsMap.value[targetItem.uniqueKey] -= 1;
-    targetItem.remainingSeconds = remainingSecondsMap.value[targetItem.uniqueKey];
+    targetItem.remainingSeconds =
+      remainingSecondsMap.value[targetItem.uniqueKey];
 
     if (targetItem.remainingSeconds <= 0) {
       clearInterval(countdownTimers.value[targetItem.uniqueKey]);
@@ -209,7 +216,9 @@ const pauseCountdown = () => {
   clearInterval(countdownTimers.value[activeKey]);
   delete countdownTimers.value[activeKey];
 
-  const targetItem = treatData.value.flat().find(item => item.uniqueKey === activeKey);
+  const targetItem = treatData.value
+    .flat()
+    .find((item) => item.uniqueKey === activeKey);
   if (targetItem) {
     targetItem.status = "paused"; // 明确标记暂停
   }
@@ -219,7 +228,9 @@ const pauseCountdown = () => {
 const resumeCountdown = () => {
   const allItems = treatData.value.flat();
   // 精准找到：激活+暂停状态的穴位
-  const activeItem = allItems.find(item => item.isActive && item.status === "paused");
+  const activeItem = allItems.find(
+    (item) => item.isActive && item.status === "paused"
+  );
 
   if (!activeItem) {
     ElMessage.warning("暂无暂停的倒计时可继续");
@@ -241,7 +252,8 @@ const resumeCountdown = () => {
     }
 
     remainingSecondsMap.value[activeItem.uniqueKey] -= 1;
-    activeItem.remainingSeconds = remainingSecondsMap.value[activeItem.uniqueKey];
+    activeItem.remainingSeconds =
+      remainingSecondsMap.value[activeItem.uniqueKey];
 
     if (activeItem.remainingSeconds <= 0) {
       clearInterval(countdownTimers.value[activeItem.uniqueKey]);
@@ -258,11 +270,11 @@ const resumeCountdown = () => {
 
 // 停止所有倒计时
 const stopCountdown = () => {
-  Object.keys(countdownTimers.value).forEach(key => {
+  Object.keys(countdownTimers.value).forEach((key) => {
     clearInterval(countdownTimers.value[key]);
     delete countdownTimers.value[key];
   });
-  treatData.value.flat().forEach(item => {
+  treatData.value.flat().forEach((item) => {
     item.status = "idle";
     item.isActive = false;
     item.remainingSeconds = item.totalSeconds;
@@ -270,7 +282,7 @@ const stopCountdown = () => {
   });
 };
 
-// 核心：修改时长方法（修复数值更新+状态保留）
+// 【核心修复2】修改时长方法：强制更新所有关联字段+刷新treatData
 const editTime = (item) => {
   // 1. 先暂停并清除定时器
   emit("pauseEdit", item);
@@ -285,39 +297,55 @@ const editTime = (item) => {
   })
     .then(({ value }) => {
       const newTime = parseInt(value.trim()) || 60;
-      const minutes = Math.floor(newTime / 60).toString().padStart(2, "0");
+      const minutes = Math.floor(newTime / 60)
+        .toString()
+        .padStart(2, "0");
       const seconds = (newTime % 60).toString().padStart(2, "0");
+      const newTime1 = `00:${minutes}:${seconds}`; // 激活项显示（00:分:秒）
+      const newTime2 = `${minutes}:${seconds}`; // 非激活项显示（分:秒）
 
-      // 2. 更新父组件数据（确保数值同步）
-      const newSwiperData = JSON.parse(JSON.stringify(props.swiperData)).map(d => {
-        if (d.uniqueKey === item.uniqueKey) {
-          return { 
-            ...d, 
-            time: newTime,
-            time1: `00:${minutes}:${seconds}`,
-            time2: `${minutes}:${seconds}`,
-            totalSeconds: newTime
-          };
+      // 2. 深拷贝更新父组件数据（同步所有字段）
+      const newSwiperData = JSON.parse(JSON.stringify(props.swiperData)).map(
+        (d) => {
+          if (d.uniqueKey === item.uniqueKey) {
+            return {
+              ...d,
+              time: newTime,
+              time1: newTime1, // 激活项时长显示
+              time2: newTime2, // 非激活项时长显示（核心）
+              totalSeconds: newTime,
+              remainingSeconds: newTime, // 提前同步剩余时间
+            };
+          }
+          return d;
         }
-        return d;
-      });
+      );
       emit("updateSwiperData", newSwiperData);
 
-      // 3. 更新子组件本地数据（核心：保留激活+暂停状态）
-      const allItems = treatData.value.flat();
-      const targetItem = allItems.find(i => i.uniqueKey === item.uniqueKey);
-      if (targetItem) {
-        targetItem.time = newTime;
-        targetItem.totalSeconds = newTime;
-        targetItem.time1 = `00:${minutes}:${seconds}`;
-        targetItem.time2 = `${minutes}:${seconds}`;
-        targetItem.remainingSeconds = newTime; // 剩余时间设为新值
-        targetItem.status = "paused"; // 强制暂停（显示红圈）
-        targetItem.isActive = true; // 保持激活
-        remainingSecondsMap.value[targetItem.uniqueKey] = newTime;
-      }
+      // 3. 【强制刷新子组件本地数据】
+      nextTick(() => {
+        // 重新格式化数据+分页，强制更新DOM
+        const formatted = formatData(newSwiperData, props.activeIndex);
+        treatData.value = groupByPageSize(formatted, 3);
 
-      ElMessage.success(`已将${item.point}时长修改为 ${newTime} 秒，点击继续恢复倒计时`);
+        // 同步修改子组件本地的目标穴位
+        const allItems = treatData.value.flat();
+        const targetItem = allItems.find((i) => i.uniqueKey === item.uniqueKey);
+        if (targetItem) {
+          targetItem.time = newTime;
+          targetItem.totalSeconds = newTime;
+          targetItem.time1 = newTime1;
+          targetItem.time2 = newTime2;
+          targetItem.remainingSeconds = newTime;
+          targetItem.status = "paused";
+          targetItem.isActive = true;
+          remainingSecondsMap.value[targetItem.uniqueKey] = newTime;
+        }
+      });
+
+      ElMessage.success(
+        `已将${item.point}时长修改为 ${newTime} 秒，点击继续恢复倒计时`
+      );
     })
     .catch(() => {
       ElMessage.info("已取消修改时长");
@@ -337,7 +365,10 @@ const goPrev = () => {
 };
 
 const goNext = () => {
-  if (swiperInstance.value && swiperInstance.value.activeIndex < treatData.value.length - 1) {
+  if (
+    swiperInstance.value &&
+    swiperInstance.value.activeIndex < treatData.value.length - 1
+  ) {
     swiperInstance.value.slideNext();
   }
 };
@@ -350,11 +381,12 @@ const onSlideChange = (swiper) => {
   emit("swiperChange", swiper.activeIndex);
 };
 
-// 监听数据变化（仅更新数据，不自动启动）
+// 【核心修复3】监听swiperData时强制刷新（deep+immediate）
 watch(
   () => props.swiperData,
   (newVal) => {
     if (!newVal.length) return;
+    // 每次数据变化都重新格式化+分页，确保DOM刷新
     const formatted = formatData(newVal, props.activeIndex);
     treatData.value = groupByPageSize(formatted, 3);
   },
@@ -386,7 +418,7 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  Object.keys(countdownTimers.value).forEach(key => {
+  Object.keys(countdownTimers.value).forEach((key) => {
     clearInterval(countdownTimers.value[key]);
   });
   countdownTimers.value = {};
@@ -402,8 +434,6 @@ defineExpose({
   swiperInstance,
 });
 </script>
-
-
 
 <style scoped lang="scss">
 .swiper-main {

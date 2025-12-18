@@ -1,8 +1,5 @@
 <template>
   <div class="container">
-    <!-- <div class="point-nav">
-      <span>定穴</span>
-    </div> -->
     <div class="point-content">
       <div class="point-content-left">
         <div class="point-content-left-border">
@@ -293,6 +290,8 @@ const flattenPlanData = (planList) => {
         .toString()
         .padStart(2, "0");
       const seconds = (timeInSeconds % 60).toString().padStart(2, "0");
+      const time1 = `00:${minutes}:${seconds}`;
+      const time2 = `${minutes}:${seconds}`; // 非激活项显示字段
       flatPoints.push({
         ...pointItem,
         groupName: groupName,
@@ -304,15 +303,14 @@ const flattenPlanData = (planList) => {
         status: 0,
         isActive: false,
         uniqueId: `${groupName}-${treatType}-${pointIndex}-${pointItem.name}`,
-        // 修复time1：00:分:秒
-        time1: `00:${minutes}:${seconds}`,
-        // time2保持不变（分:秒）
-        time2: `${minutes}:${seconds}`,
+        time1: time1,
+        time2: time2, // 确保初始化时存在该字段
       });
     });
   });
   return flatPoints;
 };
+
 // 获取穴位数据（适配新数据结构）
 const getPoint = (id) => {
   selectedCase.value = JSON.parse(localStorage.getItem("selectedCase"));
@@ -338,7 +336,8 @@ const getPoint = (id) => {
   flatPoints[0].isActive = true;
   selectedObj.value = flatPoints[0];
   currentPoint.value = flatPoints[0];
-  newPlanPoint.value = [flatPoints[0]]; // 适配组件传参
+  // 核心修改1：初始化newPlanPoint为所有穴位（而非仅第一个）
+  newPlanPoint.value = JSON.parse(JSON.stringify(flatPoints));
   chooseBody(flatPoints[0]);
 
   // 3. 初始化图片类型
@@ -374,6 +373,19 @@ const getPoint = (id) => {
   });
 };
 
+// 核心修改2：更新newPlanPoint的状态（全局生效）
+const updateNewPlanPointStatus = (pointId, status) => {
+  if (!newPlanPoint.value || newPlanPoint.value.length === 0) return;
+  // 深拷贝+更新状态，强制触发响应式
+  const newArr = JSON.parse(JSON.stringify(newPlanPoint.value));
+  const targetIndex = newArr.findIndex((item) => item.id === pointId);
+  if (targetIndex > -1) {
+    newArr[targetIndex].status = status;
+    newPlanPoint.value = newArr;
+    console.log(`更新穴位${pointId}状态为${status}`, newPlanPoint.value);
+  }
+};
+
 // 父组件 - 自动切换穴位
 const usePoint = () => {
   const flatPoints = tableData.value;
@@ -386,8 +398,11 @@ const usePoint = () => {
 
   // 标记当前穴位为已完成
   if (testIndex.value < pointLength) {
+    const currentPointId = flatPoints[testIndex.value].id;
     flatPoints[testIndex.value].status = 2; // 已完成
     flatPoints[testIndex.value].isActive = false;
+    // 核心：同步更新newPlanPoint中该穴位的状态
+    updateNewPlanPointStatus(currentPointId, 2);
   }
 
   // 计算下一个索引
@@ -408,16 +423,21 @@ const usePoint = () => {
     if (idx === nextIndex) {
       item.status = 1; // 运行中
       item.isActive = true;
+      // 同步更新newPlanPoint中该穴位的状态
+      updateNewPlanPointStatus(item.id, 1);
     } else if (item.status !== 2) {
       item.status = 0; // 未开始
       item.isActive = false;
+      // 同步更新newPlanPoint中该穴位的状态
+      updateNewPlanPointStatus(item.id, 0);
     }
   });
 
   // 更新选中状态和图片
   selectedObj.value = flatPoints[nextIndex];
   currentPoint.value = flatPoints[nextIndex];
-  newPlanPoint.value = [flatPoints[nextIndex]];
+  // 核心修改2：newPlanPoint始终保持所有穴位的最新状态
+  newPlanPoint.value = JSON.parse(JSON.stringify(flatPoints));
   picType.value = flatPoints[nextIndex].bodyType;
   picUrl.value = [0, 2].includes(flatPoints[nextIndex].bodyType)
     ? BodyPic
@@ -439,47 +459,75 @@ const usePoint = () => {
 
   testIndex.value = nextIndex;
 };
+
 // 父组件 - 处理倒计时结束事件
 const countdownEnd = (item) => {
   const flatPoints = tableData.value;
   const pointLength = flatPoints.length;
 
+  // 核心修复1：先更新最后一个穴位的状态为2，再标记结束
   if (testIndex.value >= pointLength - 1) {
+    // 第一步：先把当前最后一个穴位的status设为2
+    updateNewPlanPointStatus(item.id, 2);
+    // 同步更新tableData里的状态（确保数据一致）
+    const targetIndex = flatPoints.findIndex((p) => p.id === item.id);
+    if (targetIndex > -1) {
+      flatPoints[targetIndex].status = 2;
+      flatPoints[targetIndex].isActive = false;
+    }
+
+    isTreatmentEnded.value = true;
     if (treatSwiperRef.value) {
       treatSwiperRef.value.stopCountdown();
     }
+
+    // 核心修复2：弹窗前先更新newPlanPoint（确保子组件能拿到最新状态）
+    newPlanPoint.value = JSON.parse(JSON.stringify(flatPoints));
+
     ElMessageBox.alert(
       "<strong><i style='font-size: 24px; color: #6c359d; text-align: center; display: block;font-weight: bold;font-style: normal;'>治疗结束</i></strong>",
       "提醒",
       {
         dangerouslyUseHTMLString: true,
         confirmButtonText: "确定",
+        showClose: false,
       }
     ).then(() => {
       testIndex.value = -1;
       isTreating.value = false;
       isPsuse.value = true;
-      isTreatmentEnded.value = true;
-      flatPoints.forEach((item) => {
-        item.isActive = false;
-      });
+
+      // 这里可以保留全量更新（兜底，确保所有穴位都是2）
+      const finalPoints = flatPoints.map((item) => ({
+        ...item,
+        status: 2,
+        isActive: false,
+      }));
+      tableData.value = finalPoints;
+      newPlanPoint.value = JSON.parse(JSON.stringify(finalPoints));
+
+      console.log("治疗完全结束，所有穴位状态设为2：", newPlanPoint.value);
     });
     return;
   }
 
-  setTimeout(() => {
-    // 切换到下一个穴位
-    usePoint();
+  // 非最后一个穴位：正常更新状态
+  updateNewPlanPointStatus(item.id, 2);
 
-    // 核心修复：强制启动下一个穴位的倒计时
-    nextTick(() => {
-      if (treatSwiperRef.value && isTreating.value && !isPsuse.value) {
-        treatSwiperRef.value.startCountdown(testIndex.value);
-        console.log(`启动第${testIndex.value}个穴位倒计时`);
-      }
-    });
+  setTimeout(() => {
+    if (!isTreatmentEnded.value) {
+      usePoint();
+
+      nextTick(() => {
+        if (treatSwiperRef.value && isTreating.value && !isPsuse.value) {
+          treatSwiperRef.value.startCountdown(testIndex.value);
+          console.log(`启动第${testIndex.value}个穴位倒计时`);
+        }
+      });
+    }
   }, 500);
 };
+
 // 父组件 handleSwiperChange 函数（删除bodyType关联，改为分页索引）
 const handleSwiperChange = (swiperPageIndex) => {
   const flatPoints = tableData.value;
@@ -499,11 +547,16 @@ const handleSwiperChange = (swiperPageIndex) => {
 
 // 处理时长更新事件（适配扁平化数据）
 const handleUpdateSwiperData = (newSwiperData) => {
-  // 1. 深拷贝更新数据，确保子组件能读到新值
-  tableData.value = JSON.parse(JSON.stringify(newSwiperData));
-  // 2. 强制保持暂停状态（显示红圈+继续按钮）
+  // 1. 深拷贝覆盖，确保引用更新（触发子组件watch）
+  tableData.value = []; // 先清空
+  nextTick(() => {
+    tableData.value = JSON.parse(JSON.stringify(newSwiperData));
+    // 同步更新newPlanPoint
+    newPlanPoint.value = JSON.parse(JSON.stringify(newSwiperData));
+  });
+  // 2. 强制保持暂停状态
   isPsuse.value = true;
-  ElMessage.success("时长已更新");
+  ElMessage.success("时长已更新，非激活项已同步显示新值");
 };
 
 // 暂停治疗
@@ -541,6 +594,8 @@ const continueTreat = () => {
       testIndex.value = firstUnfinished;
       flatPoints[firstUnfinished].status = 1;
       flatPoints[firstUnfinished].isActive = true;
+      // 同步更新newPlanPoint
+      updateNewPlanPointStatus(flatPoints[firstUnfinished].id, 1);
       if (treatSwiperRef.value) {
         treatSwiperRef.value.startCountdown(firstUnfinished);
       }
@@ -573,10 +628,12 @@ const endTreat = () => {
         treatSwiperRef.value.treatData.forEach((page) => {
           page.forEach((item) => {
             if (item.isActive) {
-              item.status = "ended";
+              item.status = 2;
+              updateNewPlanPointStatus(item.id, 2);
             } else {
-              item.status = "idle";
+              item.status = 0;
               item.isActive = false;
+              updateNewPlanPointStatus(item.id, 0);
             }
           });
         });
@@ -588,8 +645,11 @@ const endTreat = () => {
         if (item.status !== 2) {
           item.status = 0;
           item.isActive = false;
+          updateNewPlanPointStatus(item.id, 0);
         }
       });
+      // 最终更新newPlanPoint
+      newPlanPoint.value = JSON.parse(JSON.stringify(flatPoints));
       testIndex.value = -1;
 
       ElMessage.success("治疗已结束");
@@ -619,12 +679,15 @@ const restartTreat = () => {
       flatPoints.forEach((item, idx) => {
         item.status = idx === 0 ? 1 : 0;
         item.isActive = idx === 0;
+        // 同步更新每个穴位的状态
+        updateNewPlanPointStatus(item.id, idx === 0 ? 1 : 0);
       });
 
       // 重置选中状态
       selectedObj.value = flatPoints[0];
       currentPoint.value = flatPoints[0];
-      newPlanPoint.value = [flatPoints[0]];
+      // 重置newPlanPoint
+      newPlanPoint.value = JSON.parse(JSON.stringify(flatPoints));
       picType.value = flatPoints[0].bodyType;
       picUrl.value = [0, 2].includes(flatPoints[0].bodyType) ? BodyPic : LegPic;
       chooseBody(flatPoints[0]);
@@ -632,7 +695,7 @@ const restartTreat = () => {
       // 重置索引
       testIndex.value = 0;
 
-      // 🔥 核心修复：切到分页索引0（第一页），而非bodyType
+      // 核心修复：切到分页索引0（第一页），而非bodyType
       nextTick(() => {
         if (swiperInstance.value) {
           swiperInstance.value.slideTo(0); // 强制切回第一页
@@ -745,6 +808,8 @@ const switchDemoMode = () => {
         item.time1 = "00:08:00";
         item.time2 = "00:08";
       });
+      // 同步newPlanPoint
+      newPlanPoint.value = JSON.parse(JSON.stringify(tableData.value));
       // 同步selectedCase
       if (selectedCase.value.plan) {
         selectedCase.value.plan.forEach((groupItem) => {
@@ -756,7 +821,7 @@ const switchDemoMode = () => {
       // 重启治疗
       nextTick(() => {
         restartTreat();
-        // 🔥 补充：强制切回第一页
+        // 补充：强制切回第一页
         if (swiperInstance.value) {
           swiperInstance.value.slideTo(0);
         }
@@ -771,6 +836,7 @@ const switchDemoMode = () => {
       ElMessage.info("已取消演示模式切换");
     });
 };
+
 // 发送WS消息
 const sendWsMessage = (data) => {
   if (!$ws) return;
@@ -795,6 +861,15 @@ watch(
   { immediate: true }
 );
 
+// 核心监听：确保newPlanPoint变化时触发子组件更新
+watch(
+  () => newPlanPoint.value,
+  (newVal) => {
+    console.log("newPlanPoint更新：", newVal);
+  },
+  { deep: true, immediate: true }
+);
+
 // 初始化
 onMounted(() => {
   selectedCaseId.value = localStorage.getItem("selectedCaseId") || 1;
@@ -803,6 +878,7 @@ onMounted(() => {
 
 onUnmounted(() => {});
 </script>
+>
 
 <style scoped lang="scss">
 .container {

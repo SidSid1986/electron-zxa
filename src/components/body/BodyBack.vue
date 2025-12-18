@@ -2,10 +2,11 @@
  * @Author: Sid Li
  * @Date: 2025-12-13 14:06:46
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-17 23:58:02
- * @FilePath: \electron-zxa\src\components\body\BodyBack.vue
+ * @LastEditTime: 2025-12-18 15:14:04
+ * @FilePath: \zi-xiao-ai\src\components\body\BodyBack.vue
  * @Description: 身体正面图片组件
 -->
+
 <template>
   <div class="body-img">
     <!-- <img src="@/assets/pic/body/body2.png" alt="" /> -->
@@ -42,7 +43,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from "vue";
+import { ref, onMounted, watch, nextTick } from "vue";
 
 const props = defineProps({
   newPlanPoint: {
@@ -52,56 +53,68 @@ const props = defineProps({
 });
 
 const pointData = ref([]);
-
 const pointDataCopy = ref([]);
-
 const pointTreat = ref([]);
 
+// 新增：确保pointTreat始终有数据的初始化函数
+const initPointTreat = () => {
+  const pointDataJson = JSON.parse(localStorage.getItem("pointData")) || [];
+  pointDataCopy.value = JSON.parse(JSON.stringify(pointDataJson));
+  // 过滤bodyType=2的穴位（如果为空，用原始数据兜底）
+  pointTreat.value = pointDataCopy.value.filter(item => item.bodyType === 2) || pointDataCopy.value;
+  console.log("初始化pointTreat：", pointTreat.value);
+};
+
 const replaceStatusById = (sourceArr, targetArr) => {
-  // 1. 构建id->status的映射表（提升匹配效率）
   const statusMap = sourceArr.reduce((map, item) => {
     map[item.id] = item.status;
     return map;
   }, {});
-
-  // 2. 遍历目标数组，替换匹配id的status（不修改原数组）
   return targetArr.map((item) => {
-    // 若id在映射表中存在，则替换status，否则返回原数据
     if (statusMap.hasOwnProperty(item.id)) {
       return { ...item, status: statusMap[item.id] };
     }
-    return { ...item }; // 浅拷贝原对象，避免修改原数组
+    return { ...item };
   });
 };
 
 watch(
-  () => props.newPlanPoint,
+  () => [...props.newPlanPoint],
   (newVal) => {
-    console.log(111222);
-    console.log(newVal);
-    // 核心：先判断pointTreat是否初始化完成，未完成则不执行
-    if (!pointTreat.value || pointTreat.value.length === 0) {
-      console.log("pointTreat尚未初始化，跳过本次更新");
-      return;
+    console.log("最新newPlanPoint数据：", newVal);
+    if (!newVal || newVal.length === 0) return;
+
+    // 核心修复：每次watch前先确保pointTreat已初始化
+    if (pointTreat.value.length === 0) {
+      initPointTreat();
     }
+
+    console.log("更新前pointTreat：", pointTreat.value);
     const updatedArr2 = replaceStatusById(newVal, pointTreat.value);
-    console.log(updatedArr2);
-    pointData.value = updatedArr2;
-    console.log(pointData.value);
+    console.log("更新后pointData：", updatedArr2);
+
+    pointData.value = [];
+    nextTick(() => {
+      pointData.value = updatedArr2;
+    });
+    console.log("最终pointData：", pointData.value);
   },
-  {
-    immediate: true,
-    deep: true,
-  }
+  { immediate: true, deep: true }
+);
+
+watch(
+  () => pointData.value,
+  (newVal) => {
+    console.log("pointData最终渲染数据：", newVal);
+    const hasStatus2 = newVal.some((item) => item.status === 2);
+    console.log("是否有治疗完成的穴位（status=2）：", hasStatus2);
+  },
+  { deep: true }
 );
 
 onMounted(() => {
   console.log("组件挂载了");
-  const pointDataJson = JSON.parse(localStorage.getItem("pointData")) || [];
-  pointDataCopy.value = JSON.parse(JSON.stringify(pointDataJson));
-
-  pointTreat.value = pointDataCopy.value.filter((item) => item.bodyType === 2);
-
+  initPointTreat(); // 调用初始化函数
   const updatedArr2 = replaceStatusById(props.newPlanPoint, pointTreat.value);
   pointData.value = updatedArr2;
 });
