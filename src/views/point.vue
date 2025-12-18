@@ -25,89 +25,19 @@
       </div>
       <div class="point-content-right">
         <div class="point-content-right-border">
-          <div class="right-table-border">
-            <div class="right-table-header">
-              <div class="header-item1 item-border">灸法</div>
-              <div class="header-item2 item-border">时长</div>
-              <div class="header-item3 item-border">穴位</div>
-              <div class="header-item4">定穴状态</div>
-            </div>
+          <!-- 引入封装的表格组件 -->
+          <PointTable
+            :tableData="tableData"
+            :selectedIndex="selectedAutoIndex"
+            :minBodyHeight="'5vh'"
+            :maxBodyHeight="'50vh'"
+            :headerHeight="'6vh'"
+            :tableWidth="'100%'"
+            @row-click="handleTableRowClick"
+            @point-status-click="handleTablePointStatusClick"
+            @scroll-change="handleTableScrollChange"
+          />
 
-            <div
-              class="right-table-content-border"
-              @mousedown="handleTableDragStart"
-              @mouseup="handleTableDragEnd"
-              @mouseleave="handleTableDragEnd"
-              @mousemove="handleTableDragMove"
-              @wheel="handleTableWheel"
-            >
-              <div
-                class="table-scroll-content"
-                :style="{
-                  transform: `translateY(${tableDragOffset}px)`,
-                  transition: tableIsDragging
-                    ? 'none'
-                    : 'transform 0.2s cubic-bezier(0.25, 0.1, 0.25, 1)',
-                }"
-              >
-                <div
-                  v-for="(item, index) in tableData"
-                  :key="index"
-                  :class="
-                    index == selectedAutoIndex
-                      ? 'table-item-border-index'
-                      : 'right-table-content'
-                  "
-                >
-                  <div class="table-item-first table-item1 table-item-border">
-                    <div
-                      class="table-item-left"
-                      v-show="index == selectedAutoIndex"
-                    ></div>
-                    <div class="table-line-name">{{ item.chooseName }}</div>
-                  </div>
-                  <div class="table-item2 table-item-border">
-                    {{ item.time }}
-                  </div>
-                  <div class="table-item3 table-item-border">
-                    <div
-                      v-for="(area, areaIndex) in item.points"
-                      :key="areaIndex"
-                      class="point-name-item"
-                    >
-                      {{ area.name }}
-                    </div>
-                  </div>
-                  <!-- 多穴位分别显示状态 -->
-                  <div class="table-item4">
-                    <div
-                      v-for="(point, pointIndex) in item.points"
-                      :key="pointIndex"
-                      class="point-status-item"
-                    >
-                      <span
-                        :class="[
-                          point.status === 1
-                            ? 'status-red'
-                            : point.status === 0
-                              ? 'status-blue'
-                              : 'status-green',
-                        ]"
-                      >
-                        {{
-                          point.status === 0
-                            ? "未定穴"
-                            : point.status === 1
-                              ? "正在定穴"
-                              : "已定穴"
-                        }}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
           <div class="right-ins">
             移动摇杆，将红点制动到指定穴位后，点击下方【使用此穴位】按钮<br />
             当前定穴：{{ currentPoint.name || "请选择穴位" }}
@@ -154,14 +84,12 @@ import caseData from "@/data/caseData.json";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useRoute, useRouter } from "vue-router";
 import BodyCom from "@/components/BodyCom.vue";
+import PointTable from "@/components/point/PointTable.vue"; // 引入封装的表格组件
 
 import BodyFront from "@/components/body/BodyFront.vue";
 import BodyBack from "@/components/body/BodyBack.vue";
 import LegFront from "@/components/body/LegFront.vue";
 import LegBack from "@/components/body/LegBack.vue";
-
-import BodyPic from "@/assets/pic/body/body0.png";
-import LegPic from "@/assets/pic/body/body1.png";
 
 const $ws = inject("$ws");
 
@@ -184,16 +112,6 @@ const tableData = ref([]);
 
 const selectedAutoIndex = ref(0);
 const selectedObj = ref({});
-const tableIsDragging = ref(false);
-const tableStartY = ref(0);
-const tableLastY = ref(0);
-const tableDragOffset = ref(0);
-const tableVelocity = ref(0);
-const tableInertiaTimer = ref(null);
-const tableContentHeight = ref(0);
-const tableContainerHeight = ref(0);
-const tableMaxOffset = ref(0);
-
 const newPlanPoint = ref([]);
 
 // 当前选中的单个穴位
@@ -259,95 +177,37 @@ const getPoint = (id) => {
   newPlanPoint.value = tableData.value[0].points;
   chooseBody(newPlanPoint.value[0]);
   console.log(newPlanPoint.value);
-
-  nextTick(() => {
-    setTimeout(calcTableScrollHeight, 50);
-  });
 };
 
-const calcTableScrollHeight = () => {
-  const container = document.querySelector(".right-table-content-border");
-  const content = document.querySelector(".table-scroll-content");
-  if (container && content) {
-    tableContainerHeight.value = container.clientHeight;
-    tableContentHeight.value = content.scrollHeight;
-
-    if (tableContentHeight.value <= tableContainerHeight.value) {
-      tableMaxOffset.value = 0;
-      tableDragOffset.value = 0;
-    } else {
-      tableMaxOffset.value =
-        tableContainerHeight.value - tableContentHeight.value;
-    }
+// 表格行点击事件
+const handleTableRowClick = (item, index) => {
+  selectedAutoIndex.value = index;
+  // 切换选中行的第一个未完成穴位
+  const firstUnfinished = item.points.findIndex((p) => p.status === 0);
+  if (firstUnfinished > -1) {
+    currentPoint.value = {
+      ...item.points[firstUnfinished],
+      rowIndex: index,
+      pointIndex: firstUnfinished,
+    };
+    newPlanPoint.value = item.points;
+    chooseBody(item.points[firstUnfinished]);
   }
 };
 
-const handleTableDragStart = (e) => {
-  if (tableContentHeight.value <= tableContainerHeight.value) return;
-
-  tableIsDragging.value = true;
-  tableStartY.value = e.clientY;
-  tableLastY.value = e.clientY;
-  tableVelocity.value = 0;
-  document.body.style.cursor = "grabbing";
-  document.body.style.userSelect = "none";
-
-  if (tableInertiaTimer.value) clearInterval(tableInertiaTimer.value);
+// 表格穴位状态点击事件
+const handleTablePointStatusClick = ({ item, rowIndex, point, pointIndex }) => {
+  console.log("点击穴位状态:", point.name, point.status);
+  // 可选：手动切换穴位状态逻辑
+  // const newTableData = JSON.parse(JSON.stringify(tableData.value));
+  // newTableData[rowIndex].points[pointIndex].status = point.status === 0 ? 1 : 0;
+  // tableData.value = newTableData;
 };
 
-const handleTableDragMove = (e) => {
-  if (!tableIsDragging.value) return;
-  if (tableContentHeight.value <= tableContainerHeight.value) return;
-
-  const currentY = e.clientY;
-  const moveY = currentY - tableLastY.value;
-  tableLastY.value = currentY;
-
-  tableVelocity.value = moveY * 0.5;
-  let newOffset = tableDragOffset.value + moveY;
-  newOffset = Math.max(tableMaxOffset.value, Math.min(0, newOffset));
-  tableDragOffset.value = newOffset;
-};
-
-const handleTableDragEnd = () => {
-  tableIsDragging.value = false;
-  document.body.style.cursor = "grab";
-  document.body.style.userSelect = "auto";
-
-  if (tableContentHeight.value <= tableContainerHeight.value) return;
-
-  if (Math.abs(tableVelocity.value) > 1) {
-    startTableInertiaScroll();
-  }
-};
-
-const startTableInertiaScroll = () => {
-  if (tableInertiaTimer.value) clearInterval(tableInertiaTimer.value);
-
-  tableInertiaTimer.value = setInterval(() => {
-    tableVelocity.value *= 0.92;
-    let newOffset = tableDragOffset.value + tableVelocity.value;
-    newOffset = Math.max(tableMaxOffset.value, Math.min(0, newOffset));
-    tableDragOffset.value = newOffset;
-
-    if (Math.abs(tableVelocity.value) < 0.5) {
-      clearInterval(tableInertiaTimer.value);
-    }
-  }, 16);
-};
-
-const handleTableWheel = (e) => {
-  if (tableContentHeight.value <= tableContainerHeight.value) {
-    e.preventDefault();
-    return;
-  }
-
-  e.preventDefault();
-  const scrollStep = Math.abs(e.deltaY) > 100 ? 50 : 30;
-  let newOffset =
-    tableDragOffset.value + (e.deltaY > 0 ? -scrollStep : scrollStep);
-  newOffset = Math.max(tableMaxOffset.value, Math.min(0, newOffset));
-  tableDragOffset.value = newOffset;
+// 表格滚动变化事件
+const handleTableScrollChange = (offset) => {
+  console.log("表格滚动位置:", offset);
+  // 可选：记录滚动位置或其他逻辑
 };
 
 const handleCancel = () => {
@@ -518,16 +378,15 @@ onMounted(() => {
   selectedCaseId.value = route.query.id;
   getPoint(selectedCaseId.value);
 
-  nextTick(() => {
-    setTimeout(calcTableScrollHeight, 100);
+  window.addEventListener("resize", () => {
+    // 可选：表格高度变化时重新计算
+    // 表格组件内部已处理resize逻辑，此处无需重复处理
   });
-
-  window.addEventListener("resize", calcTableScrollHeight);
 });
 
 onUnmounted(() => {
-  if (tableInertiaTimer.value) clearInterval(tableInertiaTimer.value);
-  window.removeEventListener("resize", calcTableScrollHeight);
+  stopDrag(); // 组件卸载时停止拖拽
+  window.removeEventListener("resize", () => {});
 });
 </script>
 
@@ -577,7 +436,6 @@ onUnmounted(() => {
       width: 30%;
       height: 100%;
       height: 86vh;
-      // padding: 20px 10px 20px 20px;
 
       .point-content-left-border {
         box-sizing: border-box;
@@ -655,257 +513,6 @@ onUnmounted(() => {
         overflow: hidden;
         background-color: #ffffff;
 
-        .right-table-border {
-          // padding: 20px 20px 60px 20px;
-          box-sizing: border-box;
-          width: 100%;
-          background-color: #fbfcf9;
-        }
-
-        .right-table-header {
-          width: 100%;
-          height: 6vh;
-          display: flex;
-          flex-direction: row;
-          align-items: center;
-          background-color: #fcd700;
-          font-size: 20px;
-          color: #111;
-
-          .header-item1 {
-            box-sizing: border-box;
-            height: 100%;
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-          }
-          .header-item2 {
-            box-sizing: border-box;
-            height: 100%;
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-          }
-          .header-item3 {
-            box-sizing: border-box;
-            height: 100%;
-            flex: 2;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-          }
-          .header-item4 {
-            box-sizing: border-box;
-            height: 100%;
-            flex: 2;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-          }
-          .item-border {
-            border-right: 1px solid #ffffff;
-          }
-        }
-
-        .right-table-content-border {
-          box-sizing: border-box;
-          width: 100%;
-          max-height: 50vh;
-          overflow: hidden;
-          position: relative;
-          cursor: grab;
-
-          &:active {
-            cursor: grabbing;
-          }
-
-          -webkit-tap-highlight-color: transparent;
-
-          .table-scroll-content {
-            will-change: transform;
-            width: 100%;
-          }
-
-          .right-table-content {
-            box-sizing: border-box;
-            width: 100%;
-            height: 100%;
-
-            display: flex;
-            flex-direction: row;
-            align-items: center;
-            font-size: 18px;
-            color: #511d6a;
-            background-color: #ffffff;
-
-            .table-item1 {
-              box-sizing: border-box;
-              height: 8vh;
-              flex: 1;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              text-align: center;
-              background-color: #ffffff;
-            }
-            .table-item2 {
-              box-sizing: border-box;
-              height: 8vh;
-              flex: 1;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              text-align: center;
-              background-color: #ffffff;
-            }
-            .table-item3 {
-              box-sizing: border-box;
-              height: 8vh;
-              flex: 2;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              text-align: center;
-              background-color: #ffffff;
-            }
-            .table-item4 {
-              box-sizing: border-box;
-              height: 8vh;
-              flex: 2;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              text-align: center;
-              background-color: #ffffff;
-            }
-
-            .table-item-border {
-              border-right: 1px solid #af7dc4;
-            }
-
-            // 穴位名称项
-            .point-name-item {
-              width: 100%;
-              margin: 4px 0;
-              font-size: 16px;
-            }
-
-            // 穴位状态项
-            .point-status-item {
-              width: 100%;
-              margin: 4px 0;
-
-              span {
-                cursor: pointer;
-                transition: all 0.2s;
-
-                &:hover {
-                  transform: scale(1.05);
-                }
-              }
-            }
-          }
-
-          .table-item-border-index {
-            box-sizing: border-box;
-            width: 100%;
-            height: auto;
-
-            display: flex;
-            flex-direction: row;
-            align-items: center;
-            font-size: 20px;
-            color: #511d6a;
-
-            .table-item1 {
-              box-sizing: border-box;
-              height: 8vh;
-              flex: 1;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              text-align: center;
-              background-color: #f3ebf4;
-            }
-            .table-item2 {
-              box-sizing: border-box;
-              height: 8vh;
-              flex: 1;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              text-align: center;
-              background-color: #f3ebf4;
-            }
-            .table-item3 {
-              box-sizing: border-box;
-              height: 8vh;
-              flex: 2;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              text-align: center;
-              background-color: #f3ebf4;
-            }
-            .table-item4 {
-              box-sizing: border-box;
-              height: 8vh;
-              flex: 2;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              text-align: center;
-              background-color: #f3ebf4;
-            }
-
-            .table-item-border {
-              border-right: 1px solid #af7dc4;
-            }
-
-            // 穴位名称项
-            .point-name-item {
-              width: 100%;
-              margin: 4px 0;
-              font-size: 16px;
-            }
-
-            // 穴位状态项
-            .point-status-item {
-              width: 100%;
-              margin: 4px 0;
-
-              span {
-                cursor: pointer;
-                transition: all 0.2s;
-
-                &:hover {
-                  transform: scale(1.05);
-                }
-              }
-            }
-          }
-
-          .table-item-first {
-            justify-content: flex-start !important;
-
-            .table-line-name {
-              margin-left: 40%;
-            }
-          }
-
-          .table-item-left {
-            width: 4px;
-            height: 100%;
-            background-color: #af7dc4;
-          }
-        }
-
         .right-ins {
           height: auto;
           min-height: 6vh;
@@ -955,45 +562,6 @@ onUnmounted(() => {
       }
     }
   }
-}
-
-// 状态样式
-.status-blue {
-  display: inline-block;
-  width: 80px;
-  height: 30px;
-  line-height: 30px;
-  font-size: 16px;
-
-  background-color: #bdbdba;
-  border-radius: 40px;
-  color: #111;
-  text-align: center;
-}
-
-.status-red {
-  display: inline-block;
-  width: 80px;
-  height: 30px;
-  line-height: 30px;
-  background-color: #de2b1f;
-  border-radius: 40px;
-  color: #ffffff;
-  text-align: center;
-  font-size: 16px;
-}
-
-.status-green {
-  display: inline-block;
-  width: 80px;
-  height: 30px;
-  line-height: 30px;
-  font-size: 16px;
-
-  background-color: #6c359d;
-  border-radius: 40px;
-  color: #ffffff;
-  text-align: center;
 }
 
 // Dialog 样式
