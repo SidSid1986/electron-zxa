@@ -44,62 +44,54 @@
         </div>
       </div>
       <div class="right">
-        <!-- 表格外层滚动容器 - 新增固定高度 20vh -->
+        <div class="right-top">
+          <span>灸法</span>
+          <span>时长</span>
+          <span>穴位</span>
+        </div>
+
+        <!-- 右侧外层容器：最大55vh，最小自适应 -->
         <div
-          class="right-table-container"
+          class="right-table"
           @mousedown="handleRightDragStart"
           @mouseup="handleRightDragEnd"
           @mouseleave="handleRightDragEnd"
           @mousemove="handleRightDragMove"
           @wheel="handleRightWheel"
         >
-          <!-- 原生表格：严格的table/thead/tbody/tr/th/td结构 -->
-          <table class="right-table">
-            <!-- 表头 -->
-            <thead>
-              <tr class="right-top">
-                <th class="col-1">灸法</th>
-                <th class="col-2">时长</th>
-                <th class="col-3">穴位</th>
-              </tr>
-            </thead>
-            <!-- 表体：滚动的内容 -->
-            <tbody
-              class="right-table-body"
-              :style="{
-                transform: `translateY(${rightDragOffset}px)`,
-                transition: rightIsDragging
-                  ? 'none'
-                  : 'transform 0.2s cubic-bezier(0.25, 0.1, 0.25, 1)',
+          <!-- 右侧内层容器：完全复刻左侧结构 -->
+          <div
+            class="right-table-content"
+            :style="{
+              transform: `translateY(${rightDragOffset}px)`,
+              transition: rightIsDragging
+                ? 'none'
+                : 'transform 0.2s cubic-bezier(0.25, 0.1, 0.25, 1)',
+            }"
+          >
+            <div
+              class="right-bottom"
+              v-for="(item, index) in selectedPlan"
+              :key="index"
+              :class="{
+                'right-bottom-last': index === selectedPlan.length - 1,
               }"
             >
-              <tr
-                class="right-bottom"
-                v-for="(item, index) in selectedPlan"
-                :key="index"
-                :class="{
-                  'right-bottom-last': index === selectedPlan.length - 1,
-                }"
-              >
-                <!-- 第一列：灸法 -->
-                <td class="col-1">
-                  <span class="right-name">{{ item.chooseName }}</span>
-                </td>
-                <!-- 第二列：时长 -->
-                <td class="col-2">{{ item.time }}</td>
-                <!-- 第三列：穴位 -->
-                <td class="col-3">
-                  <span
-                    class="point-item"
-                    v-for="(area, areaIndex) in item.points"
-                    :key="areaIndex"
-                  >
-                    {{ area.name }}
-                  </span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+              <span>
+                <span class="right-name">{{ item.chooseName }}</span>
+              </span>
+              <span>{{ item.time }}</span>
+              <span>
+                <span
+                  class="no-border"
+                  v-for="(area, areaIndex) in item.points"
+                  :key="areaIndex"
+                >
+                  {{ area.name }}&nbsp;&nbsp;
+                </span>
+              </span>
+            </div>
+          </div>
         </div>
 
         <!-- 开始按钮容器 -->
@@ -141,6 +133,7 @@
     </el-dialog>
 
     <!-- 抽屉 -->
+
     <el-drawer
       class="drawer-content"
       :class="[
@@ -161,6 +154,7 @@
 import { ref, onMounted, onUnmounted, nextTick, watch } from "vue";
 import { useRouter } from "vue-router";
 import caseData from "@/data/caseData.json";
+// import { getCaseData, getCaseById } from "@/utils/caseDataManager";
 import DrawerList from "@/components/DrawerList.vue";
 import Top from "@/components/Top.vue";
 import pointData from "@/data/pointData.json";
@@ -181,13 +175,13 @@ const watchUserInfo = () => {
   });
 };
 
-// 原有逻辑不变
+// 原有逻辑不变（以下为你的原有代码）
 const dialogVisible = ref(false);
 const selectedCaseId = ref(1);
 const selectedPlan = ref([]);
 const caseArr = ref([]);
 
-// 左侧拖拽滚动相关状态
+// 左侧/右侧拖拽滚动相关状态
 const isDragging = ref(false);
 const startY = ref(0);
 const dragOffset = ref(0);
@@ -198,7 +192,6 @@ const contentHeight = ref(0);
 const containerHeight = ref(0);
 const maxOffset = ref(0);
 
-// 右侧拖拽滚动相关状态
 const rightIsDragging = ref(false);
 const rightStartY = ref(0);
 const rightDragOffset = ref(0);
@@ -206,7 +199,7 @@ const rightLastY = ref(0);
 const rightVelocity = ref(0);
 const rightInertiaTimer = ref(null);
 const rightContentHeight = ref(0);
-const rightContainerHeight = ref(0); // 固定20vh
+const rightContainerHeight = ref(0);
 const rightMaxOffset = ref(0);
 const drawerVisible = ref(false);
 
@@ -220,7 +213,6 @@ const openMenu = () => {
   drawerVisible.value = true;
 };
 
-// 左侧高度计算
 const updateMaxOffset = () => {
   if (contentHeight.value <= containerHeight.value) {
     maxOffset.value = 0;
@@ -230,11 +222,7 @@ const updateMaxOffset = () => {
   }
 };
 
-// 右侧高度计算 - 改为固定20vh
 const updateRightMaxOffset = () => {
-  // 固定容器高度为20vh
-  rightContainerHeight.value = window.innerHeight * 0.2;
-
   if (rightContentHeight.value <= rightContainerHeight.value) {
     rightMaxOffset.value = 0;
     rightDragOffset.value = 0;
@@ -254,25 +242,24 @@ const initLeftHeight = () => {
   }
 };
 
-// 初始化右侧表格高度 - 适配固定20vh
 const initRightHeight = () => {
-  const rightContainer = document.querySelector(".right-table-container");
-  const rightContent = document.querySelector(".right-table-body");
-
+  const rightContainer = document.querySelector(".right-table");
+  const rightContent = document.querySelector(".right-table-content");
   if (rightContainer && rightContent) {
-    // 设置容器固定高度20vh
-    rightContainer.style.height = `${window.innerHeight * 0.2}px`;
-    // 计算内容高度
-    rightContentHeight.value = rightContent.offsetHeight;
+    const contentNaturalHeight = rightContent.scrollHeight;
+    const maxHeight = window.innerHeight * 0.55;
+    rightContainerHeight.value = Math.min(contentNaturalHeight, maxHeight);
+    rightContainer.style.height = `${rightContainerHeight.value}px`;
+    rightContentHeight.value = contentNaturalHeight;
     updateRightMaxOffset();
   }
 };
 
 const handleStartClick = () => {
+  console.log("start");
   dialogVisible.value = true;
 };
 
-// 左侧拖拽逻辑
 const handleDragStart = (e) => {
   if (contentHeight.value <= containerHeight.value) return;
   isDragging.value = true;
@@ -331,7 +318,6 @@ const handleWheel = (e) => {
   dragOffset.value = newOffset;
 };
 
-// 右侧拖拽滚动逻辑
 const handleRightDragStart = (e) => {
   if (rightContentHeight.value <= rightContainerHeight.value) return;
   rightIsDragging.value = true;
@@ -393,10 +379,11 @@ const handleRightWheel = (e) => {
 
 const handleClick = (id) => {
   selectedCaseId.value = id;
+
   const selectedItem = caseArr.value.find((item) => item.id === id);
+  console.log(selectedItem);
   selectedPlan.value = selectedItem?.plan || [];
 
-  // 重置右侧滚动位置
   rightDragOffset.value = 0;
   nextTick(() => {
     setTimeout(initRightHeight, 50);
@@ -413,18 +400,16 @@ const cancelDialog = () => {
 
 onMounted(() => {
   const arr = JSON.parse(JSON.stringify(pointData));
+  console.log(arr);
   localStorage.setItem("pointData", JSON.stringify(arr));
-
   setTimeout(() => {
     initLeftHeight();
     initRightHeight();
   }, 100);
-
-  window.addEventListener("resize", () => {
-    initLeftHeight();
-    initRightHeight();
-  });
+  window.addEventListener("resize", initRightHeight);
   getCaseList();
+
+  // 监听用户信息变化
   watchUserInfo();
 });
 
@@ -446,6 +431,7 @@ onUnmounted(() => {
   align-items: center;
   justify-content: flex-start;
   width: 100vw;
+  // height: 96vh;
   height: 100vh;
   margin: 0;
   padding: 0;
@@ -500,9 +486,12 @@ onUnmounted(() => {
       }
     }
 
+    // 左侧容器样式（保持不变）
     .left-table {
       margin-top: 10px;
       border: 1px solid #b99aca;
+      // border-left: 1px solid #b99aca;
+      // border-right: 1px solid #b99aca;
       height: 70vh;
       overflow: hidden;
       position: relative;
@@ -579,116 +568,113 @@ onUnmounted(() => {
     display: flex;
     flex-direction: column;
 
-    // 右侧表格滚动容器 - 固定20vh高度
-    .right-table-container {
-      position: relative;
-      overflow: hidden;
-      cursor: grab;
-      // border-left: 1px solid #b99aca;
-      // border-right: 1px solid #b99aca;
-      // border-bottom: 1px solid #b99aca;
-      border: 2px solid red;
-      height: 20vh; // 固定高度20vh
-      &:active {
-        cursor: grabbing;
-      }
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    // 核心：原生表格样式
-    .right-table {
-      width: 100%;
-      border-collapse: collapse; // 合并边框
-      table-layout: fixed; // 固定列宽，关键！
-      background-color: #dad2e6;
-    }
-
-    // 表头行样式
     .right-top {
       height: 5vh;
+      line-height: 5vh;
+      color: #511d6a;
+      font-weight: bold;
+      border-bottom: 1px solid #c293d5;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
       background: #c293d5;
+      box-sizing: border-box;
 
-      th {
-        color: #ffffff;
-        font-weight: bold;
+      span {
         font-size: 18px;
+        color: #ffffff;
         text-align: center;
-        border: none;
-        height: 100%;
-        line-height: 5vh;
+        box-sizing: border-box;
       }
 
-      // 列宽严格定义
-      .col-1 {
+      :nth-child(1) {
         width: 25%;
       }
-      .col-2 {
+
+      :nth-child(2) {
         width: 25%;
         border-left: 1px solid #ffffff;
         border-right: 1px solid #ffffff;
       }
-      .col-3 {
+
+      :nth-child(3) {
         width: 50%;
       }
     }
 
-    // 表体容器（滚动的部分）
-    .right-table-body {
+    // 右侧容器样式：关键优化！不固定高度，由JS动态设置
+    .right-table {
+      margin-top: 0;
+      border-left: 1px solid #b99aca;
+      border-right: 1px solid #b99aca;
+      border-bottom: 1px solid #b99aca;
+      overflow: hidden;
+      position: relative;
+      cursor: grab;
+      &:active {
+        cursor: grabbing;
+      }
+      -webkit-tap-highlight-color: transparent;
+      /* 高度由JS动态设置，这里不写固定值 */
+    }
+
+    // 右侧内容容器：保持与左侧一致
+    .right-table-content {
       will-change: transform;
-      width: 100%;
-      display: table-row-group; // 保持表格结构
     }
 
-    // 表体行样式
     .right-bottom {
-      td {
-        color: #511d6a;
-        font-weight: 500;
-        font-size: 18px;
-        text-align: center;
-        border-bottom: 1px solid #b99aca;
-        height: 100%;
-        line-height: 5vh;
-        padding: 0;
-        margin: 0;
+      box-sizing: border-box;
+      width: 100%;
+      height: 5vh;
+      line-height: 5vh;
+      font-size: 18px;
+      color: #511d6a;
+      font-weight: 500;
+      border-bottom: 1px solid #b99aca;
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+      background-color: #dad2e6;
+
+      span {
         box-sizing: border-box;
-        border: 1px solid yellow;
       }
 
-      // 列宽和表头严格对应
-      .col-1 {
-        width: 25%;
-        text-align: left;
-      }
-      .col-2 {
-        width: 25%;
-        border-left: 1px solid #b99aca;
-        border-right: 1px solid #b99aca;
-      }
-      .col-3 {
-        width: 50%;
-      }
-
-      // 灸法名称样式
       .right-name {
         padding-left: 20px;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        display: inline-block;
-        width: 90%;
-        box-sizing: border-box;
+        text-align: left;
       }
 
-      // 穴位项样式
-      .point-item {
-        margin: 0 4px;
-        display: inline-block;
+      :nth-child(1) {
+        width: 25%;
+      }
+
+      :nth-child(2) {
+        width: 25%;
+        border-left: 1px solid #b99aca;
+        border-right: 1px solid #b99aca;
+        text-align: center;
+        // background-color: red;
+      }
+
+      :nth-child(3) {
+        width: 50%;
+        border-right: none;
+        text-align: center;
+      }
+
+      .no-border {
+        border: none;
       }
     }
 
-    // 最后一行移除下边框
-    .right-bottom-last td {
+    .right-bottom-last {
       border-bottom: none !important;
     }
 
@@ -700,7 +686,6 @@ onUnmounted(() => {
       align-items: center;
       justify-content: flex-end;
       margin-top: 20px;
-
       :deep(.start-btn) {
         width: 180px;
         height: 60px;
@@ -739,11 +724,15 @@ onUnmounted(() => {
   }
 }
 
-// Dialog 样式
+// Dialog 整体文字样式：居中 + 颜色 #D4BFE1
 :deep(.el-dialog__body) {
+  // 让内部所有文本居中
   text-align: center;
+  // 移除默认内边距，自定义更美观的间距
   padding: 30px 20px !important;
   background-color: #d4bfe1;
+
+  // 所有直接文本节点和 div 内文字的颜色
 }
 
 .dialog-content {
@@ -752,14 +741,12 @@ onUnmounted(() => {
   align-items: center;
   justify-content: flex-start;
   height: 25vh;
-
   .dialog-title {
     font-size: 30px;
     font-weight: bold;
     color: #511d6a;
     margin-bottom: 40px;
   }
-
   .dialog-text {
     font-size: 20px;
     font-weight: 500;
@@ -776,6 +763,7 @@ onUnmounted(() => {
   align-items: center;
 }
 
+// 按钮样式优化（可选，让按钮与文字颜色协调）
 :deep(.el-dialog .title-btn) {
   width: 120px;
   height: 50px;
@@ -807,28 +795,28 @@ onUnmounted(() => {
   color: #ffffff !important;
 }
 
-// 隐藏滚动条
+// 隐藏所有浏览器的滚动条
 ::-webkit-scrollbar {
   display: none;
 }
-
 * {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
   touch-action: pan-y;
   margin: 0;
   padding: 0;
   font-family: "Microsoft YaHei", sans-serif;
 }
-</style>
 
+// 抽屉内容样式
+</style>
 <style lang="scss">
 .drawer-content {
+  // border: 3px solid blue;
   max-height: 90vh !important;
   box-sizing: border-box;
   margin-top: 10vh;
   width: 280px !important;
-
   .el-drawer__body {
     padding: 0 !important;
   }
@@ -842,20 +830,12 @@ onUnmounted(() => {
 .drawer-user {
   height: 60vh !important;
 }
+
 .drawer-admin {
   height: 70vh !important;
 }
+
 .drawer-super {
   height: 88vh !important;
-}
-
-// 确保表格行/列正确渲染
-.right-table tr {
-  display: table-row;
-}
-
-.right-table td,
-.right-table th {
-  display: table-cell;
 }
 </style>
