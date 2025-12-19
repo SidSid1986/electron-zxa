@@ -56,11 +56,11 @@ const pointData = ref([]);
 const pointDataCopy = ref([]);
 const pointTreat = ref([]);
 
-// 新增：确保pointTreat始终有数据的初始化函数
+//  确保pointTreat始终有数据的初始化函数
 const initPointTreat = () => {
   const pointDataJson = JSON.parse(localStorage.getItem("pointData")) || [];
   pointDataCopy.value = JSON.parse(JSON.stringify(pointDataJson));
-  // 过滤bodyType=2的穴位（如果为空，用原始数据兜底）
+  // 过滤bodyType=2的穴位（如果为空，用原始数据）
   pointTreat.value = pointDataCopy.value.filter(item => item.bodyType === 2) || pointDataCopy.value;
   console.log("初始化pointTreat：", pointTreat.value);
 };
@@ -84,7 +84,7 @@ watch(
     console.log("最新newPlanPoint数据：", newVal);
     if (!newVal || newVal.length === 0) return;
 
-    // 核心修复：每次watch前先确保pointTreat已初始化
+    //  每次watch前先确保pointTreat已初始化
     if (pointTreat.value.length === 0) {
       initPointTreat();
     }

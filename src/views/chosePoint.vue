@@ -2,8 +2,8 @@
  * @Author: Sid Li
  * @Date: 2025-12-12 14:38:40
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-17 23:48:10
- * @FilePath: \electron-zxa\src\views\chosePoint.vue
+ * @LastEditTime: 2025-12-19 09:43:37
+ * @FilePath: \zi-xiao-ai\src\views\chosePoint.vue
  * @Description: 选择穴位页面  
 -->
 <template>
@@ -139,12 +139,12 @@ const chooseBody = (item, index) => {
 
   chooseBodyIndex.value = index;
 
-  // ========== 核心：修改bodyType字段（保留其他字段） ==========
+  //  修改bodyType字段（保留其他字段） 
   // 1. 读取localStorage中的完整newPlan（无则初始化空对象）
   const storedPlan = JSON.parse(localStorage.getItem("newPlan")) || {};
   // 2. 仅修改bodyType为当前item.bodyType
   storedPlan.bodyType = item.bodyType;
-  // 3. 写回localStorage（保留所有原有字段，仅更新bodyType）
+  // 3. 写回localStorage（保留所有原有字段，更新bodyType）
   localStorage.setItem("newPlan", JSON.stringify(storedPlan));
 };
 

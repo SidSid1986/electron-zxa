@@ -25,7 +25,7 @@
 
         <!-- 主体内容 -->
         <div class="player-body">
-          <!-- 封面+播放状态（保留旋转动画） -->
+          <!-- 封面+播放状态  -->
           <div class="player-cover-wrapper">
             <div class="player-cover" :class="{ playing: isPlaying }">
               <!-- 统一静态图标，居中显示 -->
@@ -224,7 +224,7 @@ async function loadMusicList() {
   try {
     if (isDev) {
       // 开发模式（Electron开发/纯Web开发）统一用这个逻辑
-      // 关键：路径改为 Vite 能识别的绝对路径（以 /@ 开头 或 /src 开头）
+      // 路径改为 Vite 能识别的绝对路径（以 /@ 开头 或 /src 开头）
       const musicFiles = import.meta.glob("@/assets/music/*.mp3", {
         eager: true,
         import: "default", // 显式指定导入default（Vite新版需加）

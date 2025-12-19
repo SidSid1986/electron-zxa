@@ -35,7 +35,7 @@
                   v-if="item.isActive && item.status === 'running'"
                   class="light-border"
                 ></div>
-                <!-- 暂停/结束：红圈（核心：恢复暂停状态的红圈） -->
+                <!-- 暂停/结束：红圈（ 恢复暂停状态的红圈） -->
                 <div
                   v-if="
                     item.isActive &&
@@ -125,7 +125,7 @@ const props = defineProps({
     default: false,
   },
   isDemoMode: {
-    // 新增：接收演示模式状态
+    // 接收演示模式状态
     type: Boolean,
     default: false,
   },
@@ -148,18 +148,18 @@ const formatTime = (seconds) => {
   return `${mins}:${secs}`;
 };
 
-// 【核心修复1】格式化数据：完全使用传入的time1/time2，不重新计算
+//  格式化数据：完全使用传入的time1/time2，不重新计算
 const formatData = (data, activeIndex) => {
   return data.map((item, index) => {
     const timeNum = parseInt(item.time) || 60;
     const uniqueKey = item.uniqueId || `${item.name}-${item.point}`;
     const hasValidTime = timeNum > 0;
 
-    // 优先使用props传入的time1/time2（修改后的值），绝对不重新计算
+    //  使用props传入的time1/time2（修改后的值）， 
     const time1 = item.time1 || `00:01:00`; // 默认1分钟
     const time2 = item.time2 || `01:00`; // 默认1分钟
 
-    // 初始化剩余秒数（优先用已存在的，避免覆盖修改后的值）
+    // 初始化剩余秒数（ 用已存在的，避免覆盖修改后的值）
     if (!remainingSecondsMap.value[uniqueKey]) {
       remainingSecondsMap.value[uniqueKey] = timeNum;
     }
@@ -167,8 +167,8 @@ const formatData = (data, activeIndex) => {
     return {
       ...item,
       uniqueKey,
-      time1: time1, // 直接用传入的（修改后的值）
-      time2: time2, // 直接用传入的（修改后的值）
+      time1: time1,  
+      time2: time2, 
       totalSeconds: timeNum,
       remainingSeconds: remainingSecondsMap.value[uniqueKey],
       isActive: index === activeIndex,
@@ -187,7 +187,7 @@ const groupByPageSize = (data, pageSize = 3) => {
   return pages;
 };
 
-// 启动倒计时（仅手动触发）
+// 启动倒计时 
 const startCountdown = (targetIndex) => {
   if (!props.isTreating || targetIndex === -1) return;
   const allItems = treatData.value.flat();
@@ -207,10 +207,10 @@ const startCountdown = (targetIndex) => {
     delete countdownTimers.value[key];
   });
 
-  // 2. 重置所有穴位状态（仅当前激活项为运行中）
+  // 2. 重置所有穴位状态（ 
   allItems.forEach((item) => {
     if (item.uniqueKey === targetItem.uniqueKey) {
-      item.status = "running"; // 运行中 → 绿圈
+      item.status = "running"; // 运行中 绿圈
       item.isActive = true;
     } else {
       item.status = "idle";
@@ -229,7 +229,7 @@ const startCountdown = (targetIndex) => {
     if (!isComponentMounted.value || !props.isTreating) {
       clearInterval(countdownTimers.value[targetItem.uniqueKey]);
       delete countdownTimers.value[targetItem.uniqueKey];
-      targetItem.status = "paused"; // 暂停 → 红圈
+      targetItem.status = "paused"; // 暂停  红圈
       return;
     }
 
@@ -240,7 +240,7 @@ const startCountdown = (targetIndex) => {
     if (targetItem.remainingSeconds <= 0) {
       clearInterval(countdownTimers.value[targetItem.uniqueKey]);
       delete countdownTimers.value[targetItem.uniqueKey];
-      targetItem.status = "ended"; // 结束 → 红圈
+      targetItem.status = "ended"; // 结束 红圈
       targetItem.remainingSeconds = 0;
       setTimeout(() => {
         emit("countdownEnd", targetItem);
@@ -261,11 +261,11 @@ const pauseCountdown = () => {
     .flat()
     .find((item) => item.uniqueKey === activeKey);
   if (targetItem) {
-    targetItem.status = "paused"; // 明确标记暂停
+    targetItem.status = "paused"; // 标记暂停
   }
 };
 
-// 继续倒计时（核心：找到暂停状态的激活项）
+// 继续倒计时（ 找到暂停状态的激活项）
 const resumeCountdown = () => {
   const allItems = treatData.value.flat();
   // 精准找到：激活+暂停状态的穴位
@@ -323,7 +323,7 @@ const stopCountdown = () => {
   });
 };
 
-// 【核心修复】修改时长方法：输入分钟，转换为秒
+//  修改时长方法：输入分钟，转换为秒
 const editTime = (item) => {
   emit("pauseEdit", item);
   pauseCountdown();
@@ -339,7 +339,7 @@ const editTime = (item) => {
 };
 
 const handleDurationConfirm = () => {
-  // 原弹窗的then回调逻辑，一行不改
+  
   const inputVal =
     parseInt(durationInputValue.value.trim()) || (isDemoMode.value ? 8 : 1);
   const newTimeInSeconds = isDemoMode.value ? inputVal : inputVal * 60;
@@ -354,7 +354,7 @@ const handleDurationConfirm = () => {
   const newSwiperData = JSON.parse(JSON.stringify(props.swiperData)).map(
     (d) => {
       if (d.uniqueKey === currentEditItem.value.uniqueKey) {
-        // 原逻辑，不修改
+     
         return {
           ...d,
           time: newTimeInSeconds,
@@ -426,7 +426,7 @@ const onSlideChange = (swiper) => {
   emit("swiperChange", swiper.activeIndex);
 };
 
-// 【核心修复3】监听swiperData时强制刷新（deep+immediate）
+//  监听swiperData时强制刷新（deep+immediate）
 watch(
   () => props.swiperData,
   (newVal) => {
@@ -446,7 +446,7 @@ watch(
       stopCountdown();
       return;
     }
-    // 仅标记激活状态，不启动倒计时
+    //  标记激活状态，不启动倒计时
     const allItems = treatData.value.flat();
     allItems.forEach((item, idx) => {
       item.isActive = idx === newIndex;

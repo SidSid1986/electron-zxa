@@ -47,7 +47,7 @@ if (typeof window !== "undefined") {
 function bootstrapApp() {
   const app = createApp(App);
   app.use(store);
-  // ✅ 关键：只注册组件，不自动导入任何样式（交给全局引入）
+  //  只注册组件，不自动导入任何样式（交给全局引入）
   app.use(ElementPlus, { 
     locale: zhCn,
     importStyle: false // 彻底关闭自动样式导入

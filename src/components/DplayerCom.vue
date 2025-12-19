@@ -16,7 +16,7 @@ import {
 } from "vue";
 import DPlayer from "dplayer";
 
-// 定义 Props（完全对齐官方文档参数）
+// 定义 Props 
 const props = defineProps({
   // 基础配置
   containerStyle: {
@@ -90,7 +90,7 @@ const props = defineProps({
     default: true,
   },
 
-  // 视频配置（核心）
+  // 视频配置 
   video: {
     type: Object,
     required: true,
@@ -316,7 +316,7 @@ const bindAllEvents = () => {
   });
 };
 
-// 监听核心配置变化，重新初始化
+// 监听 配置变化，重新初始化
 watch(
   [() => props.video, () => props.danmaku, () => props.theme],
   () => initPlayer(),

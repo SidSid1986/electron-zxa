@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-12 14:38:40
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-15 15:26:51
+ * @LastEditTime: 2025-12-19 09:59:14
  * @FilePath: \zi-xiao-ai\src\views\newPlan.vue
  * @Description: 新增灸方页面  
 -->
@@ -104,7 +104,7 @@ const router = useRouter();
 const bodyRef = ref(null);
 const currentComponent = shallowRef(markRaw(BodyBack));
 
-// 拖拽滚动核心状态（复刻plan.vue逻辑）
+// 拖拽滚动状态 
 const rightIsDragging = ref(false);
 const rightStartY = ref(0);
 const rightDragOffset = ref(0);
@@ -159,7 +159,7 @@ const handleCancel = () => {
 const handleAdd = () => {
   router.push("/chooseType");
 };
-// 更新最大滚动偏移（边界计算）
+// 更新最大滚动偏移 
 const updateRightMaxOffset = () => {
   if (rightContentHeight.value <= rightContainerHeight.value) {
     rightMaxOffset.value = 0;
@@ -170,7 +170,7 @@ const updateRightMaxOffset = () => {
   }
 };
 
-// 初始化高度（关键：获取容器和内容高度）
+// 初始化高度 
 const initRightHeight = () => {
   nextTick(() => {
     const rightContainer = document.querySelector(".table-data");
@@ -443,7 +443,7 @@ onUnmounted(() => {
             }
           }
 
-          // 滚动容器核心样式修改
+          // 滚动容器样式修改
           .table-data {
             box-sizing: border-box;
             width: 100%;

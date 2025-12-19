@@ -150,24 +150,24 @@ defineExpose({
     font-weight: 600;
 
     .header-icon {
-      width: 50px; // 从20→18
+      width: 50px;  
       height: 50px;
       // border: 1px solid red;
       object-fit: contain;
     }
     .header-text {
       font-size: 32px;
-      line-height: 1; // 新增：重置行高
+      line-height: 1; 
     }
   }
 
   .close-btn {
-    width: 40px; // 从28→24
+    width: 40px;  
     height: 40px;
     border: none;
     background: transparent;
     color: #693e9c;
-    font-size: 50px; // 从20→18
+    font-size: 50px;  
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -184,8 +184,8 @@ defineExpose({
 
 .modal-body {
   height: 20vh;
-  // border: 1px solid red;
-  padding: 16px; // 从20→16，压缩主体内边距
+  
+  padding: 16px;  
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
@@ -193,9 +193,9 @@ defineExpose({
 
   .temp-display {
     text-align: center;
-    margin-bottom: 12px; // 从24→12，大幅减少空白
-    line-height: 1; // 新增：重置行高
-    // background-color: red;
+    margin-bottom: 12px;  
+    line-height: 1;  
+    
     height: 6vh;
     display: flex;
     flex-direction: column;
@@ -204,14 +204,14 @@ defineExpose({
 
     .temp-value {
       display: block;
-      font-size: 28px; // 从32→28
+      font-size: 28px;  
       font-weight: 700;
       color: #693e9c;
-      margin-bottom: 2px; // 从4→2
+      margin-bottom: 2px;  
     }
 
     .temp-desc {
-      font-size: 24px; // 从14→13
+      font-size: 24px;  
       color: #8a5ca0;
     }
   }
@@ -234,12 +234,12 @@ defineExpose({
       background: #f0e0f7;
       border-radius: 3px;
       outline: none;
-      margin-bottom: 8px; // 从12→8
+      margin-bottom: 8px; 
 
       &::-webkit-slider-thumb {
         -webkit-appearance: none;
         appearance: none;
-        width: 18px; // 从20→18
+        width: 18px;  
         height: 18px;
         border-radius: 50%;
         background: #693e9c;
@@ -258,7 +258,7 @@ defineExpose({
       width: 100%;
       display: flex;
       justify-content: space-between;
-      font-size: 11px; // 从12→11
+      font-size: 11px;  
       color: #8a5ca0;
       font-size: 20px;
     }

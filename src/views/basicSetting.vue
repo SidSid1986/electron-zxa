@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-12 16:15:42
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-15 17:18:51
+ * @LastEditTime: 2025-12-19 09:58:57
  * @FilePath: \zi-xiao-ai\src\views\basicSetting.vue
  * @Description: 基础参数页面（整合设备音量控制）
 -->
@@ -10,7 +10,7 @@
 <template>
   <div class="device-container">
     <div class="device-title">基础参数</div>
-    <!-- 音量控制区域（原弹窗核心内容） -->
+    <!-- 音量控制区域（原弹窗内容） -->
     <div class="volume-control-wrapper">
       <div class="volume-header">
         <div class="header-title">
@@ -79,7 +79,7 @@ const info = ref({
   activeStatus: 1,
 });
 
-// ========== 核心改造：音量控制逻辑 ==========
+//  音量控制逻辑  
 const volume = ref(50); // 默认音量50%
 const isElectronEnv = ref(false); // 判断是否为Electron环境
 
@@ -90,10 +90,10 @@ try {
   isElectronEnv.value = false;
 }
 
-// 初始化：读取设备当前音量（而非本地存储）
+// 读取设备当前音量（而非本地存储）
 onMounted(async () => {
   console.log("组件挂载了");
-  // 1. Electron环境：优先读取设备真实音量
+  //  Electron环境：优先读取设备真实音量
   if (isElectronEnv.value) {
     try {
       const { getVol } = await import("@/utils/volume");
@@ -109,7 +109,7 @@ onMounted(async () => {
       }
     }
   } else {
-    // 2. 非Electron环境：读取本地存储
+    // 非Electron环境：读取本地存储
     const storedVolume = localStorage.getItem("systemVolume");
     if (storedVolume) {
       volume.value = Number(storedVolume);
@@ -127,7 +127,7 @@ const handleVolumeChange = async () => {
   if (isElectronEnv.value) {
     try {
       const { setVol } = await import("@/utils/volume");
-      await setVol(volume.value); // 核心：控制系统音量
+      await setVol(volume.value); // 控制系统音量
       // ElMessage.success(`设备音量已设置为 ${volume.value}%`);
     } catch (err) {
       console.error("控制设备音量失败:", err);
@@ -139,7 +139,7 @@ const handleVolumeChange = async () => {
   }
 };
 
-// ========== 原有方法改造 ==========
+ 
 const updateFunc = () => {
   console.log("保存设置，当前音量：", volume.value + "%");
   // 主动触发一次音量同步（确保保存时生效）

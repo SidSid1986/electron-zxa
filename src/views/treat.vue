@@ -121,7 +121,7 @@
               type="primary"
               >继续</el-button
             >
-            <!-- 结束按钮：仅在治疗未结束时显示（核心修改） -->
+            <!-- 结束按钮：仅在治疗未结束时显示  -->
             <el-button
               v-if="hasTreatmentStarted && !isTreatmentEnded"
               class="end-btn"
@@ -205,7 +205,7 @@ try {
 
 const router = useRouter();
 
-// 核心状态
+// 状态
 const isTreating = ref(false); // 是否正在治疗（控制倒计时启动）
 const isPsuse = ref(true); // 默认暂停，确保初始能看到继续按钮
 const hasTreatmentStarted = ref(false); // 标记治疗是否已开始（控制按钮显示）
@@ -338,7 +338,7 @@ const getPoint = (id) => {
   flatPoints[0].isActive = true;
   selectedObj.value = flatPoints[0];
   currentPoint.value = flatPoints[0];
-  // 核心修改1：初始化newPlanPoint为所有穴位（而非仅第一个）
+  //  初始化newPlanPoint为所有穴位（而非仅第一个）
   newPlanPoint.value = JSON.parse(JSON.stringify(flatPoints));
   chooseBody(flatPoints[0]);
 
@@ -366,7 +366,7 @@ const getPoint = (id) => {
   // 7. 启动倒计时
   nextTick(() => {
     if (swiperInstance.value) {
-      // 初始索引0 → 分页索引0（第一页3个）
+      // 初始索引0  分页索引0（第一页3个）
       swiperInstance.value.slideTo(Math.floor(testIndex.value / 3));
     }
     if (treatSwiperRef.value) {
@@ -375,7 +375,7 @@ const getPoint = (id) => {
   });
 };
 
-// 核心修改2：更新newPlanPoint的状态（全局生效）
+//  更新newPlanPoint的状态（全局生效）
 const updateNewPlanPointStatus = (pointId, status) => {
   if (!newPlanPoint.value || newPlanPoint.value.length === 0) return;
   // 深拷贝+更新状态，强制触发响应式
@@ -403,7 +403,7 @@ const usePoint = () => {
     const currentPointId = flatPoints[testIndex.value].id;
     flatPoints[testIndex.value].status = 2; // 已完成
     flatPoints[testIndex.value].isActive = false;
-    // 核心：同步更新newPlanPoint中该穴位的状态
+    // 同步更新newPlanPoint中该穴位的状态
     updateNewPlanPointStatus(currentPointId, 2);
   }
 
@@ -420,7 +420,7 @@ const usePoint = () => {
     return;
   }
 
-  // 核心修复：更新下一个穴位状态为“运行中”
+  //  更新下一个穴位状态为“运行中”
   flatPoints.forEach((item, idx) => {
     if (idx === nextIndex) {
       item.status = 1; // 运行中
@@ -438,7 +438,7 @@ const usePoint = () => {
   // 更新选中状态和图片
   selectedObj.value = flatPoints[nextIndex];
   currentPoint.value = flatPoints[nextIndex];
-  // 核心修改2：newPlanPoint始终保持所有穴位的最新状态
+  //  newPlanPoint始终保持所有穴位的最新状态
   newPlanPoint.value = JSON.parse(JSON.stringify(flatPoints));
   picType.value = flatPoints[nextIndex].bodyType;
   picUrl.value = [0, 2].includes(flatPoints[nextIndex].bodyType)
@@ -467,7 +467,7 @@ const countdownEnd = (item) => {
   const flatPoints = tableData.value;
   const pointLength = flatPoints.length;
 
-  // 核心修复1：先更新最后一个穴位的状态为2，再标记结束
+  //  先更新最后一个穴位的状态为2，再标记结束
   if (testIndex.value >= pointLength - 1) {
     // 第一步：先把当前最后一个穴位的status设为2
     updateNewPlanPointStatus(item.id, 2);
@@ -483,7 +483,7 @@ const countdownEnd = (item) => {
       treatSwiperRef.value.stopCountdown();
     }
 
-    // 核心修复2：弹窗前先更新newPlanPoint（确保子组件能拿到最新状态）
+    //  弹窗前先更新newPlanPoint（确保子组件能拿到最新状态）
     newPlanPoint.value = JSON.parse(JSON.stringify(flatPoints));
 
     ElMessageBox.alert(
@@ -499,7 +499,6 @@ const countdownEnd = (item) => {
       isTreating.value = false;
       isPsuse.value = true;
 
-      // 这里可以保留全量更新（兜底，确保所有穴位都是2）
       const finalPoints = flatPoints.map((item) => ({
         ...item,
         status: 2,
@@ -530,7 +529,7 @@ const countdownEnd = (item) => {
   }, 500);
 };
 
-// 父组件 handleSwiperChange 函数（删除bodyType关联，改为分页索引）
+//  删除bodyType关联，改为分页索引
 const handleSwiperChange = (swiperPageIndex) => {
   const flatPoints = tableData.value;
   if (flatPoints.length === 0) return;
@@ -605,7 +604,7 @@ const continueTreat = () => {
     return;
   }
 
-  // 核心：调用子组件的 resumeCountdown 恢复暂停的倒计时
+  //  调用子组件的 resumeCountdown 恢复暂停的倒计时
   if (treatSwiperRef.value) {
     treatSwiperRef.value.resumeCountdown();
   }
@@ -697,7 +696,7 @@ const restartTreat = () => {
       // 重置索引
       testIndex.value = 0;
 
-      // 核心修复：切到分页索引0（第一页），而非bodyType
+      //  切到分页索引0（第一页），而非bodyType
       nextTick(() => {
         if (swiperInstance.value) {
           swiperInstance.value.slideTo(0); // 强制切回第一页
@@ -809,11 +808,11 @@ const switchDemoMode = () => {
       // 1. 标记演示模式（先赋值，确保子组件能拿到）
       isDemoMode.value = true;
 
-      // 2. 深度修改tableData：替换数组（触发子组件watch），且格式正确
+      // 2. 深度修改tableData：替换数组（触发子组件watch）
       const newTableData = JSON.parse(JSON.stringify(tableData.value)).map(
         (item) => ({
           ...item,
-          time: 8, // 演示模式：时长设为8秒（核心）
+          time: 8, // 演示模式：时长设为8秒
           time1: "00:00:08", // 激活项显示格式：00:分:秒
           time2: "00:08", // 非激活项显示格式：分:秒
           totalSeconds: 8, // 子组件依赖的总秒数
@@ -838,7 +837,7 @@ const switchDemoMode = () => {
           swiperInstance.value.slideTo(0);
         }
 
-        // 重启子组件倒计时（关键：重新启动8秒倒计时）
+        // 重启子组件倒计时（ 重新启动8秒倒计时）
         if (treatSwiperRef.value) {
           treatSwiperRef.value.stopCountdown(); // 先停止旧的
           treatSwiperRef.value.startCountdown(0); // 启动第0个穴位的8秒倒计时
@@ -878,7 +877,7 @@ watch(
   { immediate: true }
 );
 
-// 核心监听：确保newPlanPoint变化时触发子组件更新
+//  确保newPlanPoint变化时触发子组件更新
 watch(
   () => newPlanPoint.value,
   (newVal) => {

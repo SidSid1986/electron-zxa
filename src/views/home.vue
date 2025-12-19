@@ -211,7 +211,7 @@ onUnmounted(() => {
               font-size: 20px;
             }
 
-            // 关键修复1：提升样式穿透的优先级，直接匹配 .connect.connected-btn
+            //  提升样式穿透的优先级，直接匹配 .connect.connected-btn
             :deep(.connect.custom-btn) {
               --el-button-text-color: #fff;
               --el-button-bg-color: #af7dc4;
@@ -232,7 +232,7 @@ onUnmounted(() => {
               }
             }
 
-            // 关键修复2：直接匹配 .connect.connected-btn，提升优先级
+            //  直接匹配 .connect.connected-btn，提升优先级
             :deep(.connect.connected-btn) {
               --el-button-bg-color: #44a649 !important;
               --el-button-border-color: #44a649 !important;

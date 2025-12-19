@@ -1,4 +1,4 @@
-/* 第一步：覆盖 Element Plus 核心变量（必须放在最前面） */
+/* 第一步：覆盖 Element Plus 变量（必须放在最前面） */
 @forward "element-plus/theme-chalk/src/common/var.scss" with (
   $colors: (
     "primary": (
@@ -17,16 +17,16 @@
   )
 );
 
-/* 第二步：重新编译 Element Plus 核心样式（让变量生效） */
+/* 第二步：重新编译 Element Plus （让变量生效） */
 @use "element-plus/theme-chalk/src/button.scss" as *;
 @use "element-plus/theme-chalk/src/table.scss" as *;
 @use "element-plus/theme-chalk/src/pagination.scss" as *;
 @use "element-plus/theme-chalk/src/input.scss" as *;
 @use "element-plus/theme-chalk/src/select.scss" as *;
 
-/* 第三步：强制全局覆盖（100%生效的兜底方案） */
+/* 第三步：强制全局覆盖  */
 :root {
-  // 核心主题色
+  // 主题色
   --el-color-primary: #c293d5 !important;
   --el-color-primary-light-1: #c9a0da !important;
   --el-color-primary-light-2: #d0acde !important;

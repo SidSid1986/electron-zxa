@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-13 14:06:46
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-18 15:20:48
+ * @LastEditTime: 2025-12-19 10:02:34
  * @FilePath: \zi-xiao-ai\src\components\body\BodyFront.vue
  * @Description: 身体正面图片组件
 -->
@@ -54,12 +54,14 @@ const pointData = ref([]);
 const pointDataCopy = ref([]);
 const pointTreat = ref([]);
 
-// 初始化函数：仅修改bodyType过滤值，其余逻辑统一
+// 初始化
 const initPointTreat = () => {
   const pointDataJson = JSON.parse(localStorage.getItem("pointData")) || [];
   pointDataCopy.value = JSON.parse(JSON.stringify(pointDataJson));
-  // 仅修改此处：bodyType === 0
-  pointTreat.value = pointDataCopy.value.filter(item => item.bodyType === 0) || pointDataCopy.value;
+
+  pointTreat.value =
+    pointDataCopy.value.filter((item) => item.bodyType === 0) ||
+    pointDataCopy.value;
   console.log("初始化pointTreat（bodyType=0）：", pointTreat.value);
 };
 
@@ -82,7 +84,7 @@ watch(
     console.log("最新newPlanPoint数据：", newVal);
     if (!newVal || newVal.length === 0) return;
 
-    // 核心修复：主动初始化
+    //  主动初始化
     if (pointTreat.value.length === 0) {
       initPointTreat();
     }
@@ -101,7 +103,7 @@ watch(
   { immediate: true, deep: true }
 );
 
-// 调试监听（可选，可保留）
+// 调试监听 
 watch(
   () => pointData.value,
   (newVal) => {

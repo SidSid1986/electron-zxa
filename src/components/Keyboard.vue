@@ -89,7 +89,7 @@ const props = defineProps({
     type: [String, Number],
     default: "",
   },
-  // 【新增】单一值模式下的输入框标识（用于定位输入框）
+  //  单一值模式下的输入框标识（用于定位输入框）
   inputId: {
     type: String,
     default: "",
@@ -99,7 +99,7 @@ const props = defineProps({
     type: Number,
     default: 2,
   },
-  // 是否仅允许数字（新增：适配数值输入）
+  // 是否仅允许数字（ 适配数值输入）
   isNumber: {
     type: Boolean,
     default: false,
@@ -144,7 +144,7 @@ const getCurrentDataSource = () => {
   }
 };
 
-// 【新增】获取当前输入框元素（兼容两种模式）
+//  获取当前输入框元素（兼容两种模式）
 const getCurrentInputEl = () => {
   // 表单模式：通过placeholder定位
   if (currentField.value) {
@@ -156,7 +156,7 @@ const getCurrentInputEl = () => {
   else if (currentInputId.value) {
     return document.getElementById(currentInputId.value);
   }
-  // 兜底：获取当前聚焦的输入框
+  // 获取当前聚焦的输入框
   return document.activeElement?.tagName === "INPUT"
     ? document.activeElement
     : null;
@@ -230,7 +230,7 @@ const initKeyboard = () => {
         keyboardInstance.value.setInput(finalInput);
       }
 
-      // 强制触发输入框事件（核心：解决回显问题）
+      // 强制触发输入框事件 
       triggerInputEvent(finalInput);
     },
     onKeyPress: handleKeyPress,
@@ -305,18 +305,18 @@ const handleKeyPress = (button) => {
   }
 };
 
-// 【核心】触发输入框事件（兼容所有模式）
+//  触发输入框事件（兼容所有模式）
 const triggerInputEvent = (val) => {
   nextTick(() => {
     const inputEl = getCurrentInputEl();
     if (inputEl) {
       // 强制设置输入框value
       inputEl.value = val;
-      // 触发input事件（Vue v-model核心监听）
+      // 触发input事件（Vue v-model监听）
       inputEl.dispatchEvent(
         new Event("input", { bubbles: true, cancelable: true })
       );
-      // 触发change事件（兜底）
+      // 触发change事件 
       inputEl.dispatchEvent(
         new Event("change", { bubbles: true, cancelable: true })
       );
@@ -360,7 +360,7 @@ const handleClose = () => {
   emit("close");
 };
 
-// 【重载open方法】支持两种模式：
+//  支持两种模式：
 // 1. 表单模式：open('username')
 // 2. 单一值模式：open(null, 'input-planName')
 const open = (field, inputId) => {

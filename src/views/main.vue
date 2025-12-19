@@ -107,16 +107,12 @@ const watchUserInfo = () => {
   });
 };
 
-// 核心业务变量（保留）
 const dialogVisible = ref(false);
 const selectedCaseId = ref(1);
 const selectedPlan = ref([]);
 const caseArr = ref([]);
 const drawerVisible = ref(false);
 
-// 删除原左侧拖拽相关变量（isDragging/startY/dragOffset等）
-
-// 原有业务逻辑保留
 const getCaseList = () => {
   caseArr.value = JSON.parse(JSON.stringify(caseData));
   selectedPlan.value = caseArr.value[0].plan;
@@ -131,7 +127,7 @@ const handleStartClick = () => {
   dialogVisible.value = true;
 };
 
-// 列表项点击事件（保留）
+// 列表项点击事件
 const handleClick = (id) => {
   selectedCaseId.value = id;
   const selectedItem = caseArr.value.find((item) => item.id === id);
@@ -153,18 +149,16 @@ onMounted(() => {
   console.log(arr);
   localStorage.setItem("pointData", JSON.stringify(arr));
   getCaseList();
-  // 移除原initLeftHeight/initRightHeight相关代码（新组件无需）
+
   watchUserInfo();
 });
 
 onUnmounted(() => {
-  // 移除原定时器清理代码（新组件内部已处理）
   window.removeEventListener("storage", watchUserInfo);
 });
 </script>
 
 <style scoped lang="scss">
-// 保留所有原有样式，删除左侧table相关样式（已移到组件内）
 .main-container {
   box-sizing: border-box;
   background: url("@/assets/pic/backgroundImage.png") no-repeat;
@@ -228,8 +222,6 @@ onUnmounted(() => {
         --el-button-active-border-color: #8a5ca0;
       }
     }
-
-    // 删除原.left-table相关样式（已移到组件内）
   }
 
   .right {
@@ -286,7 +278,7 @@ onUnmounted(() => {
   }
 }
 
-// Dialog 样式保留
+
 :deep(.el-dialog__body) {
   text-align: center;
   padding: 30px 20px !important;

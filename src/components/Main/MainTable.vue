@@ -1,5 +1,5 @@
 <template>
-  <!-- 表格核心容器：解决滚动条占位 + 边框 -->
+  <!-- 容器：解决滚动条占位 + 边框 -->
   <div class="table-outer">
     <div class="table-wrapper">
       <!-- 固定表头 -->

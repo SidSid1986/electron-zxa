@@ -80,7 +80,7 @@
       </div>
     </div>
 
-    <!-- 引入虚拟键盘组件（仅传递表单对象） -->
+    <!-- 引入虚拟键盘组件  -->
     <Keyboard ref="keyboardRef" :form="loginForm" />
   </div>
 </template>
@@ -190,7 +190,7 @@ const handleLogin = async () => {
 </script>
 
 <style scoped lang="scss">
-// 你的原有样式完全保留（此处省略，和你原代码一致）
+ 
 .login-container {
   box-sizing: border-box;
   background: url("@/assets/pic/backgroundImage.png") no-repeat;

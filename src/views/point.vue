@@ -288,7 +288,7 @@ const getPointWs = () => {
 
     console.log("更新穴位坐标:", newPlan[rowIndex].points[pointIndex]);
 
-    // 核心修正：检查当前行所有穴位的完成状态
+    // 修正：检查当前行所有穴位的完成状态
     const currentRow = newPlan[rowIndex];
     // 统计当前行未完成的穴位数量（status=0 或 status=1）
     const unfinishedPoints = currentRow.points.filter((p) => p.status !== 2);
@@ -304,7 +304,7 @@ const getPointWs = () => {
         rowIndex,
         pointIndex: nextPointIndex,
       };
-      // 同步更新newPlanPoint为当前行的穴位列表（关键修正）
+      // 同步更新newPlanPoint为当前行的穴位列表 
       newPlanPoint.value = currentRow.points;
       // 更新当前行的身体部位显示
       chooseBody(currentRow.points[nextPointIndex]);
@@ -379,8 +379,8 @@ onMounted(() => {
   getPoint(selectedCaseId.value);
 
   window.addEventListener("resize", () => {
-    // 可选：表格高度变化时重新计算
-    // 表格组件内部已处理resize逻辑，此处无需重复处理
+    //  表格高度变化时重新计算
+    // 表格组件内部已处理resize逻辑 
   });
 });
 

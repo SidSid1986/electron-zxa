@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-12 11:26:16
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-18 08:53:05
+ * @LastEditTime: 2025-12-19 10:06:53
  * @FilePath: \zi-xiao-ai\src\views\plan.vue
  * @Description: 
 -->
@@ -25,7 +25,6 @@
           @item-click="handleClick"
         />
 
-        <!-- 保留新增/编辑/删除按钮 -->
         <div class="edit-group">
           <el-button @click="openDialog" class="edit-btn" type="primary"
             >新增灸方</el-button
@@ -45,7 +44,7 @@
       </div>
     </div>
 
-    <!-- 保留新建灸方的Dialog -->
+    <!-- 新建灸方的Dialog -->
     <el-dialog v-model="dialogVisible" width="500">
       <div class="dialog-content">
         <div class="dialog-title">新建灸方</div>
@@ -136,7 +135,6 @@ const watchUserInfo = () => {
   });
 };
 
-// 核心业务变量
 const dialogVisible = ref(false);
 const selectedCaseId = ref(1);
 const selectedPlan = ref([]);
@@ -146,7 +144,6 @@ const keyboardRef = ref(null);
 const planName = ref("");
 const newPlan = ref({});
 
-// 原有业务逻辑保留
 const getCaseList = () => {
   caseArr.value = JSON.parse(JSON.stringify(caseData));
   selectedPlan.value = caseArr.value[0].plan;
@@ -240,7 +237,6 @@ onUnmounted(() => {
       }
     }
 
-    // 新增/编辑/删除按钮样式保留
     .edit-group {
       margin-top: 20px;
       display: flex;
@@ -276,7 +272,6 @@ onUnmounted(() => {
   }
 }
 
-// 新建灸方Dialog样式保留
 :deep(.el-dialog__body) {
   text-align: center;
   padding: 30px 20px !important;
@@ -342,7 +337,6 @@ onUnmounted(() => {
   color: #ffffff !important;
 }
 
-// 输入框样式保留
 .plan-input {
   --el-input-border-radius: 10px;
   --el-input-text-color: #511d6a;
@@ -372,7 +366,6 @@ onUnmounted(() => {
 </style>
 
 <style lang="scss">
-// 抽屉样式保留
 .drawer-content {
   max-height: 90vh !important;
   box-sizing: border-box;

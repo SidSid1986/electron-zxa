@@ -10,7 +10,6 @@ import { createWebHashHistory, createRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 
 const routes = [
-  // 原有路由配置不变，仅修改login页的meta和守卫逻辑
   {
     path: "/",
     redirect: { name: "Load" },
@@ -214,7 +213,7 @@ const router = createRouter({
   },
 });
 
-// 路由守卫逻辑（核心修改：取消login页的已登录跳转限制）
+// 路由守卫逻辑（ 取消login页的已登录跳转限制）
 router.beforeEach((to, from, next) => {
   const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}");
   const userRole = userInfo.role || "";

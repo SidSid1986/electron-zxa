@@ -57,7 +57,7 @@ const pointTreat = ref([]);
 const initPointTreat = () => {
   const pointDataJson = JSON.parse(localStorage.getItem("pointData")) || [];
   pointDataCopy.value = JSON.parse(JSON.stringify(pointDataJson));
-  // 仅修改此处：bodyType === 3
+
   pointTreat.value =
     pointDataCopy.value.filter((item) => item.bodyType === 3) ||
     pointDataCopy.value;

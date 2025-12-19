@@ -122,7 +122,7 @@ const props = defineProps({
     type: String,
     default: "5vh",
   },
-  // 表体最大高度（核心滚动控制）
+  // 表体最大高度 
   maxBodyHeight: {
     type: String,
     default: "50vh",
@@ -174,7 +174,7 @@ const handleMouseMove = (e) => {
 
   const tableBody = e.currentTarget;
   const moveY = e.clientY - startY.value;
-  // 反向滚动：鼠标向下拖 → 内容向上滚
+  // 反向滚动：鼠标向下拖  内容向上滚
   tableBody.scrollTop = startScrollTop.value - moveY;
 
   // 通知父组件滚动位置变化

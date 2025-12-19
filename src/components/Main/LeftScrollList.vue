@@ -86,7 +86,7 @@ const handleMouseUp = () => {
   document.body.style.userSelect = "auto";
 };
 
-// 鼠标移动（处理拖动）
+// 鼠标移动 
 const handleMouseMove = (e) => {
   if (!isDragging.value) return;
 
@@ -123,7 +123,7 @@ onUnmounted(() => {
 .left-table {
   width: v-bind(containerWidth);
   height: v-bind(containerHeight);
-  overflow-y: auto; // 原生滚动核心
+  overflow-y: auto; 
   overflow-x: hidden;
   box-sizing: border-box;
   border: 1px solid #b99aca;

@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-13 14:06:46
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-15 16:37:44
+ * @LastEditTime: 2025-12-19 09:49:36
  * @FilePath: \zi-xiao-ai\src\components\body\LegFront.vue
  * @Description:腿正面图片组件
 -->
@@ -57,8 +57,10 @@ const pointTreat = ref([]);
 const initPointTreat = () => {
   const pointDataJson = JSON.parse(localStorage.getItem("pointData")) || [];
   pointDataCopy.value = JSON.parse(JSON.stringify(pointDataJson));
-  // 仅修改此处：bodyType === 1
-  pointTreat.value = pointDataCopy.value.filter(item => item.bodyType === 1) || pointDataCopy.value;
+
+  pointTreat.value =
+    pointDataCopy.value.filter((item) => item.bodyType === 1) ||
+    pointDataCopy.value;
   console.log("初始化pointTreat（bodyType=1）：", pointTreat.value);
 };
 

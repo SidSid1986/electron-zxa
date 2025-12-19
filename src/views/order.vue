@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-12 16:15:42
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-17 15:52:38
+ * @LastEditTime: 2025-12-19 10:07:26
  * @FilePath: \zi-xiao-ai\src\views\order.vue
  * @Description: 
 -->
@@ -244,7 +244,7 @@ const timeStart = ref("");
 const timeEnd = ref("");
 const dialogTableVisible = ref(false);
 
-// 模拟数据（保持不变）
+// 模拟数据 
 const tableData = ref([
   {
     id: 1,
@@ -698,7 +698,7 @@ onMounted(() => {
   }
 }
 
-/* 表格行样式 - 关键修改：清除所有冗余边距 */
+/* 表格行样式 -  清除所有冗余边距 */
 .order-table {
   border-radius: 20px !important;
   overflow: hidden !important;
@@ -747,10 +747,10 @@ onMounted(() => {
     border-color: #9033e9 !important;
   }
 
-  // 关键：隐藏表格的默认滚动条（如果内容刚好适配）
+  // 隐藏表格的默认滚动条 
   .el-table__body-wrapper {
     overflow-y: auto !important;
-    // 可选：隐藏滚动条（仅在内容完全适配时用）
+    // 可选：隐藏滚动条 
     // &::-webkit-scrollbar {
     //   display: none;
     // }

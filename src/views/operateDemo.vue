@@ -2,10 +2,10 @@
   <div class="device-container">
     <div class="device-title">操作演示</div>
 
-    <!-- 外层容器：解决滚动条占位 + 边框 -->
+   
     <div class="operate-outer">
       <div class="operate-wrapper">
-        <!-- 可滚动内容区（核心拖拽滚动） -->
+        <!-- 可滚动内容区  -->
         <div
           class="operate-content"
           @mousedown="handleMouseDown"
@@ -65,21 +65,21 @@ const operateList = ref([
   { id: 1, name: "更换滤芯", videoUrl: demoVideo },
   { id: 2, name: "更换钢管", videoUrl: demoVideo },
   { id: 3, name: "清理油桶", videoUrl: demoVideo },
-  { id: 4, name: "更换滤芯", videoUrl: demoVideo },
-  { id: 5, name: "更换钢管", videoUrl: demoVideo },
-  { id: 6, name: "清理油桶", videoUrl: demoVideo },
-  { id: 7, name: "更换滤芯", videoUrl: demoVideo },
-  { id: 8, name: "更换钢管", videoUrl: demoVideo },
-  { id: 9, name: "清理油桶", videoUrl: demoVideo },
-  { id: 1, name: "更换滤芯", videoUrl: demoVideo },
-  { id: 2, name: "更换钢管", videoUrl: demoVideo },
-  { id: 3, name: "清理油桶", videoUrl: demoVideo },
-  { id: 4, name: "更换滤芯", videoUrl: demoVideo },
-  { id: 5, name: "更换钢管", videoUrl: demoVideo },
-  { id: 6, name: "清理油桶", videoUrl: demoVideo },
-  { id: 7, name: "更换滤芯", videoUrl: demoVideo },
-  { id: 8, name: "更换钢管", videoUrl: demoVideo },
-  { id: 9, name: "清理油桶", videoUrl: demoVideo },
+  // { id: 4, name: "更换滤芯", videoUrl: demoVideo },
+  // { id: 5, name: "更换钢管", videoUrl: demoVideo },
+  // { id: 6, name: "清理油桶", videoUrl: demoVideo },
+  // { id: 7, name: "更换滤芯", videoUrl: demoVideo },
+  // { id: 8, name: "更换钢管", videoUrl: demoVideo },
+  // { id: 9, name: "清理油桶", videoUrl: demoVideo },
+  // { id: 1, name: "更换滤芯", videoUrl: demoVideo },
+  // { id: 2, name: "更换钢管", videoUrl: demoVideo },
+  // { id: 3, name: "清理油桶", videoUrl: demoVideo },
+  // { id: 4, name: "更换滤芯", videoUrl: demoVideo },
+  // { id: 5, name: "更换钢管", videoUrl: demoVideo },
+  // { id: 6, name: "清理油桶", videoUrl: demoVideo },
+  // { id: 7, name: "更换滤芯", videoUrl: demoVideo },
+  // { id: 8, name: "更换钢管", videoUrl: demoVideo },
+  // { id: 9, name: "清理油桶", videoUrl: demoVideo },
 ]);
 
 // 视频事件处理
@@ -87,7 +87,7 @@ const handlePlay = () => console.log("视频开始播放");
 const handleEnded = () => console.log("视频播放结束");
 const backMain = () => router.push("/main");
 
-// 拖拽滚动核心变量
+// 拖拽滚动变量
 const isDragging = ref(false); // 是否正在拖拽
 const startY = ref(0); // 鼠标按下时的Y坐标
 const startScrollTop = ref(0); // 按下时的滚动位置
@@ -115,7 +115,7 @@ const handleMouseMove = (e) => {
 
   const container = e.currentTarget;
   const moveY = e.clientY - startY.value; // 计算鼠标移动距离
-  // 反向滚动：鼠标向下拖 → 内容向上滚，鼠标向上拖 → 内容向下滚
+  // 反向滚动：鼠标向下拖内容向上滚，鼠标向上拖内容向下滚
   container.scrollTop = startScrollTop.value - moveY;
 };
 
@@ -169,7 +169,7 @@ onUnmounted(() => {
   box-sizing: border-box;
 }
 
-// 核心滚动容器
+// 滚动容器
 .operate-content {
   overflow-y: auto;
   overflow-x: hidden;

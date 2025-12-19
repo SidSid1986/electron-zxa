@@ -1,10 +1,18 @@
 /*
  * @Author: Sid Li
+ * @Date: 2025-12-09 15:10:24
+ * @LastEditors: Sid Li
+ * @LastEditTime: 2025-12-19 10:00:47
+ * @FilePath: \zi-xiao-ai\src\utils\volume.js
+ * @Description:
+ */
+/*
+ * @Author: Sid Li
  * @Date: 2025-12-06 08:28:51
  * @LastEditors: Sid Li
  * @LastEditTime: 2025-12-06 08:29:13
  * @FilePath: \ai\src\utils\volume.js
- * @Description: 
+ * @Description:
  */
 /**
  * 音量控制工具类
@@ -26,23 +34,23 @@ export const isElectron = (() => {
   return checkList.some(Boolean);
 })();
 
-// ======================== 2. 仅 Electron 加载 loudness ========================
+//  2. 仅 Electron 加载 loudness
 let loudness = null;
 if (isElectron) {
   try {
     // Electron 渲染进程安全加载 loudness
     loudness = window.require("loudness");
-    console.log("✅ Electron 环境 - loudness 加载成功");
+    console.log(" Electron 环境 - loudness 加载成功");
   } catch (error) {
-    console.error("❌ Electron 环境 - loudness 加载失败:", error);
+    console.error("Electron 环境 - loudness 加载失败:", error);
     loudness = null;
   }
 }
 
-// ======================== 3. 模拟状态（网页环境用） ========================
+//   3. 模拟状态（网页环境用）
 const mockVolumeState = { volume: 50, muted: false };
 
-// ======================== 4. 核心方法（全自动适配） ========================
+//  4. 方法（全自动适配）
 /**
  * 设置音量（自动分环境）
  * @param {number} val - 音量值 0-100
