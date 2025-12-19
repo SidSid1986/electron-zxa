@@ -189,7 +189,7 @@ const handleTableRowClick = (item, index) => {
 // 表格穴位状态点击事件
 const handleTablePointStatusClick = ({ item, rowIndex, point, pointIndex }) => {
   console.log("点击穴位状态:", point.name, point.status);
-  // 可选：手动切换穴位状态逻辑
+  //手动切换穴位状态逻辑
   // const newTableData = JSON.parse(JSON.stringify(tableData.value));
   // newTableData[rowIndex].points[pointIndex].status = point.status === 0 ? 1 : 0;
   // tableData.value = newTableData;
@@ -198,7 +198,7 @@ const handleTablePointStatusClick = ({ item, rowIndex, point, pointIndex }) => {
 // 表格滚动变化事件
 const handleTableScrollChange = (offset) => {
   console.log("表格滚动位置:", offset);
-  // 可选：记录滚动位置或其他逻辑
+  // 记录滚动位置或其他逻辑
 };
 
 const handleCancel = () => {

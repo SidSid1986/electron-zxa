@@ -28,7 +28,7 @@ export function setupRemAdaptation() {
 
     // 设置根字体
     document.documentElement.style.fontSize = `${fontSize}px`;
-    // 兼容 body 字体（可选）
+    // 兼容 body 字体
     document.body.style.fontSize = "16px"; //
   }
 

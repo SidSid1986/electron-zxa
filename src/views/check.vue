@@ -165,7 +165,7 @@ const finishCheck = () => {
   }
 }
 
-// 响应式调整（可选）
+// 响应式调整
 @media (max-width: 768px) {
   .container {
     .home-content {

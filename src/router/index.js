@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-11-29 10:30:04
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-19 10:49:53
+ * @LastEditTime: 2025-12-19 14:37:57
  * @FilePath: \zi-xiao-ai\src\router\index.js
  * @Description:
  */
@@ -219,6 +219,15 @@ const routes = [
     meta: {
       requiresAuth: true,
       roles: ["admin", "super_admin"],
+    },
+  },
+  {
+    path: "/test",
+    name: "Test",
+    component: () => import("@/views/test.vue"),
+    meta: {
+      requiresAuth: true,
+      roles: ["admin", "user", "super_admin"],
     },
   },
 ];

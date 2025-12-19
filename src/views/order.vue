@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-12 16:15:42
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-19 13:54:42
+ * @LastEditTime: 2025-12-19 16:16:26
  * @FilePath: \zi-xiao-ai\src\views\order.vue
  * @Description: 
 -->
@@ -65,38 +65,48 @@
     </div>
 
     <div class="device-item-container">
-      <el-table
-        :data="currentTableData"
-        @selection-change="handleSelectionChange"
-        header-row-class-name="custom-header-row"
-        class="order-table"
+      <!-- 主表格拖拽容器 -->
+      <div
+        class="table-drag-wrapper"
+        @mousedown="(e) => handleDragStart(e, 'main')"
+        @mousemove="handleDragMove"
+        @mouseup="handleDragEnd"
+        @mouseleave="handleDragEnd"
       >
-        <el-table-column align="center" type="selection" width="55" />
-        <el-table-column align="center" label="订单时间" width="180">
-          <template #default="scope">{{ scope.row.date }}</template>
-        </el-table-column>
-        <el-table-column align="center" property="name" label="顾客姓名" width="120" />
-        <el-table-column align="center" property="phone" label="顾客电话" />
-        <el-table-column align="center" property="time" label="方案时长" />
-        <el-table-column align="center" property="detail" label="详细">
-          <template #default="scope">
-            <el-button type="text" @click="viewDetail(scope.row)" class="detail-btn">
-              查看详情
-            </el-button>
-          </template>
-        </el-table-column>
-        <el-table-column align="center" property="isComplete" label="是否完成">
-          <template #default="scope">
-            <el-tag
-              :type="scope.row.isComplete === 1 ? 'success' : 'danger'"
-              effect="plain"
-              class="status-tag"
-            >
-              {{ scope.row.isComplete === 1 ? "已完成" : "未完成" }}
-            </el-tag>
-          </template>
-        </el-table-column>
-      </el-table>
+        <el-table
+          :data="currentTableData"
+          @selection-change="handleSelectionChange"
+          header-row-class-name="custom-header-row"
+          class="order-table"
+          ref="mainTableRef"
+        >
+          <el-table-column align="center" type="selection" width="55" />
+          <el-table-column align="center" label="订单时间" width="180">
+            <template #default="scope">{{ scope.row.date }}</template>
+          </el-table-column>
+          <el-table-column align="center" property="name" label="顾客姓名" width="120" />
+          <el-table-column align="center" property="phone" label="顾客电话" />
+          <el-table-column align="center" property="time" label="方案时长" />
+          <el-table-column align="center" property="detail" label="详细">
+            <template #default="scope">
+              <el-button type="text" @click="viewDetail(scope.row)" class="detail-btn">
+                查看详情
+              </el-button>
+            </template>
+          </el-table-column>
+          <el-table-column align="center" property="isComplete" label="是否完成">
+            <template #default="scope">
+              <el-tag
+                :type="scope.row.isComplete === 1 ? 'success' : 'danger'"
+                effect="plain"
+                class="status-tag"
+              >
+                {{ scope.row.isComplete === 1 ? "已完成" : "未完成" }}
+              </el-tag>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
 
       <!-- 分页器 -->
       <div class="pagination-container">
@@ -120,14 +130,12 @@
       :show-close="false"
       v-model="dialogTableVisible"
       title=""
+      @open="handleDialogOpen"
     >
       <template #header="{ close, titleId, titleClass }">
         <div class="my-header">
           <h4 :id="titleId" :class="titleClass">诊断灸方详情</h4>
           <el-icon @click="close" class="el-icon--left"><CloseBold /></el-icon>
-          <!-- <el-icon @click="close" class="el-icon--left"
-            ><CircleCloseFilled
-          /></el-icon> -->
         </div>
       </template>
       <div class="detail-text">
@@ -143,31 +151,46 @@
         </div>
       </div>
       <div>
-        <el-table border class="dialog-table" :data="orderInfo.plan">
-          <el-table-column align="center" property="id" label="序号" width="50" />
-          <el-table-column align="center" property="name" label="灸法">
-            <template #default="scope">
-              <span class="name-tag">
-                {{ scope.row.name }}
-              </span>
-            </template>
-          </el-table-column>
+        <!-- 弹窗表格拖拽容器 - 绑定原生事件确保生效 -->
+        <div
+          class="dialog-drag-wrapper"
+          @mousedown.native="(e) => handleDragStart(e, 'dialog')"
+          @mousemove.native="handleDragMove"
+          @mouseup.native="handleDragEnd"
+          @mouseleave.native="handleDragEnd"
+        >
+          <el-table
+            border
+            class="dialog-table"
+            :data="orderInfo.plan"
+            ref="dialogTableRef"
+            header-row-class-name="dialog-table-header-row"
+          >
+            <el-table-column align="center" property="id" label="序号" width="60" />
+            <el-table-column align="center" property="name" label="灸法">
+              <template #default="scope">
+                <span class="name-tag">
+                  {{ scope.row.name }}
+                </span>
+              </template>
+            </el-table-column>
 
-          <el-table-column width="80" align="center" property="time" label="时长" />
-          <el-table-column width="180" align="center" property="point" label="穴位">
-            <template #default="scope">
-              <el-tag
-                class="point-tag"
-                round
-                effect="plain"
-                v-for="(item, index) in scope.row.point"
-                :key="index"
-              >
-                {{ item }}
-              </el-tag>
-            </template>
-          </el-table-column>
-        </el-table>
+            <el-table-column width="80" align="center" property="time" label="时长" />
+            <el-table-column width="180" align="center" property="point" label="穴位">
+              <template #default="scope">
+                <el-tag
+                  class="point-tag"
+                  round
+                  effect="plain"
+                  v-for="(item, index) in scope.row.point"
+                  :key="index"
+                >
+                  {{ item }}
+                </el-tag>
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
       </div>
     </el-dialog>
   </div>
@@ -175,11 +198,13 @@
 
 <script setup>
 import { createTablePopper } from "element-plus/es/components/table/src/util.mjs";
-import { ref, onMounted, computed, watch } from "vue";
+import { ref, onMounted, computed, watch, nextTick } from "vue";
 import { useRouter } from "vue-router";
+import { CloseBold } from "@element-plus/icons-vue";
 
 const router = useRouter();
 
+// 扩展弹窗表格数据，确保有足够滚动内容
 const orderInfo = ref({
   id: 1,
   name: "bob",
@@ -189,24 +214,18 @@ const orderInfo = ref({
   finalTime: 1,
   status: 0,
   plan: [
-    {
-      id: 11,
-      name: "回旋灸",
-      time: 1,
-      point: ["大椎穴"],
-    },
-    {
-      id: 12,
-      name: "回旋灸",
-      time: 1,
-      point: ["风门穴"],
-    },
-    {
-      id: 13,
-      name: "往复灸",
-      time: 1,
-      point: ["风门穴", "肺俞穴"],
-    },
+    { id: 11, name: "回旋灸", time: 1, point: ["大椎穴"] },
+    { id: 12, name: "回旋灸", time: 1, point: ["风门穴"] },
+    { id: 13, name: "往复灸", time: 1, point: ["风门穴", "肺俞穴"] },
+    { id: 14, name: "温和灸", time: 2, point: ["足三里"] },
+    { id: 15, name: "隔姜灸", time: 3, point: ["关元穴"] },
+    { id: 16, name: "雀啄灸", time: 1, point: ["中脘穴"] },
+    { id: 17, name: "回旋灸", time: 2, point: ["涌泉穴"] },
+    { id: 18, name: "往复灸", time: 1, point: ["太冲穴"] },
+    { id: 19, name: "温和灸", time: 2, point: ["三阴交"] },
+    { id: 20, name: "隔盐灸", time: 3, point: ["神阙穴"] },
+    { id: 21, name: "温针灸", time: 2, point: ["合谷穴"] },
+    { id: 22, name: "化脓灸", time: 1, point: ["曲池穴"] },
   ],
 });
 
@@ -219,6 +238,17 @@ const size = ref("large");
 const timeStart = ref("");
 const timeEnd = ref("");
 const dialogTableVisible = ref(false);
+
+// 表格Ref
+const mainTableRef = ref(null);
+const dialogTableRef = ref(null);
+
+// 拖拽相关变量
+const isDragging = ref(false);
+let startY = 0;
+let startScrollTop = 0;
+let currentScrollContainer = null;
+let dialogScrollContainer = null; // 缓存弹窗滚动容器
 
 // 模拟数据
 const tableData = ref([
@@ -403,18 +433,9 @@ const tableData = ref([
 // 计算属性：过滤后的数据
 const filteredData = computed(() => {
   return tableData.value.filter((item) => {
-    // 按手机号筛选
-    if (searchPhone.value && !item.phone.includes(searchPhone.value)) {
-      return false;
-    }
-
-    // 按完成状态筛选
-    if (completionStatus.value === "completed") {
-      return item.isComplete === 1;
-    } else if (completionStatus.value === "incomplete") {
-      return item.isComplete === 0;
-    }
-
+    if (searchPhone.value && !item.phone.includes(searchPhone.value)) return false;
+    if (completionStatus.value === "completed") return item.isComplete === 1;
+    if (completionStatus.value === "incomplete") return item.isComplete === 0;
     return true;
   });
 });
@@ -429,7 +450,7 @@ const currentTableData = computed(() => {
 // 分页相关
 const handleSizeChange = (val) => {
   console.log(`每页 ${val} 条`);
-  currentPage.value = 1; // 重置到第一页
+  currentPage.value = 1;
 };
 
 const handleCurrentChange = (val) => {
@@ -438,31 +459,23 @@ const handleCurrentChange = (val) => {
 
 // 选择处理
 const multipleSelection = ref([]);
-
 const handleSelectionChange = (val) => {
   multipleSelection.value = val;
 };
 
 // 按钮事件
 const handleSearch = () => {
-  console.log("搜索条件:", {
-    phone: searchPhone.value,
-    status: completionStatus.value,
-  });
-  currentPage.value = 1; // 搜索后回到第一页
+  console.log("搜索条件:", { phone: searchPhone.value, status: completionStatus.value });
+  currentPage.value = 1;
 };
 
 const handleBatchDelete = () => {
-  if (multipleSelection.value.length === 0) {
-    return;
-  }
+  if (multipleSelection.value.length === 0) return;
   console.log("批量删除:", multipleSelection.value);
-  //  调用删除API
 };
 
 const viewDetail = (row) => {
   console.log("查看详情:", row);
-  // 可以跳转到详情页或打开弹窗
   dialogTableVisible.value = true;
 };
 
@@ -470,8 +483,111 @@ const backMain = () => {
   router.push("/main");
 };
 
+// 弹窗打开时初始化滚动容器
+const handleDialogOpen = () => {
+  nextTick(() => {
+    setTimeout(() => {
+      // 强制获取弹窗表格的滚动容器
+      if (dialogTableRef.value && dialogTableRef.value.$el) {
+        const bodyWrapper = dialogTableRef.value.$el.querySelector(
+          ".el-table__body-wrapper"
+        );
+        if (bodyWrapper) {
+          dialogScrollContainer =
+            bodyWrapper.querySelector(".el-scrollbar__wrap") || bodyWrapper;
+          // 手动触发一次滚动容器高度计算
+          dialogScrollContainer.style.height = "100%";
+        }
+      }
+    }, 200);
+  });
+};
+
+// ===================== 拖拽滚动核心逻辑（重写） =====================
+// 获取滚动容器
+const getScrollContainer = (type) => {
+  if (type === "main") {
+    if (!mainTableRef.value || !mainTableRef.value.$el) return null;
+    const bodyWrapper = mainTableRef.value.$el.querySelector(".el-table__body-wrapper");
+    return bodyWrapper
+      ? bodyWrapper.querySelector(".el-scrollbar__wrap") || bodyWrapper
+      : null;
+  } else if (type === "dialog") {
+    // 优先使用缓存的弹窗滚动容器
+    if (dialogScrollContainer) return dialogScrollContainer;
+    if (!dialogTableRef.value || !dialogTableRef.value.$el) return null;
+    const bodyWrapper = dialogTableRef.value.$el.querySelector(".el-table__body-wrapper");
+    return bodyWrapper
+      ? bodyWrapper.querySelector(".el-scrollbar__wrap") || bodyWrapper
+      : null;
+  }
+  return null;
+};
+
+// 开始拖拽 - 简化逻辑，确保执行
+const handleDragStart = (e, type) => {
+  // 快速判断：排除可交互元素
+  const target = e.target;
+  if (
+    target.tagName === "BUTTON" ||
+    target.tagName === "INPUT" ||
+    target.classList.contains("el-checkbox") ||
+    target.classList.contains("el-tag") ||
+    target.classList.contains("el-icon")
+  ) {
+    return;
+  }
+
+  // 强制获取滚动容器
+  currentScrollContainer = getScrollContainer(type);
+  if (!currentScrollContainer) return;
+
+  // 强制标记拖拽状态
+  isDragging.value = true;
+  startY = e.clientY || e.touches[0].clientY;
+  startScrollTop = currentScrollContainer.scrollTop;
+
+  // 阻止所有默认行为
+  e.preventDefault();
+  e.stopPropagation();
+};
+
+// 拖拽中 - 确保持续执行
+const handleDragMove = (e) => {
+  if (!isDragging.value || !currentScrollContainer) return;
+
+  // 兼容鼠标和触摸事件
+  const clientY = e.clientY || e.touches[0].clientY;
+  const moveY = clientY - startY;
+
+  // 直接设置滚动位置，增加阻尼系数让滚动更流畅
+  currentScrollContainer.scrollTop = startScrollTop - moveY * 1.2;
+
+  e.preventDefault();
+  e.stopPropagation();
+};
+
+// 结束拖拽 - 强制重置
+const handleDragEnd = (e) => {
+  isDragging.value = false;
+  currentScrollContainer = null;
+  if (e) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+};
+
+// 初始化
 onMounted(() => {
   console.log("组件挂载了");
+  // 主表格初始化
+  setTimeout(() => {
+    getScrollContainer("main");
+  }, 300);
+
+  // 全局监听鼠标抬起事件，防止拖拽出容器后无法停止
+  document.addEventListener("mouseup", handleDragEnd);
+  document.addEventListener("touchend", handleDragEnd);
 });
 </script>
 
@@ -508,7 +624,6 @@ onMounted(() => {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 0px;
-  // border: 1px solid red;
   padding: 0 40px;
 
   .table-nav-left {
@@ -567,18 +682,30 @@ onMounted(() => {
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  // background: #ffffff;
   border-radius: 8px;
   padding: 20px;
-  // box-shadow: 0 2px 8px rgba(77, 17, 102, 0.1);
-  // border: 2px solid green;
   box-sizing: border-box;
   position: relative;
+
+  // 主表格拖拽容器
+  .table-drag-wrapper {
+    width: 100%;
+    height: 55vh;
+    overflow: hidden;
+    user-select: none;
+    cursor: grab;
+    position: relative;
+    z-index: 1;
+
+    &:active {
+      cursor: grabbing;
+    }
+  }
 
   .order-table {
     width: 100%;
     box-sizing: border-box;
-    height: 55vh;
+    height: 100%;
   }
 
   .pagination-container {
@@ -589,9 +716,40 @@ onMounted(() => {
     align-items: center;
     margin-top: 10px;
     position: absolute;
-    bottom: -0vh;
+    bottom: 0;
     right: 0;
     margin-top: 5vh;
+  }
+}
+
+// 弹窗表格拖拽容器 - 强制设置样式确保覆盖
+.dialog-drag-wrapper {
+  width: 100%;
+  height: 28vh;
+  overflow: hidden !important;
+  user-select: none !important;
+  cursor: grab !important;
+  position: relative;
+  z-index: 10;
+
+  &:active {
+    cursor: grabbing !important;
+  }
+
+  // 强制穿透样式到内部表格
+  :deep(.el-table) {
+    height: 100%;
+    width: 100%;
+  }
+
+  :deep(.el-table__body-wrapper) {
+    height: 100% !important;
+    overflow: hidden !important;
+  }
+
+  :deep(.el-scrollbar__wrap) {
+    height: 100% !important;
+    overflow-y: auto !important;
   }
 }
 
@@ -599,7 +757,7 @@ onMounted(() => {
   display: inline-block;
   font-size: 14px;
   background: #9b28ae;
-  padding: 3px 8px;
+  padding: 0px 8px;
   border-radius: 20px;
   color: #ffffff;
 }
@@ -610,21 +768,20 @@ onMounted(() => {
   font-weight: bold;
 }
 
-// 搜索输入框样式穿透
+// 搜索输入框样式
 :deep(.search-input) {
   height: 50px;
   width: 10vw;
 
   .el-input__wrapper {
     border-color: #9033e9;
-
     &:hover {
       border-color: #4d1166;
     }
   }
 }
 
-// 详情按钮样式穿透
+// 详情按钮样式
 :deep(.detail-btn) {
   color: #9033e9 !important;
   font-weight: bold;
@@ -637,7 +794,7 @@ onMounted(() => {
   }
 }
 
-// 状态标签样式穿透
+// 状态标签样式
 :deep(.status-tag) {
   font-weight: bold;
   border-radius: 4px;
@@ -645,12 +802,28 @@ onMounted(() => {
   height: 24px;
   line-height: 24px;
 }
+
+// 主表格滚动条隐藏
+:deep(.order-table .el-table__body-wrapper) {
+  overflow: hidden !important;
+
+  .el-scrollbar__wrap {
+    overflow-y: auto !important;
+    height: 100% !important;
+
+    &::-webkit-scrollbar {
+      display: none !important;
+      width: 0 !important;
+    }
+    -ms-overflow-style: none !important;
+    scrollbar-width: none !important;
+  }
+}
 </style>
 
 <style lang="scss">
 /* 自定义表头样式 */
 .custom-header-row th {
-  // background: linear-gradient(135deg, #794fba 0%, #9033e9 100%) !important;
   background: #9033e9 !important;
   color: #ffffff !important;
   font-size: 18px !important;
@@ -669,17 +842,15 @@ onMounted(() => {
     left: 0;
     width: 100%;
     height: 2px;
-    // background: linear-gradient(90deg, #4d1166, #794fba);
     background: #9033e9 !important;
   }
 }
 
-/* 表格行样式 -  清除所有冗余边距 */
+/* 主表格样式 */
 .order-table {
   border-radius: 20px !important;
   overflow: hidden !important;
 
-  // 清除表格容器的默认内边距
   .el-table__header,
   .el-table__body {
     padding: 0 !important;
@@ -693,13 +864,12 @@ onMounted(() => {
     td {
       height: 5vh !important;
       line-height: 5vh !important;
-      padding: 0 !important; // 清除单元格内边距
+      padding: 0 !important;
       vertical-align: middle !important;
-      border: none !important; // 清除单元格边框（可选，看需求）
+      border: none !important;
       font-size: 18px;
     }
 
-    /* 斑马纹 */
     &:nth-child(even) {
       background-color: #f9f5fd !important;
     }
@@ -709,10 +879,8 @@ onMounted(() => {
     }
   }
 
-  /* 复选框样式 */
   .el-checkbox__inner {
     border-color: #9033e9 !important;
-
     &:hover {
       border-color: #4d1166 !important;
     }
@@ -723,13 +891,8 @@ onMounted(() => {
     border-color: #9033e9 !important;
   }
 
-  // 隐藏表格的默认滚动条
   .el-table__body-wrapper {
     overflow-y: auto !important;
-    // 可选：隐藏滚动条
-    // &::-webkit-scrollbar {
-    //   display: none;
-    // }
   }
 }
 
@@ -743,7 +906,6 @@ onMounted(() => {
 .status-select {
   .el-input__wrapper {
     border-color: #9033e9;
-
     &:hover {
       border-color: #4d1166;
     }
@@ -751,18 +913,19 @@ onMounted(() => {
 
   width: 7vw;
   height: 50px !important;
-
   .el-select__wrapper {
     height: 50px !important;
   }
 }
 
+// 弹窗样式（保持原有）
 .order-table-dialog {
   width: 35vw;
-  height: 55vh;
+  height: 65vh;
   padding: 0;
   border-radius: 20px !important;
   overflow: hidden;
+
   .el-dialog__header {
     height: 3vh !important;
     line-height: 3vh !important;
@@ -771,8 +934,8 @@ onMounted(() => {
     color: #ffffff !important;
     background: #9033e9 !important;
   }
+
   .el-dialog__body {
-    // border: 1px solid red;
     padding: 2vh;
     height: 50vh;
     box-sizing: border-box;
@@ -790,6 +953,7 @@ onMounted(() => {
     }
   }
 }
+
 .my-header {
   padding: 0 20px;
   height: 4vh !important;
@@ -798,9 +962,11 @@ onMounted(() => {
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
+
   .el-dialog__title {
     color: #ffffff;
   }
+
   .el-icon--left {
     cursor: pointer;
     font-size: 14px;
@@ -814,8 +980,9 @@ onMounted(() => {
   }
 }
 
+// 弹窗表格样式
 .dialog-table {
-  max-height: 27vh;
+  max-height: 32vh;
   width: 100%;
   border-radius: 20px !important;
   border: 1px solid #e0ddec !important;
@@ -827,75 +994,18 @@ onMounted(() => {
     td {
       height: 4vh !important;
       line-height: 4vh !important;
-      padding: 0 !important; // 清除单元格内边距
+      padding: 0 !important;
       vertical-align: middle !important;
     }
   }
 }
 
-/* 自定义分页器样式 */
-// .custom-pagination {
-//   .el-pagination__total {
-//     color: #4d1166;
-//     font-weight: 500;
-//   }
-
-//   .el-pagination__sizes {
-//     .el-input__wrapper {
-//       border-color: #9033e9;
-
-//       &:hover {
-//         border-color: #4d1166;
-//       }
-//     }
-//   }
-
-//   .el-pager {
-//     .number {
-//       color: #4d1166;
-//       border: 1px solid #e0d4e8;
-//       border-radius: 4px;
-//       margin: 0 4px;
-
-//       &:hover {
-//         color: #9033e9;
-//         border-color: #9033e9;
-//       }
-//     }
-//     .is-active {
-//       background-color: #9033e9 !important;
-//       color: white;
-//       border-color: #9033e9 !important;
-//     }
-//   }
-
-//   .btn-prev,
-//   .btn-next {
-//     color: #4d1166;
-//     border: 1px solid #e0d4e8;
-//     border-radius: 4px;
-
-//     &:hover:not(.disabled) {
-//       color: #9033e9;
-//       border-color: #9033e9;
-//     }
-
-//     &.disabled {
-//       color: #b8a6c5;
-//       cursor: not-allowed;
-//     }
-//   }
-
-//   .el-pagination__jump {
-//     color: #4d1166;
-
-//     .el-pagination__editor {
-//       border-color: #9033e9;
-
-//       &:focus {
-//         border-color: #4d1166;
-//       }
-//     }
-//   }
-// }
+.dialog-table-header-row th {
+  // background: #9033e9 !important;
+  font-size: 16px !important;
+  font-weight: bold !important;
+  height: 4vh !important;
+  text-align: center !important;
+  padding: 0 !important;
+}
 </style>

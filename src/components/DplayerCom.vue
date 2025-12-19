@@ -16,7 +16,7 @@ import {
 } from "vue";
 import DPlayer from "dplayer";
 
-// 定义 Props 
+// 定义 Props
 const props = defineProps({
   // 基础配置
   containerStyle: {
@@ -90,7 +90,7 @@ const props = defineProps({
     default: true,
   },
 
-  // 视频配置 
+  // 视频配置
   video: {
     type: Object,
     required: true,
@@ -204,7 +204,6 @@ const playerRef = ref(null);
 let dp = null;
 
 // 构建播放器配置
-// 构建播放器配置
 const buildPlayerConfig = computed(() => ({
   container: playerRef.value,
   live: props.live,
@@ -225,7 +224,6 @@ const buildPlayerConfig = computed(() => ({
   mutex: props.mutex,
   video: {
     ...props.video,
-   
   },
   subtitle: props.subtitle.enabled ? props.subtitle : undefined,
   danmaku: props.danmaku.enabled ? props.danmaku : undefined,
@@ -246,13 +244,16 @@ const initPlayer = () => {
   if (!playerRef.value) return;
 
   // 创建新实例
-  dp = new DPlayer(buildPlayerConfig.value);
-
-  // 绑定所有事件
-  bindAllEvents();
+  try {
+    dp = new DPlayer(buildPlayerConfig.value);
+    // 绑定所有事件
+    bindAllEvents();
+  } catch (e) {
+    console.error("播放器初始化失败:", e);
+  }
 };
 
-// 绑定事件（覆盖官方所有事件）
+// 绑定事件
 const bindAllEvents = () => {
   if (!dp) return;
 
@@ -316,16 +317,16 @@ const bindAllEvents = () => {
   });
 };
 
-// 监听 配置变化，重新初始化
-watch(
-  [() => props.video, () => props.danmaku, () => props.theme],
-  () => initPlayer(),
-  { deep: true, immediate: false }
-);
+// 监听配置变化，重新初始化
+watch([() => props.video, () => props.danmaku, () => props.theme], () => initPlayer(), {
+  deep: true,
+  immediate: false,
+});
 
 // 组件挂载初始化
 onMounted(() => {
-  initPlayer();
+  // 确保DOM渲染完成后初始化
+  nextTick(() => initPlayer());
 });
 
 // 组件卸载销毁实例
@@ -336,12 +337,17 @@ onUnmounted(() => {
   }
 });
 
-// 暴露官方所有 API（对齐文档）
+// 暴露官方所有 API
 defineExpose({
   // 基础控制
   play: () => dp?.play(),
   pause: () => dp?.pause(),
-  seek: (time) => dp?.seek(time),
+  seek: (time) => {
+    // 修复non-finite错误：校验时间合法性
+    if (typeof time === "number" && isFinite(time) && time >= 0) {
+      dp?.seek(time);
+    }
+  },
   toggle: () => dp?.toggle(),
   destroy: () => dp?.destroy(),
   speed: (rate) => dp?.speed(rate),
@@ -388,9 +394,11 @@ defineExpose({
 <style scoped lang="scss">
 /* 播放器容器基础样式 */
 .dplayer-container {
-  height:100%;
+  height: 100%;
   border-radius: 12px;
   overflow: hidden;
   background-color: #000;
+  // 确保播放器事件优先
+  pointer-events: auto !important;
 }
 </style>

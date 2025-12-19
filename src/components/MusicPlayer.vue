@@ -54,7 +54,7 @@
             </div>
           </div>
 
-          <!-- 控制按钮 + 新增音量控制滑块 -->
+          <!-- 控制按钮 + 音量控制滑块 -->
           <div class="control-panel">
             <div class="control-space"></div>
             <div class="play-btns">
@@ -99,7 +99,7 @@
               </button>
             </div>
 
-            <!-- 新增：音量控制滑块 -->
+            <!--音量控制滑块 -->
             <div class="volume-control-wrapper">
               <svg
                 width="18"
@@ -721,7 +721,7 @@ onMounted(() => {
       gap: 12px;
     }
 
-    // 新增：音量控制容器样式
+    //音量控制容器样式
     .volume-control-wrapper {
       display: flex;
       flex-direction: row;

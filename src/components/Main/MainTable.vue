@@ -32,9 +32,7 @@
           </div>
         </div>
         <!-- 空数据占位 -->
-        <div v-if="!tableData || tableData.length === 0" class="empty-row">
-          暂无数据
-        </div>
+        <div v-if="!tableData || tableData.length === 0" class="empty-row">暂无数据</div>
       </div>
     </div>
   </div>
@@ -43,7 +41,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from "vue";
 
-// 接收父组件传入的表体数据
+//  传入的表体数据
 const props = defineProps({
   // 表体数据数组，结构需包含：chooseName、time、points（数组，含name字段）
   tableData: {
@@ -51,22 +49,22 @@ const props = defineProps({
     default: () => [],
     required: true,
   },
-  // 新增：表体最小高度（默认5vh，适配1行数据）
+  //  表体最小高度（默认5vh，适配1行数据）
   minBodyHeight: {
     type: String,
     default: "5vh",
   },
-  // 新增：表体最大高度（默认20vh，超出滚动）
+  //  表体最大高度（默认20vh，超出滚动）
   maxBodyHeight: {
     type: String,
     default: "20vh",
   },
-  // 可选：表头高度（默认5vh）
+  //  表头高度（默认5vh）
   headerHeight: {
     type: String,
     default: "5vh",
   },
-  // 可选：表格宽度（默认90vw）
+  //  表格宽度（默认90vw）
   tableWidth: {
     type: String,
     default: "90vw",
@@ -168,7 +166,7 @@ onUnmounted(() => {
   user-select: none;
   cursor: grab;
 
-  // 完全隐藏滚动条 
+  // 完全隐藏滚动条
   &::-webkit-scrollbar {
     display: none;
   }

@@ -17,11 +17,7 @@
           }"
         >
           <div class="operate-line">
-            <div
-              class="operate-item"
-              v-for="item in operateList"
-              :key="item.id"
-            >
+            <div class="operate-item" v-for="item in operateList" :key="item.id">
               <DPlayerCom
                 class="dplayer-item"
                 :video="{
@@ -44,9 +40,7 @@
     </div>
 
     <div>
-      <el-button class="add-btn" type="primary" @click="backMain"
-        >返回</el-button
-      >
+      <el-button class="add-btn" type="primary" @click="backMain">返回</el-button>
     </div>
   </div>
 </template>
@@ -64,21 +58,6 @@ const operateList = ref([
   { id: 1, name: "更换滤芯", videoUrl: demoVideo },
   { id: 2, name: "更换钢管", videoUrl: demoVideo },
   { id: 3, name: "清理油桶", videoUrl: demoVideo },
-  // { id: 4, name: "更换滤芯", videoUrl: demoVideo },
-  // { id: 5, name: "更换钢管", videoUrl: demoVideo },
-  // { id: 6, name: "清理油桶", videoUrl: demoVideo },
-  // { id: 7, name: "更换滤芯", videoUrl: demoVideo },
-  // { id: 8, name: "更换钢管", videoUrl: demoVideo },
-  // { id: 9, name: "清理油桶", videoUrl: demoVideo },
-  // { id: 1, name: "更换滤芯", videoUrl: demoVideo },
-  // { id: 2, name: "更换钢管", videoUrl: demoVideo },
-  // { id: 3, name: "清理油桶", videoUrl: demoVideo },
-  // { id: 4, name: "更换滤芯", videoUrl: demoVideo },
-  // { id: 5, name: "更换钢管", videoUrl: demoVideo },
-  // { id: 6, name: "清理油桶", videoUrl: demoVideo },
-  // { id: 7, name: "更换滤芯", videoUrl: demoVideo },
-  // { id: 8, name: "更换钢管", videoUrl: demoVideo },
-  // { id: 9, name: "清理油桶", videoUrl: demoVideo },
 ]);
 
 // 视频事件处理
@@ -90,6 +69,8 @@ const backMain = () => router.push("/main");
 const isDragging = ref(false); // 是否正在拖拽
 const startY = ref(0); // 鼠标按下时的Y坐标
 const startScrollTop = ref(0); // 按下时的滚动位置
+const dragThreshold = ref(5); // 拖拽阈值（像素），小于该值视为点击
+const isClick = ref(true); // 标记是否为点击行为
 
 // 鼠标按下（开始拖拽）
 const handleMouseDown = (e) => {
@@ -97,10 +78,17 @@ const handleMouseDown = (e) => {
   // 内容未超出容器时不触发拖拽
   if (container.scrollHeight <= container.clientHeight) return;
 
+  // 排除播放器区域的mousedown（关键：放行播放器点击）
+  if (e.target.closest(".dplayer-container")) {
+    isDragging.value = false;
+    return;
+  }
+
   isDragging.value = true;
+  isClick.value = true;
   startY.value = e.clientY; // 记录鼠标按下位置
   startScrollTop.value = container.scrollTop; // 记录当前滚动位置
-  e.preventDefault(); // 阻止选中文本等默认行为
+  e.preventDefault(); // 仅阻止非播放器区域的默认行为
 };
 
 // 鼠标松开/离开（结束拖拽）
@@ -114,13 +102,24 @@ const handleMouseMove = (e) => {
 
   const container = e.currentTarget;
   const moveY = e.clientY - startY.value; // 计算鼠标移动距离
-  // 反向滚动：鼠标向下拖内容向上滚，鼠标向上拖内容向下滚
-  container.scrollTop = startScrollTop.value - moveY;
+
+  // 判断是否超过拖拽阈值，超过则视为拖拽，否则视为点击
+  if (Math.abs(moveY) > dragThreshold.value) {
+    isClick.value = false;
+    // 反向滚动：鼠标向下拖内容向上滚，鼠标向上拖内容向下滚
+    // 修复数值合法性：确保scrollTop为有效数值
+    const newScrollTop = Math.max(0, startScrollTop.value - moveY);
+    container.scrollTop = Math.min(
+      newScrollTop,
+      container.scrollHeight - container.clientHeight
+    );
+  }
 };
 
 // 生命周期：全局监听鼠标松开（防止移出容器后无法结束拖拽）
 onMounted(() => {
-  document.addEventListener("mouseup", handleMouseUp);
+  // 使用passive: false确保preventDefault生效，同时避免影响播放器
+  document.addEventListener("mouseup", handleMouseUp, { passive: false });
 });
 
 onUnmounted(() => {
@@ -153,7 +152,6 @@ onUnmounted(() => {
 
 .operate-outer {
   width: 80%;
-
   height: 71vh;
   margin-bottom: 3vh;
   overflow: hidden; // 隐藏内部滚动条占位
@@ -183,8 +181,8 @@ onUnmounted(() => {
   -ms-overflow-style: none;
   scrollbar-width: none;
 
-  // 拖拽时的光标样式
-  &:active {
+  // 拖拽时的光标样式（仅非播放器区域）
+  &:not(:has(.dplayer-container:active)):active {
     cursor: grabbing;
   }
 
@@ -194,10 +192,8 @@ onUnmounted(() => {
     align-items: flex-start;
     justify-content: space-between;
     padding: 10px;
-
     flex-wrap: wrap;
     min-height: 100%;
-    // border: 1px solid red;
 
     .operate-item {
       height: 35vh;
@@ -219,6 +215,8 @@ onUnmounted(() => {
       height: 28vh !important;
       width: 100%;
       margin-bottom: 0.5vh;
+      // 确保播放器区域光标正常
+      cursor: default;
     }
   }
 }
@@ -238,5 +236,10 @@ onUnmounted(() => {
   --el-button-active-text-color: #fff;
   --el-button-active-bg-color: #8a5ca0;
   --el-button-active-border-color: #8a5ca0;
+}
+
+// 覆盖播放器区域的拖拽光标
+:deep(.dplayer-container) {
+  cursor: default !important;
 }
 </style>

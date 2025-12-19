@@ -17,7 +17,7 @@
               <span class="left-nav-text">暂停中 </span>
             </div>
 
-            <!-- 可选补充：治疗结束状态（如果需要） -->
+            <!-- 可治疗结束状态 -->
             <div v-if="isTreatmentEnded" class="left-nav-text-box">
               <span class="point-ball-gray"></span>
               <span class="left-nav-text">已结束 </span>
@@ -37,16 +37,10 @@
       <div class="point-content-right">
         <div class="point-content-right-border">
           <div class="tool-bar">
-            <el-button
-              class="end-btn demo-btn"
-              @click="refreshNormal"
-              type="warning"
+            <el-button class="end-btn demo-btn" @click="refreshNormal" type="warning"
               >正常模式</el-button
             >
-            <el-button
-              class="end-btn demo-btn"
-              @click="switchDemoMode"
-              type="warning"
+            <el-button class="end-btn demo-btn" @click="switchDemoMode" type="warning"
               >演示模式（8秒）</el-button
             >
             <!-- 温度图标 -->
@@ -74,10 +68,7 @@
               @click="openMusicPlayer"
             />
             <!-- 引入三个组件 -->
-            <TemperatureModal
-              ref="tempModalRef"
-              @update:temperature="handleTempUpdate"
-            />
+            <TemperatureModal ref="tempModalRef" @update:temperature="handleTempUpdate" />
 
             <VolumeModal
               ref="volumeModalRef"
@@ -287,7 +278,7 @@ const flattenPlanData = (planList) => {
     } = groupItem;
     points.forEach((pointItem, pointIndex) => {
       const timeInSeconds = (parseInt(time) || 1) * 60; // 1→60秒
-      // 新增：秒数转 分:秒
+      // 秒数转 分:秒
       const minutes = Math.floor(timeInSeconds / 60)
         .toString()
         .padStart(2, "0");
@@ -441,9 +432,7 @@ const usePoint = () => {
   //  newPlanPoint始终保持所有穴位的最新状态
   newPlanPoint.value = JSON.parse(JSON.stringify(flatPoints));
   picType.value = flatPoints[nextIndex].bodyType;
-  picUrl.value = [0, 2].includes(flatPoints[nextIndex].bodyType)
-    ? BodyPic
-    : LegPic;
+  picUrl.value = [0, 2].includes(flatPoints[nextIndex].bodyType) ? BodyPic : LegPic;
   chooseBody(flatPoints[nextIndex]);
 
   // 发送WS指令
@@ -538,8 +527,7 @@ const handleSwiperChange = (swiperPageIndex) => {
   const pageStartIndex = swiperPageIndex * 3;
   // 找到该页第一个未完成的穴位
   const currentItem = flatPoints.find(
-    (item, idx) =>
-      idx >= pageStartIndex && idx < pageStartIndex + 3 && item.status === 1
+    (item, idx) => idx >= pageStartIndex && idx < pageStartIndex + 3 && item.status === 1
   );
   if (currentItem) {
     testIndex.value = flatPoints.indexOf(currentItem);
@@ -809,16 +797,14 @@ const switchDemoMode = () => {
       isDemoMode.value = true;
 
       // 2. 深度修改tableData：替换数组（触发子组件watch）
-      const newTableData = JSON.parse(JSON.stringify(tableData.value)).map(
-        (item) => ({
-          ...item,
-          time: 8, // 演示模式：时长设为8秒
-          time1: "00:00:08", // 激活项显示格式：00:分:秒
-          time2: "00:08", // 非激活项显示格式：分:秒
-          totalSeconds: 8, // 子组件依赖的总秒数
-          remainingSeconds: 8, // 剩余秒数重置为8
-        })
-      );
+      const newTableData = JSON.parse(JSON.stringify(tableData.value)).map((item) => ({
+        ...item,
+        time: 8, // 演示模式：时长设为8秒
+        time1: "00:00:08", // 激活项显示格式：00:分:秒
+        time2: "00:08", // 非激活项显示格式：分:秒
+        totalSeconds: 8, // 子组件依赖的总秒数
+        remainingSeconds: 8, // 剩余秒数重置为8
+      }));
       tableData.value = newTableData; // 替换数组，触发子组件watch
 
       // 3. 同步更新newPlanPoint（确保身体部位组件拿到最新数据）

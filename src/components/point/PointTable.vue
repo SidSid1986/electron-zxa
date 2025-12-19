@@ -206,7 +206,7 @@ watch(
   () => props.tableData,
   () => {
     nextTick(() => {
-      // 数据更新后重置滚动位置（可选）
+      // 数据更新后重置滚动位置
       if (tableBodyRef.value) {
         tableBodyRef.value.scrollTop = 0;
       }
