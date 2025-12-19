@@ -149,7 +149,9 @@ const getCurrentInputEl = () => {
   // 表单模式：通过placeholder定位
   if (currentField.value) {
     return document.querySelector(
-      `.login-input input[placeholder*="${currentField.value === "username" ? "账号" : "密码"}"]`
+      `.login-input input[placeholder*="${
+        currentField.value === "username" ? "账号" : "密码"
+      }"]`
     );
   }
   // 单一值模式：通过ID定位
@@ -157,9 +159,7 @@ const getCurrentInputEl = () => {
     return document.getElementById(currentInputId.value);
   }
   // 获取当前聚焦的输入框
-  return document.activeElement?.tagName === "INPUT"
-    ? document.activeElement
-    : null;
+  return document.activeElement?.tagName === "INPUT" ? document.activeElement : null;
 };
 
 // 基础布局（支持数字模式切换）
@@ -167,12 +167,7 @@ const getBaseLayout = () => {
   // 数字模式布局
   if (props.isNumber) {
     return {
-      default: [
-        "1 2 3 {bksp}",
-        "4 5 6 {clear}",
-        "7 8 9 {enter}",
-        "0 . {space}",
-      ],
+      default: ["1 2 3 {bksp}", "4 5 6 {clear}", "7 8 9 {enter}", "0 . {space}"],
     };
   }
   // 普通字母布局
@@ -230,7 +225,7 @@ const initKeyboard = () => {
         keyboardInstance.value.setInput(finalInput);
       }
 
-      // 强制触发输入框事件 
+      // 强制触发输入框事件
       triggerInputEvent(finalInput);
     },
     onKeyPress: handleKeyPress,
@@ -241,6 +236,7 @@ const initKeyboard = () => {
       if (isChineseMode.value && !props.isNumber) {
         kbd.setOptions({
           layoutCandidates: chineseLayout.layoutCandidates,
+          layoutCandidatesPageSize: 25, // 每页显示15个候选词（核心配置）
           enableCandidates: true,
         });
       }
@@ -275,8 +271,7 @@ const handleKeyPress = (button) => {
       break;
     case "{shift}":
       if (!props.isNumber) {
-        const newLayout =
-          kbd.options.layoutName === "default" ? "shift" : "default";
+        const newLayout = kbd.options.layoutName === "default" ? "shift" : "default";
         kbd.setOptions({ layoutName: newLayout });
       }
       break;
@@ -313,13 +308,9 @@ const triggerInputEvent = (val) => {
       // 强制设置输入框value
       inputEl.value = val;
       // 触发input事件（Vue v-model监听）
-      inputEl.dispatchEvent(
-        new Event("input", { bubbles: true, cancelable: true })
-      );
-      // 触发change事件 
-      inputEl.dispatchEvent(
-        new Event("change", { bubbles: true, cancelable: true })
-      );
+      inputEl.dispatchEvent(new Event("input", { bubbles: true, cancelable: true }));
+      // 触发change事件
+      inputEl.dispatchEvent(new Event("change", { bubbles: true, cancelable: true }));
     }
   });
 };
@@ -332,9 +323,8 @@ const toggleChineseMode = () => {
   const kbd = keyboardInstance.value;
   if (kbd) {
     kbd.setOptions({
-      layoutCandidates: isChineseMode.value
-        ? chineseLayout.layoutCandidates
-        : null,
+      layoutCandidates: isChineseMode.value ? chineseLayout.layoutCandidates : null,
+      layoutCandidatesPageSize: isChineseMode.value ? 25 : 0, // 切换时同步设置候选数
       enableCandidates: isChineseMode.value,
     });
   }
@@ -384,9 +374,7 @@ const open = (field, inputId) => {
 
   nextTick(() => {
     initKeyboard();
-    keyboardWrapperRef.value = document.querySelector(
-      ".virtual-keyboard-wrapper"
-    );
+    keyboardWrapperRef.value = document.querySelector(".virtual-keyboard-wrapper");
 
     // 自动聚焦输入框
     const inputEl = getCurrentInputEl();
@@ -412,13 +400,11 @@ const handleClickOutside = (e) => {
   if (!visible.value || isOpening.value) return;
 
   const wrapperEl =
-    keyboardWrapperRef.value ||
-    document.querySelector(".virtual-keyboard-wrapper");
+    keyboardWrapperRef.value || document.querySelector(".virtual-keyboard-wrapper");
   if (!wrapperEl) return;
 
   const isInput =
-    e.target.tagName === "INPUT" &&
-    e.target.classList.contains("el-input__inner");
+    e.target.tagName === "INPUT" && e.target.classList.contains("el-input__inner");
   if (!wrapperEl.contains(e.target) && !isInput) {
     handleClose();
   }
@@ -511,34 +497,50 @@ defineExpose({
   background: #e0e0e0 !important;
 }
 
+/* 优化候选框样式 - 核心修改 */
 :deep(.hg-candidate-box) {
   background: #f8f8f8;
   border-bottom: 1px solid #e0e0e0;
-  padding: 8px;
+  padding: 8px 10px;
   display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
+  gap: 6px !important; /* 减小候选词间距 */
+  flex-wrap: nowrap !important; /* 强制不换行 */
+  overflow-x: auto !important; /* 横向滚动 */
+  white-space: nowrap !important; /* 禁止文字换行 */
+  max-width: 100% !important;
+  box-sizing: border-box !important;
 }
 
 :deep(.hg-candidate-box button) {
   background: #fff;
   border: 1px solid #e0e0e0;
   border-radius: 4px;
-  padding: 6px 12px;
+  padding: 6px 10px !important; /* 减小按钮内边距 */
   cursor: pointer;
-  font-size: 16px;
+  font-size: 15px !important; /* 略缩小字体 */
+  min-width: auto !important; /* 取消固定宽度 */
+  width: fit-content !important; /* 自适应文字宽度 */
+  flex-shrink: 0 !important; /* 防止按钮被压缩 */
 }
 
 :deep(.hg-candidate-box button:hover) {
   background: #e8e8e8;
 }
 
+/* 隐藏候选框横向滚动条（优化视觉） */
+:deep(.hg-candidate-box)::-webkit-scrollbar {
+  height: 0;
+}
+
 .input-method-switch:hover {
   background: #f5f5f5;
 }
 </style>
+
 <style>
 .hg-candidate-box {
   margin-top: -5vh !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
 }
 </style>
