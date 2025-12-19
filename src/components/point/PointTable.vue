@@ -40,7 +40,8 @@
         >
           <!-- 灸法列 -->
           <div class="table-cell table-item1">
-            <div class="table-item-left" v-show="index === selectedIndex"></div>
+            <div class="table-item-left" v-if="index === selectedIndex"></div>
+            <div class="table-item-left-trans" v-else></div>
             <div class="table-line-name">{{ item.chooseName }}</div>
           </div>
 
@@ -192,7 +193,7 @@ const handleWheel = (e) => {
 
 // 行点击事件
 const handleRowClick = (item, index) => {
-  emit("row-click", item, index);
+  // emit("row-click", item, index);
 };
 
 // 穴位状态点击事件
@@ -236,13 +237,13 @@ onUnmounted(() => {
   background-color: #fbfcf9;
 }
 
-// 表格整体容器：补偿滚动条宽度
+// 表格整体容器
 .table-wrapper {
-  width: calc(100% + 17px); // 补偿浏览器默认滚动条宽度
+  width: calc(100%);
   box-sizing: border-box;
 }
 
-// 表格表头（保留原有样式 + 对齐参考示例结构）
+// 表格表头
 .table-header {
   display: flex;
   height: v-bind(headerHeight);
@@ -264,7 +265,7 @@ onUnmounted(() => {
     padding: 0 8px;
     word-break: break-all;
 
-    // 列宽分配（保留原有比例）
+    // 列宽分配
     &.header-item1 {
       width: 16.6667%;
     }
@@ -285,15 +286,15 @@ onUnmounted(() => {
   }
 }
 
-// 表格体容器（核心滚动区域，对齐参考示例）
+// 表格体容器
 .table-body {
-  overflow-y: auto; // 原生滚动（拖动依赖此属性）
+  overflow-y: auto;
   width: 100%;
   box-sizing: border-box;
-  user-select: none; // 禁止选中文本，提升拖动体验
+  user-select: none;
   cursor: grab;
 
-  // 完全隐藏滚动条（保留滚动功能）
+  // 完全隐藏滚动条
   &::-webkit-scrollbar {
     display: none;
   }
@@ -327,7 +328,7 @@ onUnmounted(() => {
     text-align: center;
     box-sizing: border-box;
     border-right: 1px solid #af7dc4;
-    padding: 0 8px;
+    // padding: 0 8px;
     word-break: break-all;
     height: 100%;
 
@@ -353,12 +354,19 @@ onUnmounted(() => {
     // 灸法列特殊样式
     &.table-item1 {
       justify-content: flex-start;
-      padding-left: 20px;
+      // padding-left: 20px;
 
       .table-item-left {
         width: 4px;
         height: 100%;
         background-color: #af7dc4;
+        margin-right: 10px;
+      }
+
+      .table-item-left-trans {
+        width: 4px;
+        height: 100%;
+        background-color: transparent;
         margin-right: 10px;
       }
 

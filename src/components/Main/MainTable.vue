@@ -5,7 +5,7 @@
       <!-- 固定表头 -->
       <div class="table-header">
         <div class="table-cell">灸法</div>
-        <div class="table-cell">时间</div>
+        <div class="table-cell">时长</div>
         <div class="table-cell no-border">穴位</div>
       </div>
 
@@ -116,24 +116,23 @@ onUnmounted(() => {
 </script>
 
 <style scoped lang="scss">
-// 外层包裹 - 解决滚动条占位 + 完整边框
 .table-outer {
-  width: v-bind(tableWidth); // 接收props的宽度
-  overflow: hidden; // 隐藏内部滚动条的占位
+  width: v-bind(tableWidth);
+  overflow: hidden;
   box-sizing: border-box;
-  border: 1px solid #c293d5; // 外层完整边框
+  border: 1px solid #c293d5;
 }
 
-// 表格整体容器：补偿滚动条宽度
+// 表格整体容器
 .table-wrapper {
-  width: calc(100% + 17px); // 补偿浏览器默认滚动条宽度
+  width: calc(100%);
   box-sizing: border-box;
 }
 
 // 表格表头
 .table-header {
   display: flex;
-  height: v-bind(headerHeight); // 接收props的表头高度
+  height: v-bind(headerHeight);
   width: 100%;
   background-color: #c293d5;
   border-bottom: 1px solid #c293d5;
@@ -141,17 +140,18 @@ onUnmounted(() => {
   color: #ffffff;
 
   .table-cell {
-    width: 33.3333%; // 固定三等分，精准对齐
-    flex-shrink: 0; // 禁止收缩，避免列宽偏差
+    width: 33.3333%;
+    flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
     border-right: 1px solid #ffffff;
     box-sizing: border-box;
     font-weight: bold;
-    padding: 0 8px;
+    // padding: 0 8px;
+    font-size: 20px;
     text-align: center;
-    word-break: break-all; // 防止超长文字溢出
+    word-break: break-all;
 
     // 最右侧单元格无边框
     &.no-border {
@@ -160,20 +160,20 @@ onUnmounted(() => {
   }
 }
 
-// 表格体容器（支持拖动+滚轮滚动）
+// 表格体容器
 .table-body {
-  overflow-y: auto; // 原生滚动（拖动依赖此属性）
+  overflow-y: auto;
   width: 100%;
   box-sizing: border-box;
-  user-select: none; // 禁止选中文本，提升拖动体验
-  cursor: grab; // 悬浮显示可拖动光标
+  user-select: none;
+  cursor: grab;
 
-  // 完全隐藏滚动条（保留滚动功能）
+  // 完全隐藏滚动条 
   &::-webkit-scrollbar {
-    display: none; // Chrome/Safari
+    display: none;
   }
-  -ms-overflow-style: none; // IE/Edge
-  scrollbar-width: none; // Firefox
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 // 表格行样式
@@ -191,17 +191,18 @@ onUnmounted(() => {
   }
 
   .table-cell {
-    width: 33.3333%; // 与表头严格对齐
+    width: 33.3333%;
     flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
     border-right: 1px solid #c293d5;
     box-sizing: border-box;
-    padding: 0 8px;
+    // padding: 0 8px;
+    font-size: 18px;
+    font-weight: bold;
     text-align: center;
-    word-break: break-all; // 防止超长穴位名称溢出
-    font-size: 14px;
+    word-break: break-all;
 
     // 最右侧单元格无边框
     &.no-border {
