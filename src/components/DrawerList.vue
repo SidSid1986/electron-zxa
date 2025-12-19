@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-11 17:24:46
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-19 10:14:26
+ * @LastEditTime: 2025-12-19 10:50:45
  * @FilePath: \zi-xiao-ai\src\components\DrawerList.vue
  * @Description: 
 -->
@@ -135,7 +135,7 @@ const menuList = ref([
     hasBorder: false,
     role: ["super_admin"],
     icon: "icon-shezhi",
-    path: "/main",
+    path: "/log",
   },
   {
     name: userInfo.nickName,

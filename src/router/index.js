@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-11-29 10:30:04
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-19 10:14:41
+ * @LastEditTime: 2025-12-19 10:49:53
  * @FilePath: \zi-xiao-ai\src\router\index.js
  * @Description:
  */
@@ -207,6 +207,15 @@ const routes = [
     path: "/backPoint",
     name: "BackPoint",
     component: () => import("@/views/backPoint.vue"),
+    meta: {
+      requiresAuth: true,
+      roles: ["admin", "super_admin"],
+    },
+  },
+  {
+    path: "/log",
+    name: "Log",
+    component: () => import("@/views/log.vue"),
     meta: {
       requiresAuth: true,
       roles: ["admin", "super_admin"],

@@ -97,21 +97,12 @@ const currentComponent = shallowRef(markRaw(BodyBack));
 
 const router = useRouter();
 const route = useRoute();
-const basicData = ref([]);
-const picType = ref(-1);
-const picUrl = ref("");
+
 const dialogVisible = ref(false);
 const selectedCaseId = ref("");
 const selectedCase = ref({});
-
-const planList = ref([]);
-const planLength = ref(0);
-const currentOperateIndex = ref(0);
-
 const tableData = ref([]);
-
 const selectedAutoIndex = ref(0);
-const selectedObj = ref({});
 const newPlanPoint = ref([]);
 
 // 当前选中的单个穴位
@@ -304,7 +295,7 @@ const getPointWs = () => {
         rowIndex,
         pointIndex: nextPointIndex,
       };
-      // 同步更新newPlanPoint为当前行的穴位列表 
+      // 同步更新newPlanPoint为当前行的穴位列表
       newPlanPoint.value = currentRow.points;
       // 更新当前行的身体部位显示
       chooseBody(currentRow.points[nextPointIndex]);
@@ -362,6 +353,7 @@ const getPointWs = () => {
     // 更新表格数据
     tableData.value = newPlan;
     selectedCase.value.plan = newPlan;
+    console.log(newPlan);
 
     ElMessage.success(`成功定穴：${currentPoint.value.name}`);
   });
@@ -380,7 +372,7 @@ onMounted(() => {
 
   window.addEventListener("resize", () => {
     //  表格高度变化时重新计算
-    // 表格组件内部已处理resize逻辑 
+    // 表格组件内部已处理resize逻辑
   });
 });
 
