@@ -61,18 +61,10 @@
         <div class="dialog-text">创建完成后可在下一个页面配置灸法详情</div>
 
         <div class="dialog-btn-content">
-          <el-button
-            round
-            type="primary"
-            @click="cancelDialog"
-            class="title-btn"
+          <el-button round type="primary" @click="cancelDialog" class="title-btn"
             >取消</el-button
           >
-          <el-button
-            round
-            type="primary"
-            @click="confirmDialog"
-            class="title-btn"
+          <el-button round type="primary" @click="confirmDialog" class="title-btn"
             >确定</el-button
           >
         </div>
@@ -238,7 +230,7 @@ onUnmounted(() => {
     }
 
     .edit-group {
-      margin-top: 20px;
+      margin-top: 1vh;
       display: flex;
       flex-direction: row;
       justify-content: flex-end;

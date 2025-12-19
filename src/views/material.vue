@@ -10,11 +10,7 @@
   <div class="material-container">
     <div class="material-title">耗材管理</div>
     <div class="material-item-container">
-      <div
-        class="material-item"
-        v-for="(item, index) in meterialData"
-        :key="item.id"
-      >
+      <div class="material-item" v-for="(item, index) in meterialData" :key="item.id">
         <div class="material-pic">
           <img :src="item.icon" alt="" />
         </div>
@@ -40,9 +36,7 @@
         </div>
       </div>
       <div class="back-content">
-        <el-button @click="backMain" class="back-btn" type="primary"
-          >返回</el-button
-        >
+        <el-button @click="backMain" class="back-btn" type="primary">返回</el-button>
       </div>
     </div>
   </div>
@@ -55,7 +49,6 @@ import icon2 from "@/assets/pic/oil_tank.png";
 import icon3 from "@/assets/pic/smoke_pipe.png";
 import { useRoute, useRouter } from "vue-router";
 const router = useRouter();
- 
 
 const meterialData = ref([
   {
@@ -230,7 +223,7 @@ onMounted(() => {
 
 :deep(.change-btn) {
   width: 80px;
-  height: 40px;
+  height: 35px;
   font-size: 16px;
   font-weight: bold;
   border-radius: 10px;
@@ -248,7 +241,7 @@ onMounted(() => {
 
 :deep(.back-btn) {
   width: 100px;
-  height: 60px;
+  height: 50px;
   font-size: 20px;
   font-weight: bold;
   border-radius: 10px;

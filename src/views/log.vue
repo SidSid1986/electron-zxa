@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-12 16:15:42
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-19 13:45:25
+ * @LastEditTime: 2025-12-19 13:47:34
  * @FilePath: \zi-xiao-ai\src\views\log.vue
  * @Description: 
 -->

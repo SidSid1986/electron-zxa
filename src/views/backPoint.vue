@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-12 16:15:42
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-19 10:35:12
+ * @LastEditTime: 2025-12-19 13:57:34
  * @FilePath: \zi-xiao-ai\src\views\backPoint.vue
  * @Description: 
 -->
@@ -97,7 +97,7 @@ onMounted(() => {
     justify-content: flex-start;
     // border: 1px solid red;
     .back-item-line {
-      width: 30%;
+      width: 32vw;
       height: 30vh;
       display: flex;
       flex-direction: column;
@@ -133,7 +133,7 @@ onMounted(() => {
     }
 
     .back-item-line-btn {
-      width: 30%;
+      width: 32vw;
       height: 20vh;
       display: flex;
       flex-direction: column;

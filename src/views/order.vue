@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-12 16:15:42
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-19 10:07:26
+ * @LastEditTime: 2025-12-19 13:54:42
  * @FilePath: \zi-xiao-ai\src\views\order.vue
  * @Description: 
 -->
@@ -75,21 +75,12 @@
         <el-table-column align="center" label="订单时间" width="180">
           <template #default="scope">{{ scope.row.date }}</template>
         </el-table-column>
-        <el-table-column
-          align="center"
-          property="name"
-          label="顾客姓名"
-          width="120"
-        />
+        <el-table-column align="center" property="name" label="顾客姓名" width="120" />
         <el-table-column align="center" property="phone" label="顾客电话" />
         <el-table-column align="center" property="time" label="方案时长" />
         <el-table-column align="center" property="detail" label="详细">
           <template #default="scope">
-            <el-button
-              type="text"
-              @click="viewDetail(scope.row)"
-              class="detail-btn"
-            >
+            <el-button type="text" @click="viewDetail(scope.row)" class="detail-btn">
               查看详情
             </el-button>
           </template>
@@ -153,12 +144,7 @@
       </div>
       <div>
         <el-table border class="dialog-table" :data="orderInfo.plan">
-          <el-table-column
-            align="center"
-            property="id"
-            label="序号"
-            width="50"
-          />
+          <el-table-column align="center" property="id" label="序号" width="50" />
           <el-table-column align="center" property="name" label="灸法">
             <template #default="scope">
               <span class="name-tag">
@@ -167,18 +153,8 @@
             </template>
           </el-table-column>
 
-          <el-table-column
-            width="80"
-            align="center"
-            property="time"
-            label="时长"
-          />
-          <el-table-column
-            width="180"
-            align="center"
-            property="point"
-            label="穴位"
-          >
+          <el-table-column width="80" align="center" property="time" label="时长" />
+          <el-table-column width="180" align="center" property="point" label="穴位">
             <template #default="scope">
               <el-tag
                 class="point-tag"
@@ -244,7 +220,7 @@ const timeStart = ref("");
 const timeEnd = ref("");
 const dialogTableVisible = ref(false);
 
-// 模拟数据 
+// 模拟数据
 const tableData = ref([
   {
     id: 1,
@@ -637,7 +613,7 @@ onMounted(() => {
 // 搜索输入框样式穿透
 :deep(.search-input) {
   height: 50px;
-  width: 7vw;
+  width: 10vw;
 
   .el-input__wrapper {
     border-color: #9033e9;
@@ -747,10 +723,10 @@ onMounted(() => {
     border-color: #9033e9 !important;
   }
 
-  // 隐藏表格的默认滚动条 
+  // 隐藏表格的默认滚动条
   .el-table__body-wrapper {
     overflow-y: auto !important;
-    // 可选：隐藏滚动条 
+    // 可选：隐藏滚动条
     // &::-webkit-scrollbar {
     //   display: none;
     // }
@@ -760,6 +736,7 @@ onMounted(() => {
 // 时间输入框样式
 .time-input {
   height: 50px !important;
+  width: 12vw !important;
 }
 
 // 状态选择器样式
@@ -772,7 +749,7 @@ onMounted(() => {
     }
   }
 
-  width: 5vw;
+  width: 7vw;
   height: 50px !important;
 
   .el-select__wrapper {
