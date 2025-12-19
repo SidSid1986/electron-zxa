@@ -21,15 +21,17 @@
             label-width="0px"
             @focus="handleFormFocus"
           >
-            <!-- 用户名输入 -->
+            <!-- 用户名输入：添加 keyboard="true" 和 data-mode -->
             <el-form-item prop="username">
               <el-input
+                ref="usernameInputRef"
                 v-model="loginForm.username"
                 placeholder="请输入绑定账号"
                 class="login-input"
                 size="large"
                 @click.stop
-                @focus="() => keyboardRef.open('username')"
+                keyboard="true"
+                data-mode="en"
               >
                 <template #prefix>
                   <i class="iconfont icon-yonghu"></i>
@@ -37,9 +39,10 @@
               </el-input>
             </el-form-item>
 
-            <!-- 密码输入 -->
+            <!-- 密码输入：添加 keyboard="true" 和 data-mode -->
             <el-form-item prop="password">
               <el-input
+                ref="passwordInputRef"
                 v-model="loginForm.password"
                 type="password"
                 placeholder="请输入密码"
@@ -47,7 +50,8 @@
                 size="large"
                 show-password
                 @click.stop
-                @focus="() => keyboardRef.open('password')"
+                keyboard="true"
+                data-mode="password"
               >
                 <template #prefix>
                   <i class="iconfont icon-lock"></i>
@@ -80,31 +84,34 @@
       </div>
     </div>
 
-    <!-- 引入虚拟键盘组件  -->
-    <Keyboard ref="keyboardRef" :form="loginForm" />
+    <!-- 仅保留一个键盘实例，移除无用的 ref 属性 -->
+    <VirtualKeyboard />
   </div>
 </template>
 
 <script setup>
-import { ref, watch } from "vue";
+import { ref, watch, onMounted } from "vue";
 import { ElMessage } from "element-plus";
 import { useRouter } from "vue-router";
 import loginData from "@/data/loginData.json";
-// 引入键盘组件
-import Keyboard from "@/components/Keyboard.vue";
+// 引入封装的键盘组件
+import VirtualKeyboard from "@/components/VirtualKeyboard.vue";
 
 const router = useRouter();
 
-// 仅维护表单本身，无需任何键盘相关状态
+// 表单数据
 const loginForm = ref({
   username: "",
   password: "",
 });
 const isLoginLoading = ref(false);
 const loginFormRef = ref(null);
-const keyboardRef = ref(null); // 仅保留组件ref，用于调用open方法
 
-// 表单验证规则（不变）
+// 输入框Ref（保留），移除无用的 keyboardRef
+const usernameInputRef = ref(null);
+const passwordInputRef = ref(null);
+
+// 表单验证规则
 const loginRules = ref({
   username: [
     { required: true, message: "请输入绑定账号", trigger: ["blur", "change"] },
@@ -131,7 +138,12 @@ const loginRules = ref({
   ],
 });
 
-// 表单聚焦验证（不变）
+// 挂载后：删除手动绑定代码，组件自动完成绑定
+onMounted(() => {
+  // 清空此处代码，无需手动调用 inputBindKeyboard
+});
+
+// 表单聚焦验证
 const handleFormFocus = (e) => {
   const form = loginFormRef.value;
   if (!form) return;
@@ -141,7 +153,7 @@ const handleFormFocus = (e) => {
   });
 };
 
-// 返回按钮逻辑（不变）
+// 返回逻辑
 const handleReturn = () => {
   router.push("/main");
 };
@@ -190,7 +202,7 @@ const handleLogin = async () => {
 </script>
 
 <style scoped lang="scss">
- 
+/* 原有样式不变 */
 .login-container {
   box-sizing: border-box;
   background: url("@/assets/pic/backgroundImage.png") no-repeat;
@@ -245,7 +257,6 @@ const handleLogin = async () => {
       img {
         max-width: 100%;
         max-height: 100%;
-
         object-fit: contain;
       }
     }
@@ -264,7 +275,6 @@ const handleLogin = async () => {
       box-sizing: border-box;
       background-color: #e0dde9;
       border-radius: 20px;
-
       box-shadow: 0px 6px 16px 2px rgba(0, 0, 0, 0.18);
       padding: 60px 60px;
       width: 100%;
@@ -284,9 +294,7 @@ const handleLogin = async () => {
   }
 }
 
-// 登录表单样式
 .login-form {
-  // margin-top: 20px;
   padding: 0 10px;
   width: 100%;
 }
@@ -311,7 +319,6 @@ const handleLogin = async () => {
   }
 }
 
-// 错误提示文字样式
 :deep(.el-form-item__error) {
   color: red;
   margin-top: -35px;
@@ -319,7 +326,6 @@ const handleLogin = async () => {
   font-size: 16px;
 }
 
-/* 去除el-form-item的默认底边距 */
 :deep(.el-form-item) {
   margin-bottom: 0;
   width: 100%;

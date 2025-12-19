@@ -1,5 +1,6 @@
 import { defineConfig, loadEnv } from "vite";
 import vue from "@vitejs/plugin-vue";
+import vueJsx from '@vitejs/plugin-vue-jsx'
 import viteImagemin from "vite-plugin-imagemin";
 import AutoImport from "unplugin-auto-import/vite";
 import Components from "unplugin-vue-components/vite";
@@ -44,6 +45,7 @@ export default ({ mode }) => {
     },
     plugins: [
       vue(),
+      vueJsx(),
       viteImagemin({
         optipng: { optimizationLevel: 7 },
         gifsicle: { optimizationLevel: 3 },
