@@ -2,7 +2,6 @@
   <div class="device-container">
     <div class="device-title">操作演示</div>
 
-   
     <div class="operate-outer">
       <div class="operate-wrapper">
         <!-- 可滚动内容区  -->
@@ -152,7 +151,6 @@ onUnmounted(() => {
   text-align: center;
 }
 
-// 外层容器：解决滚动条占位问题
 .operate-outer {
   width: 80%;
 

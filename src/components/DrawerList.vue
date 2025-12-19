@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-11 17:24:46
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-17 15:49:42
+ * @LastEditTime: 2025-12-19 10:14:26
  * @FilePath: \zi-xiao-ai\src\components\DrawerList.vue
  * @Description: 
 -->
@@ -128,7 +128,7 @@ const menuList = ref([
     hasBorder: false,
     role: ["admin", "super_admin"],
     icon: "icon-shezhi",
-    path: "/main",
+    path: "/backPoint",
   },
   {
     name: "运行日志",

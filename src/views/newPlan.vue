@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-12 14:38:40
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-19 09:59:14
+ * @LastEditTime: 2025-12-19 10:08:55
  * @FilePath: \zi-xiao-ai\src\views\newPlan.vue
  * @Description: 新增灸方页面  
 -->
@@ -443,7 +443,7 @@ onUnmounted(() => {
             }
           }
 
-          // 滚动容器样式修改
+           
           .table-data {
             box-sizing: border-box;
             width: 100%;
