@@ -1,11 +1,3 @@
-<!--
- * @Author: Sid Li
- * @Date: 2025-12-12 11:26:16
- * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-19 10:06:53
- * @FilePath: \zi-xiao-ai\src\views\plan.vue
- * @Description: 
--->
 <template>
   <div class="plan-container">
     <Top @openMenu="openMenu" />
@@ -54,8 +46,9 @@
             class="plan-input"
             v-model="planName"
             placeholder="请输入方案名称"
-            @focus="() => keyboardRef.open(null, 'input-planName')"
             @click.stop
+            keyboard="true"
+            data-mode="cn"
           />
         </div>
         <div class="dialog-text">创建完成后可在下一个页面配置灸法详情</div>
@@ -69,6 +62,8 @@
           >
         </div>
       </div>
+
+      <VirtualKeyboard v-if="keyboardVisible" />
     </el-dialog>
 
     <!-- 抽屉组件 -->
@@ -85,14 +80,6 @@
     >
       <DrawerList />
     </el-drawer>
-
-    <!-- 键盘组件 -->
-    <Keyboard
-      ref="keyboardRef"
-      v-model="planName"
-      inputId="input-planName"
-      :isNumber="false"
-    />
   </div>
 </template>
 
@@ -100,14 +87,12 @@
 import { ref, onMounted, onUnmounted, watch } from "vue";
 import { useRouter } from "vue-router";
 
-// 引入组件（和参考页面保持一致）
 import Top from "@/components/Top.vue";
 import DrawerList from "@/components/DrawerList.vue";
 import MainTable from "@/components/Main/MainTable.vue";
 import LeftScrollList from "@/components/Main/LeftScrollList.vue";
-import Keyboard from "@/components/Keyboard.vue";
+import VirtualKeyboard from "@/components/VirtualKeyboard.vue";
 
-// 引入数据（替换原getCaseData逻辑）
 import caseData from "@/data/caseData.json";
 import pointData from "@/data/pointData.json";
 
@@ -128,11 +113,11 @@ const watchUserInfo = () => {
 };
 
 const dialogVisible = ref(false);
+const keyboardVisible = ref(false);
 const selectedCaseId = ref(1);
 const selectedPlan = ref([]);
 const caseArr = ref([]);
 const drawerVisible = ref(false);
-const keyboardRef = ref(null);
 const planName = ref("");
 const newPlan = ref({});
 
@@ -155,6 +140,9 @@ const handleClick = (id) => {
 // 新建灸方Dialog相关
 const openDialog = () => {
   dialogVisible.value = true;
+  nextTick(() => {
+    keyboardVisible.value = true;
+  });
 };
 
 const cancelDialog = () => {
@@ -167,7 +155,15 @@ const confirmDialog = () => {
   router.push(`/newPlan`);
 };
 
-// 生命周期
+watch(
+  () => dialogVisible.value,
+  (newVal) => {
+    if (!newVal) {
+      planName.value = "";
+    }
+  }
+);
+
 onMounted(() => {
   const arr = JSON.parse(JSON.stringify(pointData));
   localStorage.setItem("pointData", JSON.stringify(arr));
@@ -383,5 +379,14 @@ onUnmounted(() => {
 
 .drawer-super {
   height: 88vh !important;
+}
+// 完全隐藏滚动条
+.plan-container {
+  // 完全隐藏滚动条
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 </style>

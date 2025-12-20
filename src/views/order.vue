@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-12 16:15:42
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-19 16:16:26
+ * @LastEditTime: 2025-12-20 11:06:58
  * @FilePath: \zi-xiao-ai\src\views\order.vue
  * @Description: 
 -->
@@ -36,6 +36,9 @@
             placeholder="输入手机号"
             clearable
             class="search-input"
+            @click.stop
+            keyboard="true"
+            data-mode="num"
           />
         </div>
         <div class="nav-item">
@@ -193,6 +196,7 @@
         </div>
       </div>
     </el-dialog>
+    <VirtualKeyboard />
   </div>
 </template>
 
@@ -201,6 +205,7 @@ import { createTablePopper } from "element-plus/es/components/table/src/util.mjs
 import { ref, onMounted, computed, watch, nextTick } from "vue";
 import { useRouter } from "vue-router";
 import { CloseBold } from "@element-plus/icons-vue";
+import VirtualKeyboard from "@/components/VirtualKeyboard.vue";
 
 const router = useRouter();
 

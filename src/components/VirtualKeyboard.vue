@@ -1,5 +1,4 @@
 <template>
-  <!-- 按文档要求：配置singleDict单字库、manyDict多词库，传递正确的public路径 -->
   <keyboard
     ref="innerKeyboardRef"
     :singleDict="'/dict/baseDict.json'"
@@ -12,7 +11,7 @@
 
 <script setup>
 import { ref } from "vue";
-// 导入键盘组件（按你的项目依赖）
+
 import keyboard from "vue3-virtual-keyboard-cn/keyboardIndex.vue";
 
 const innerKeyboardRef = ref(null);
@@ -34,40 +33,25 @@ const reBindKeyboard = () => {
   }
 };
 
-// 暴露手动绑定方法（可选，按需使用）
+// 暴露手动绑定方法
 defineExpose({
   reBindKeyboard,
 });
 </script>
 
 <style scoped>
-/* 键盘样式优化，确保层级和布局正常 */
-:deep(.keyboard-container) {
-  z-index: 9999 !important;
-  bottom: 0 !important;
-  left: 0 !important;
-  width: 100% !important;
-  background-color: #fff !important;
+:deep(.main-keyboard) {
+  width: 80% !important;
+  margin-left: 10% !important;
 }
 
 /* 词组候选框样式优化，更清晰 */
-:deep(.phrase-list) {
-  border: 1px solid #e0dde9 !important;
+:deep(.select-list) {
+  /* border: 1px solid #e0dde9 !important;
   border-radius: 8px !important;
   padding: 6px !important;
-  margin-bottom: 4px !important;
-}
-
-:deep(.phrase-item) {
-  font-size: 16px !important;
-  color: #511d6a !important;
-  padding: 6px 12px !important;
-  margin: 0 4px !important;
-}
-
-:deep(.phrase-item.active) {
-  background-color: #af7dc4 !important;
-  color: #fff !important;
-  border-radius: 4px !important;
+  margin-bottom: 4px !important; */
 }
 </style>
+
+<style></style>

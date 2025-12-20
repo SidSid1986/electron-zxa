@@ -84,7 +84,6 @@
       </div>
     </div>
 
-    <!-- 仅保留一个键盘实例，移除无用的 ref 属性 -->
     <VirtualKeyboard />
   </div>
 </template>
@@ -94,9 +93,8 @@ import { ref, watch, onMounted } from "vue";
 import { ElMessage } from "element-plus";
 import { useRouter } from "vue-router";
 import loginData from "@/data/loginData.json";
-// 引入封装的键盘组件
-import VirtualKeyboard from "@/components/VirtualKeyboard.vue";
 
+import VirtualKeyboard from "@/components/VirtualKeyboard.vue";
 const router = useRouter();
 
 // 表单数据
@@ -106,10 +104,6 @@ const loginForm = ref({
 });
 const isLoginLoading = ref(false);
 const loginFormRef = ref(null);
-
-// 输入框Ref（保留），移除无用的 keyboardRef
-const usernameInputRef = ref(null);
-const passwordInputRef = ref(null);
 
 // 表单验证规则
 const loginRules = ref({
@@ -138,10 +132,7 @@ const loginRules = ref({
   ],
 });
 
-// 挂载后：删除手动绑定代码，组件自动完成绑定
-onMounted(() => {
-  // 清空此处代码，无需手动调用 inputBindKeyboard
-});
+onMounted(() => {});
 
 // 表单聚焦验证
 const handleFormFocus = (e) => {

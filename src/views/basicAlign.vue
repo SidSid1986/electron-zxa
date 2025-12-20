@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-12 16:15:42
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-16 11:27:23
+ * @LastEditTime: 2025-12-20 10:58:35
  * @FilePath: \zi-xiao-ai\src\views\basicAlign.vue
  * @Description: 
 -->
@@ -20,7 +20,7 @@
           <el-button class="align-btn" type="primary" @click="alignGray"
             >开始校准</el-button
           >
-          <el-button class="align-btn" type="primary" @click="alignGray"
+          <el-button class="align-btn" type="primary" @click="confirmGray"
             >确认</el-button
           >
         </div>
@@ -34,9 +34,7 @@
           <el-button class="align-btn" type="primary" @click="alignGray"
             >开始校准</el-button
           >
-          <el-button class="align-btn" type="primary" @click="alignGray"
-            >确认</el-button
-          >
+          <el-button class="align-btn" type="primary" @click="alignGray">确认</el-button>
         </div>
       </div>
       <div class="device-item">
@@ -48,16 +46,12 @@
           <el-button class="align-btn" type="primary" @click="alignGray"
             >开始校准</el-button
           >
-          <el-button class="align-btn" type="primary" @click="alignGray"
-            >确认</el-button
-          >
+          <el-button class="align-btn" type="primary" @click="alignGray">确认</el-button>
         </div>
       </div>
     </div>
     <div class="item-btn-line">
-      <el-button class="device-btn-back" type="primary" @click="backMain"
-        >返回</el-button
-      >
+      <el-button class="device-btn-back" type="primary" @click="backMain">返回</el-button>
     </div>
   </div>
 </template>
@@ -67,6 +61,14 @@ import { ref, onMounted } from "vue";
 
 import { useRoute, useRouter } from "vue-router";
 const router = useRouter();
+
+const alignGray = () => {
+  console.log("除灰位置校准");
+};
+
+const confirmGray = () => {
+  console.log("确认除灰位置校准");
+};
 
 const backMain = () => {
   router.push("/main");

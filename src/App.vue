@@ -71,5 +71,8 @@ body,
 #app {
   margin: 0;
   padding: 0;
+  ::-webkit-scrollbar {
+    display: none;
+  }
 }
 </style>

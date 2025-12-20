@@ -38,8 +38,7 @@
                 <!-- 暂停/结束：红圈（ 恢复暂停状态的红圈） -->
                 <div
                   v-if="
-                    item.isActive &&
-                    (item.status === 'paused' || item.status === 'ended')
+                    item.isActive && (item.status === 'paused' || item.status === 'ended')
                   "
                   class="light-border-red"
                 ></div>
@@ -57,35 +56,21 @@
     </swiper>
     <span class="custom-swiper-button-next" @click="goNext"></span>
 
-    <el-dialog
-      v-model="durationDialogVisible"
-      title="修改倒计时时长"
-      width="500px"
-    >
+    <el-dialog v-model="durationDialogVisible" title="修改倒计时时长" width="500px">
       <el-input
         v-model="durationInputValue"
         :placeholder="`请输入${isDemoMode ? '秒数' : '分钟数'}`"
-        type="number"
-        min="1"
-        @focus="() => keyboardRef.open(null, 'input-duration')"
         @click.stop
+        keyboard="true"
+        data-mode="num"
       />
       <template #footer>
         <el-button @click="durationDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleDurationConfirm"
-          >确定</el-button
-        >
+        <el-button type="primary" @click="handleDurationConfirm">确定</el-button>
       </template>
-    </el-dialog>
 
-    <!-- 虚拟键盘（和方案名称输入完全一致） -->
-    <Keyboard
-      ref="keyboardRef"
-      v-model="durationInputValue"
-      inputId="input-duration"
-      :is-number="true"
-      :precision="0"
-    />
+      <VirtualKeyboard />
+    </el-dialog>
   </div>
 </template>
 
@@ -96,6 +81,7 @@ import "swiper/css";
 import { Navigation } from "swiper/modules";
 import "swiper/css/navigation";
 import { ElMessage, ElMessageBox } from "element-plus";
+import VirtualKeyboard from "@/components/VirtualKeyboard.vue";
 
 const modules = [Navigation];
 const treatData = ref([]);
@@ -104,7 +90,6 @@ const isComponentMounted = ref(false);
 const countdownTimers = ref({});
 const remainingSecondsMap = ref({});
 
-const keyboardRef = ref(null);
 const durationDialogVisible = ref(false); // Dialog显隐
 const durationInputValue = ref(""); // 输入框值
 const currentEditItem = ref(null); // 当前修改的item（仅存储，无复杂逻辑）
@@ -155,7 +140,7 @@ const formatData = (data, activeIndex) => {
     const uniqueKey = item.uniqueId || `${item.name}-${item.point}`;
     const hasValidTime = timeNum > 0;
 
-    //  使用props传入的time1/time2（修改后的值）， 
+    //  使用props传入的time1/time2（修改后的值），
     const time1 = item.time1 || `00:01:00`; // 默认1分钟
     const time2 = item.time2 || `01:00`; // 默认1分钟
 
@@ -167,8 +152,8 @@ const formatData = (data, activeIndex) => {
     return {
       ...item,
       uniqueKey,
-      time1: time1,  
-      time2: time2, 
+      time1: time1,
+      time2: time2,
       totalSeconds: timeNum,
       remainingSeconds: remainingSecondsMap.value[uniqueKey],
       isActive: index === activeIndex,
@@ -187,17 +172,13 @@ const groupByPageSize = (data, pageSize = 3) => {
   return pages;
 };
 
-// 启动倒计时 
+// 启动倒计时
 const startCountdown = (targetIndex) => {
   if (!props.isTreating || targetIndex === -1) return;
   const allItems = treatData.value.flat();
   const targetItem = allItems[targetIndex];
 
-  if (
-    !targetItem ||
-    !targetItem.hasValidTime ||
-    targetItem.status === "ended"
-  ) {
+  if (!targetItem || !targetItem.hasValidTime || targetItem.status === "ended") {
     return;
   }
 
@@ -207,7 +188,7 @@ const startCountdown = (targetIndex) => {
     delete countdownTimers.value[key];
   });
 
-  // 2. 重置所有穴位状态（ 
+  // 2. 重置所有穴位状态（
   allItems.forEach((item) => {
     if (item.uniqueKey === targetItem.uniqueKey) {
       item.status = "running"; // 运行中 绿圈
@@ -234,8 +215,7 @@ const startCountdown = (targetIndex) => {
     }
 
     remainingSecondsMap.value[targetItem.uniqueKey] -= 1;
-    targetItem.remainingSeconds =
-      remainingSecondsMap.value[targetItem.uniqueKey];
+    targetItem.remainingSeconds = remainingSecondsMap.value[targetItem.uniqueKey];
 
     if (targetItem.remainingSeconds <= 0) {
       clearInterval(countdownTimers.value[targetItem.uniqueKey]);
@@ -257,9 +237,7 @@ const pauseCountdown = () => {
   clearInterval(countdownTimers.value[activeKey]);
   delete countdownTimers.value[activeKey];
 
-  const targetItem = treatData.value
-    .flat()
-    .find((item) => item.uniqueKey === activeKey);
+  const targetItem = treatData.value.flat().find((item) => item.uniqueKey === activeKey);
   if (targetItem) {
     targetItem.status = "paused"; // 标记暂停
   }
@@ -269,9 +247,7 @@ const pauseCountdown = () => {
 const resumeCountdown = () => {
   const allItems = treatData.value.flat();
   // 精准找到：激活+暂停状态的穴位
-  const activeItem = allItems.find(
-    (item) => item.isActive && item.status === "paused"
-  );
+  const activeItem = allItems.find((item) => item.isActive && item.status === "paused");
 
   if (!activeItem) {
     ElMessage.warning("暂无暂停的倒计时可继续");
@@ -293,8 +269,7 @@ const resumeCountdown = () => {
     }
 
     remainingSecondsMap.value[activeItem.uniqueKey] -= 1;
-    activeItem.remainingSeconds =
-      remainingSecondsMap.value[activeItem.uniqueKey];
+    activeItem.remainingSeconds = remainingSecondsMap.value[activeItem.uniqueKey];
 
     if (activeItem.remainingSeconds <= 0) {
       clearInterval(countdownTimers.value[activeItem.uniqueKey]);
@@ -339,7 +314,6 @@ const editTime = (item) => {
 };
 
 const handleDurationConfirm = () => {
-  
   const inputVal =
     parseInt(durationInputValue.value.trim()) || (isDemoMode.value ? 8 : 1);
   const newTimeInSeconds = isDemoMode.value ? inputVal : inputVal * 60;
@@ -351,22 +325,19 @@ const handleDurationConfirm = () => {
   const newTime1 = `00:${minutesStr}:${secondsStr}`;
   const newTime2 = `${minutesStr}:${secondsStr}`;
 
-  const newSwiperData = JSON.parse(JSON.stringify(props.swiperData)).map(
-    (d) => {
-      if (d.uniqueKey === currentEditItem.value.uniqueKey) {
-     
-        return {
-          ...d,
-          time: newTimeInSeconds,
-          time1: newTime1,
-          time2: newTime2,
-          totalSeconds: newTimeInSeconds,
-          remainingSeconds: newTimeInSeconds,
-        };
-      }
-      return d;
+  const newSwiperData = JSON.parse(JSON.stringify(props.swiperData)).map((d) => {
+    if (d.uniqueKey === currentEditItem.value.uniqueKey) {
+      return {
+        ...d,
+        time: newTimeInSeconds,
+        time1: newTime1,
+        time2: newTime2,
+        totalSeconds: newTimeInSeconds,
+        remainingSeconds: newTimeInSeconds,
+      };
     }
-  );
+    return d;
+  });
   emit("updateSwiperData", newSwiperData);
 
   nextTick(() => {
