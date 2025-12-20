@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-12 16:15:42
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-20 16:21:16
+ * @LastEditTime: 2025-12-20 16:36:30
  * @FilePath: \zi-xiao-ai\src\views\order.vue
  * @Description: 
 -->
@@ -828,4 +828,8 @@ onMounted(() => {
   text-align: center !important;
   padding: 0 !important;
 }
+
+//  .el-scrollbar__wrap {
+//   border: 2px solid red !important;
+// }
 </style>

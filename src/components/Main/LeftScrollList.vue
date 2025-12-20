@@ -27,7 +27,7 @@
 </template>
 
 <script setup>
-import { ref, defineProps, defineEmits, onMounted, onUnmounted } from "vue";
+import { ref, onMounted, onUnmounted } from "vue";
 
 // 接收父组件参数
 const props = defineProps({
@@ -86,7 +86,7 @@ const handleMouseUp = () => {
   document.body.style.userSelect = "auto";
 };
 
-// 鼠标移动 
+// 鼠标移动
 const handleMouseMove = (e) => {
   if (!isDragging.value) return;
 
@@ -123,7 +123,7 @@ onUnmounted(() => {
 .left-table {
   width: v-bind(containerWidth);
   height: v-bind(containerHeight);
-  overflow-y: auto; 
+  overflow-y: auto;
   overflow-x: hidden;
   box-sizing: border-box;
   border: 1px solid #b99aca;

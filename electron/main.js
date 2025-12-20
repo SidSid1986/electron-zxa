@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-11-29 13:33:24
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-10 14:12:11
+ * @LastEditTime: 2025-12-20 17:05:17
  * @FilePath: \zi-xiao-ai\electron\main.js
  * @Description: 基于loudness库的跨平台音量控制主进程代码
  */
@@ -63,11 +63,10 @@ log(
 // 保持对窗口对象的全局引用
 let mainWindow;
 
-// ===================== 音乐文件处理函数 =====================
-/**
- * 获取音乐文件列表（适配开发/生产环境）
- * @returns {Array} 音乐文件的绝对路径列表
- */
+//  音乐文件处理函数
+//获取音乐文件列表（适配开发/生产环境）
+//音乐文件的绝对路径列表
+
 function getMusicFiles() {
   try {
     const candidates = [];
@@ -79,14 +78,19 @@ function getMusicFiles() {
       // candidates.push(path.join(process.resourcesPath, "public", "music"));
       // candidates.push(path.join(__dirname, "../public/music"));
 
-   candidates.push(
+      candidates.push(
         path.join(process.resourcesPath, "assets", "music"), // 对应 extraResources 配置
-        path.join(process.resourcesPath, "app.asar.unpacked", "assets", "music"), // 兼容 asarUnpack
+        path.join(
+          process.resourcesPath,
+          "app.asar.unpacked",
+          "assets",
+          "music"
+        ), // 兼容 asarUnpack
         path.join(app.getAppPath(), "dist", "assets", "music") // 备用
       );
     } else {
       // candidates.push(path.join(app.getAppPath(), "public/music"));
-       candidates.push(path.join(app.getAppPath(), "src/assets/music"));
+      candidates.push(path.join(app.getAppPath(), "src/assets/music"));
     }
 
     log(`getMusicFiles: 尝试候选目录: ${JSON.stringify(candidates)}`);
@@ -252,7 +256,7 @@ function createWindow() {
         // 安全配置
         webSecurity: true,
         allowRunningInsecureContent: false,
-        devTools: true, // 开发环境下开启
+        devTools: true, // 调试开启开发环境下开启
         contextIsolation: true,
         nodeIntegrationInWorker: false,
         nodeIntegrationInSubFrames: false,

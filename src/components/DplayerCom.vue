@@ -4,16 +4,7 @@
 </template>
 
 <script setup>
-import {
-  ref,
-  onMounted,
-  onUnmounted,
-  watch,
-  defineProps,
-  defineEmits,
-  defineExpose,
-  computed,
-} from "vue";
+import { ref, onMounted, onUnmounted, watch, computed } from "vue";
 import DPlayer from "dplayer";
 
 // 定义 Props

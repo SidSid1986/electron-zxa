@@ -521,7 +521,7 @@ defineExpose({
 
     .swiper-item-name {
       font-size: 16px;
-      width: 50%;
+      width: 40%;
       height: 5vh;
       line-height: 5vh;
       border-right: 2px solid #ffffff;
@@ -530,7 +530,7 @@ defineExpose({
 
     .swiper-item-point {
       font-size: 16px;
-      width: 50%;
+      width: 60%;
       margin: 0 auto;
       text-align: center;
       word-wrap: break-word;
