@@ -2,8 +2,8 @@
  * @Author: Sid Li
  * @Date: 2025-12-01 08:40:17
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-04 08:47:48
- * @FilePath: \ai\src\views\check.vue
+ * @LastEditTime: 2025-12-20 17:21:26
+ * @FilePath: \zi-xiao-ai\src\views\check.vue
  * @Description: 自检页面（背景旋转，文字静止）
 -->
 <template>
@@ -100,8 +100,9 @@ const finishCheck = () => {
   padding-top: 4vh;
 
   .home-content {
-    width: 500px;
-    height: 500px;
+    width: 30vw;
+    height: 30vw;
+    // border: 1px solid red;
     position: relative; // 作为定位容器
     display: flex;
     flex-direction: column;
@@ -169,8 +170,8 @@ const finishCheck = () => {
 @media (max-width: 768px) {
   .container {
     .home-content {
-      width: 80vw;
-      height: 80vw;
+      width: 30vw;
+      height: 30vw;
 
       .check-title {
         font-size: 36px;
