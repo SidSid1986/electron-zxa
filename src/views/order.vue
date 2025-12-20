@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-12 16:15:42
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-20 11:06:58
+ * @LastEditTime: 2025-12-20 16:21:16
  * @FilePath: \zi-xiao-ai\src\views\order.vue
  * @Description: 
 -->
@@ -68,15 +68,9 @@
     </div>
 
     <div class="device-item-container">
-      <!-- 主表格拖拽容器 -->
-      <div
-        class="table-drag-wrapper"
-        @mousedown="(e) => handleDragStart(e, 'main')"
-        @mousemove="handleDragMove"
-        @mouseup="handleDragEnd"
-        @mouseleave="handleDragEnd"
-      >
+      <DragScrollWrapper>
         <el-table
+          height="55vh"
           :data="currentTableData"
           @selection-change="handleSelectionChange"
           header-row-class-name="custom-header-row"
@@ -109,7 +103,7 @@
             </template>
           </el-table-column>
         </el-table>
-      </div>
+      </DragScrollWrapper>
 
       <!-- 分页器 -->
       <div class="pagination-container">
@@ -133,7 +127,6 @@
       :show-close="false"
       v-model="dialogTableVisible"
       title=""
-      @open="handleDialogOpen"
     >
       <template #header="{ close, titleId, titleClass }">
         <div class="my-header">
@@ -153,20 +146,13 @@
           {{ orderInfo.status === 0 ? "未完成" : "已完成" }}
         </div>
       </div>
-      <div>
-        <!-- 弹窗表格拖拽容器 - 绑定原生事件确保生效 -->
-        <div
-          class="dialog-drag-wrapper"
-          @mousedown.native="(e) => handleDragStart(e, 'dialog')"
-          @mousemove.native="handleDragMove"
-          @mouseup.native="handleDragEnd"
-          @mouseleave.native="handleDragEnd"
-        >
+      <div class="dialog-table-container">
+        <DragScrollWrapper>
           <el-table
             border
+            height="28vh"
             class="dialog-table"
             :data="orderInfo.plan"
-            ref="dialogTableRef"
             header-row-class-name="dialog-table-header-row"
           >
             <el-table-column align="center" property="id" label="序号" width="60" />
@@ -193,7 +179,7 @@
               </template>
             </el-table-column>
           </el-table>
-        </div>
+        </DragScrollWrapper>
       </div>
     </el-dialog>
     <VirtualKeyboard />
@@ -206,6 +192,7 @@ import { ref, onMounted, computed, watch, nextTick } from "vue";
 import { useRouter } from "vue-router";
 import { CloseBold } from "@element-plus/icons-vue";
 import VirtualKeyboard from "@/components/VirtualKeyboard.vue";
+import DragScrollWrapper from "@/components/DragScrollWrapper.vue"; // 引入通用拖拽容器
 
 const router = useRouter();
 
@@ -243,17 +230,6 @@ const size = ref("large");
 const timeStart = ref("");
 const timeEnd = ref("");
 const dialogTableVisible = ref(false);
-
-// 表格Ref
-const mainTableRef = ref(null);
-const dialogTableRef = ref(null);
-
-// 拖拽相关变量
-const isDragging = ref(false);
-let startY = 0;
-let startScrollTop = 0;
-let currentScrollContainer = null;
-let dialogScrollContainer = null; // 缓存弹窗滚动容器
 
 // 模拟数据
 const tableData = ref([
@@ -488,111 +464,8 @@ const backMain = () => {
   router.push("/main");
 };
 
-// 弹窗打开时初始化滚动容器
-const handleDialogOpen = () => {
-  nextTick(() => {
-    setTimeout(() => {
-      // 强制获取弹窗表格的滚动容器
-      if (dialogTableRef.value && dialogTableRef.value.$el) {
-        const bodyWrapper = dialogTableRef.value.$el.querySelector(
-          ".el-table__body-wrapper"
-        );
-        if (bodyWrapper) {
-          dialogScrollContainer =
-            bodyWrapper.querySelector(".el-scrollbar__wrap") || bodyWrapper;
-          // 手动触发一次滚动容器高度计算
-          dialogScrollContainer.style.height = "100%";
-        }
-      }
-    }, 200);
-  });
-};
-
-// ===================== 拖拽滚动核心逻辑（重写） =====================
-// 获取滚动容器
-const getScrollContainer = (type) => {
-  if (type === "main") {
-    if (!mainTableRef.value || !mainTableRef.value.$el) return null;
-    const bodyWrapper = mainTableRef.value.$el.querySelector(".el-table__body-wrapper");
-    return bodyWrapper
-      ? bodyWrapper.querySelector(".el-scrollbar__wrap") || bodyWrapper
-      : null;
-  } else if (type === "dialog") {
-    // 优先使用缓存的弹窗滚动容器
-    if (dialogScrollContainer) return dialogScrollContainer;
-    if (!dialogTableRef.value || !dialogTableRef.value.$el) return null;
-    const bodyWrapper = dialogTableRef.value.$el.querySelector(".el-table__body-wrapper");
-    return bodyWrapper
-      ? bodyWrapper.querySelector(".el-scrollbar__wrap") || bodyWrapper
-      : null;
-  }
-  return null;
-};
-
-// 开始拖拽 - 简化逻辑，确保执行
-const handleDragStart = (e, type) => {
-  // 快速判断：排除可交互元素
-  const target = e.target;
-  if (
-    target.tagName === "BUTTON" ||
-    target.tagName === "INPUT" ||
-    target.classList.contains("el-checkbox") ||
-    target.classList.contains("el-tag") ||
-    target.classList.contains("el-icon")
-  ) {
-    return;
-  }
-
-  // 强制获取滚动容器
-  currentScrollContainer = getScrollContainer(type);
-  if (!currentScrollContainer) return;
-
-  // 强制标记拖拽状态
-  isDragging.value = true;
-  startY = e.clientY || e.touches[0].clientY;
-  startScrollTop = currentScrollContainer.scrollTop;
-
-  // 阻止所有默认行为
-  e.preventDefault();
-  e.stopPropagation();
-};
-
-// 拖拽中 - 确保持续执行
-const handleDragMove = (e) => {
-  if (!isDragging.value || !currentScrollContainer) return;
-
-  // 兼容鼠标和触摸事件
-  const clientY = e.clientY || e.touches[0].clientY;
-  const moveY = clientY - startY;
-
-  // 直接设置滚动位置，增加阻尼系数让滚动更流畅
-  currentScrollContainer.scrollTop = startScrollTop - moveY * 1.2;
-
-  e.preventDefault();
-  e.stopPropagation();
-};
-
-// 结束拖拽 - 强制重置
-const handleDragEnd = (e) => {
-  isDragging.value = false;
-  currentScrollContainer = null;
-  if (e) {
-    e.preventDefault();
-    e.stopPropagation();
-  }
-};
-
-// 初始化
 onMounted(() => {
   console.log("组件挂载了");
-  // 主表格初始化
-  setTimeout(() => {
-    getScrollContainer("main");
-  }, 300);
-
-  // 全局监听鼠标抬起事件，防止拖拽出容器后无法停止
-  document.addEventListener("mouseup", handleDragEnd);
-  document.addEventListener("touchend", handleDragEnd);
 });
 </script>
 
@@ -692,21 +565,6 @@ onMounted(() => {
   box-sizing: border-box;
   position: relative;
 
-  // 主表格拖拽容器
-  .table-drag-wrapper {
-    width: 100%;
-    height: 55vh;
-    overflow: hidden;
-    user-select: none;
-    cursor: grab;
-    position: relative;
-    z-index: 1;
-
-    &:active {
-      cursor: grabbing;
-    }
-  }
-
   .order-table {
     width: 100%;
     box-sizing: border-box;
@@ -724,37 +582,6 @@ onMounted(() => {
     bottom: 0;
     right: 0;
     margin-top: 5vh;
-  }
-}
-
-// 弹窗表格拖拽容器 - 强制设置样式确保覆盖
-.dialog-drag-wrapper {
-  width: 100%;
-  height: 28vh;
-  overflow: hidden !important;
-  user-select: none !important;
-  cursor: grab !important;
-  position: relative;
-  z-index: 10;
-
-  &:active {
-    cursor: grabbing !important;
-  }
-
-  // 强制穿透样式到内部表格
-  :deep(.el-table) {
-    height: 100%;
-    width: 100%;
-  }
-
-  :deep(.el-table__body-wrapper) {
-    height: 100% !important;
-    overflow: hidden !important;
-  }
-
-  :deep(.el-scrollbar__wrap) {
-    height: 100% !important;
-    overflow-y: auto !important;
   }
 }
 
@@ -808,21 +635,10 @@ onMounted(() => {
   line-height: 24px;
 }
 
-// 主表格滚动条隐藏
-:deep(.order-table .el-table__body-wrapper) {
-  overflow: hidden !important;
-
-  .el-scrollbar__wrap {
-    overflow-y: auto !important;
-    height: 100% !important;
-
-    &::-webkit-scrollbar {
-      display: none !important;
-      width: 0 !important;
-    }
-    -ms-overflow-style: none !important;
-    scrollbar-width: none !important;
-  }
+// 弹窗表格容器样式
+.dialog-table-container {
+  height: 28vh;
+  width: 100%;
 }
 </style>
 
@@ -923,7 +739,6 @@ onMounted(() => {
   }
 }
 
-// 弹窗样式（保持原有）
 .order-table-dialog {
   width: 35vw;
   height: 65vh;

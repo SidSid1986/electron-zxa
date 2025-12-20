@@ -26,17 +26,21 @@
       <div class="point-content-right">
         <div class="point-content-right-border">
           <!-- 引入封装的表格组件 -->
-          <PointTable
-            :tableData="tableData"
-            :selectedIndex="selectedAutoIndex"
-            :minBodyHeight="'5vh'"
-            :maxBodyHeight="'50vh'"
-            :headerHeight="'6vh'"
-            :tableWidth="'100%'"
-            @row-click="handleTableRowClick"
-            @point-status-click="handleTablePointStatusClick"
-            @scroll-change="handleTableScrollChange"
-          />
+          <div class="table-scrooll-content">
+            <DragScrollWrapper>
+              <PointTable
+                :tableData="tableData"
+                :selectedIndex="selectedAutoIndex"
+                :minBodyHeight="'5vh'"
+                :maxBodyHeight="'50vh'"
+                :headerHeight="'6vh'"
+                :tableWidth="'100%'"
+                @row-click="handleTableRowClick"
+                @point-status-click="handleTablePointStatusClick"
+                @scroll-change="handleTableScrollChange"
+              />
+            </DragScrollWrapper>
+          </div>
 
           <div class="right-ins">
             移动摇杆，将红点制动到指定穴位后，点击下方【使用此穴位】按钮<br />
@@ -83,13 +87,14 @@ import {
 import caseData from "@/data/caseData.json";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { useRoute, useRouter } from "vue-router";
-import BodyCom from "@/components/BodyCom.vue";
+
 import PointTable from "@/components/point/PointTable.vue"; // 引入封装的表格组件
 
 import BodyFront from "@/components/body/BodyFront.vue";
 import BodyBack from "@/components/body/BodyBack.vue";
 import LegFront from "@/components/body/LegFront.vue";
 import LegBack from "@/components/body/LegBack.vue";
+import DragScrollWrapper from "@/components/DragScrollWrapper.vue";
 
 const $ws = inject("$ws");
 

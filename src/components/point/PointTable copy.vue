@@ -11,9 +11,16 @@
         <div class="table-cell header-item4 no-border">定穴状态</div>
       </div>
 
+      <!-- 可滚动表体（动态高度：最小/最大） -->
       <div
-        class="table-body scroll-container"
+        class="table-body"
+        @mousedown="handleMouseDown"
+        @mouseup="handleMouseUp"
+        @mouseleave="handleMouseUp"
+        @mousemove="handleMouseMove"
+        @wheel="handleWheel"
         :style="{
+          cursor: isDragging ? 'grabbing' : 'grab',
           minHeight: minBodyHeight,
           maxHeight: maxBodyHeight,
           height: 'fit-content',
@@ -25,7 +32,9 @@
           :key="index"
           :class="[
             'table-row',
-            index === selectedIndex ? 'table-item-border-index' : 'right-table-content',
+            index === selectedIndex
+              ? 'table-item-border-index'
+              : 'right-table-content',
           ]"
           @click="handleRowClick(item, index)"
         >
@@ -58,39 +67,43 @@
               v-for="(point, pointIndex) in item.points"
               :key="pointIndex"
               class="point-status-item"
-              @click.stop="handlePointStatusClick(item, index, point, pointIndex)"
+              @click.stop="
+                handlePointStatusClick(item, index, point, pointIndex)
+              "
             >
               <span
                 :class="[
                   point.status === 1
                     ? 'status-red'
                     : point.status === 0
-                    ? 'status-blue'
-                    : 'status-green',
+                      ? 'status-blue'
+                      : 'status-green',
                 ]"
               >
                 {{
                   point.status === 0
                     ? "未定穴"
                     : point.status === 1
-                    ? "正在定穴"
-                    : "已定穴"
+                      ? "正在定穴"
+                      : "已定穴"
                 }}
               </span>
             </div>
           </div>
         </div>
         <!-- 空数据占位 -->
-        <div v-if="!tableData || tableData.length === 0" class="empty-row">暂无数据</div>
+        <div v-if="!tableData || tableData.length === 0" class="empty-row">
+          暂无数据
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, watch, nextTick } from "vue";
+import { ref, onMounted, onUnmounted, watch, nextTick } from "vue";
 
- 
+// 接收父组件传入的Props（对齐参考示例）
 const props = defineProps({
   // 表格数据源
   tableData: {
@@ -109,7 +122,7 @@ const props = defineProps({
     type: String,
     default: "5vh",
   },
-  // 表体最大高度
+  // 表体最大高度 
   maxBodyHeight: {
     type: String,
     default: "50vh",
@@ -133,7 +146,50 @@ const emit = defineEmits([
   "scroll-change", // 滚动位置变化
 ]);
 
- 
+// 拖动滚动相关变量（对齐参考示例）
+const isDragging = ref(false);
+const startY = ref(0);
+const startScrollTop = ref(0);
+const tableBodyRef = ref(null); // 表体DOM引用
+
+// 鼠标按下事件（开始拖动）
+const handleMouseDown = (e) => {
+  const tableBody = e.currentTarget;
+  if (!tableBody) return;
+
+  isDragging.value = true;
+  startY.value = e.clientY;
+  startScrollTop.value = tableBody.scrollTop;
+  e.preventDefault(); // 阻止默认行为
+};
+
+// 鼠标松开/离开事件（结束拖动）
+const handleMouseUp = () => {
+  isDragging.value = false;
+};
+
+// 鼠标移动事件（处理拖动滚动）
+const handleMouseMove = (e) => {
+  if (!isDragging.value) return;
+
+  const tableBody = e.currentTarget;
+  const moveY = e.clientY - startY.value;
+  // 反向滚动：鼠标向下拖  内容向上滚
+  tableBody.scrollTop = startScrollTop.value - moveY;
+
+  // 通知父组件滚动位置变化
+  emit("scroll-change", tableBody.scrollTop);
+};
+
+// 滚轮事件（增强滚动体验）
+const handleWheel = (e) => {
+  const tableBody = e.currentTarget;
+  // 自定义滚动步长
+  const scrollStep = Math.abs(e.deltaY) > 100 ? 50 : 30;
+  tableBody.scrollTop += e.deltaY > 0 ? scrollStep : -scrollStep;
+
+  emit("scroll-change", tableBody.scrollTop);
+};
 
 // 行点击事件
 const handleRowClick = (item, index) => {
@@ -150,10 +206,9 @@ watch(
   () => props.tableData,
   () => {
     nextTick(() => {
-      // 数据更新后重置滚动位置 
-      const tableBody = document.querySelector(".table-body.scroll-container");
-      if (tableBody) {
-        tableBody.scrollTop = 0;
+      // 数据更新后重置滚动位置
+      if (tableBodyRef.value) {
+        tableBodyRef.value.scrollTop = 0;
       }
     });
   },
@@ -161,14 +216,20 @@ watch(
 );
 
 onMounted(() => {
- 
+  // 全局监听鼠标松开（防止移出表体后无法结束拖动）
+  document.addEventListener("mouseup", handleMouseUp);
+  // 绑定表体Ref
+  tableBodyRef.value = document.querySelector(".table-body");
 });
 
- 
+onUnmounted(() => {
+  // 移除全局监听，避免内存泄漏
+  document.removeEventListener("mouseup", handleMouseUp);
+});
 </script>
 
 <style scoped lang="scss">
- 
+// 外层容器：解决滚动条占位 + 完整边框（对齐参考示例）
 .table-outer {
   width: v-bind(tableWidth);
   overflow: hidden;
@@ -231,8 +292,7 @@ onMounted(() => {
   width: 100%;
   box-sizing: border-box;
   user-select: none;
-  // 移除原有 cursor 样式，由通用拖拽容器控制
-  // cursor: grab;
+  cursor: grab;
 
   // 完全隐藏滚动条
   &::-webkit-scrollbar {

@@ -18,21 +18,17 @@
         />
       </div>
       <div class="right">
-        <div>
+        <DragScrollWrapper>
           <MainTable
             :tableData="selectedPlan"
             :minBodyHeight="'5vh'"
             :maxBodyHeight="'20vh'"
             :tableWidth="'70vw'"
           />
-        </div>
+        </DragScrollWrapper>
         <!-- 开始按钮容器 -->
         <div class="start-content">
-          <el-button
-            round
-            type="primary"
-            class="start-btn"
-            @click="handleStartClick"
+          <el-button round type="primary" class="start-btn" @click="handleStartClick"
             >开始</el-button
           >
         </div>
@@ -46,18 +42,10 @@
         <div class="dialog-text">客户在艾灸床上躺好后，点击</div>
         <div class="dialog-text">下方【开始定穴】按钮，进行定穴</div>
         <div class="dialog-btn-content">
-          <el-button
-            round
-            type="primary"
-            @click="cancelDialog"
-            class="title-btn"
+          <el-button round type="primary" @click="cancelDialog" class="title-btn"
             >取消</el-button
           >
-          <el-button
-            round
-            type="primary"
-            @click="confirmDialog"
-            class="title-btn"
+          <el-button round type="primary" @click="confirmDialog" class="title-btn"
             >开始定穴</el-button
           >
         </div>
@@ -86,6 +74,7 @@ import { ref, onMounted, onUnmounted, watch } from "vue";
 import { useRouter } from "vue-router";
 import caseData from "@/data/caseData.json";
 import DrawerList from "@/components/DrawerList.vue";
+import DragScrollWrapper from "@/components/DragScrollWrapper.vue";
 import MainTable from "@/components/Main/MainTable.vue";
 import LeftScrollList from "@/components/Main/LeftScrollList.vue"; // 引入新组件
 import Top from "@/components/Top.vue";
@@ -277,7 +266,6 @@ onUnmounted(() => {
     color: #511d6a;
   }
 }
-
 
 :deep(.el-dialog__body) {
   text-align: center;
