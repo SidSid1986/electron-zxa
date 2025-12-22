@@ -91,7 +91,7 @@ const backMain = () => router.push("/main");
   overflow-y: auto;
   overflow-x: hidden;
   width: 100%;
-  height: 71vh; // 固定高度
+  max-height: 71vh;
   box-sizing: border-box;
   user-select: none;
 
