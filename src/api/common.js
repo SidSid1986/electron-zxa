@@ -2,8 +2,8 @@
  * @Author: Sid Li
  * @Date: 2025-11-24 10:59:31
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-11-29 08:55:05
- * @FilePath: \robot-blocky-git\src\api\common.js
+ * @LastEditTime: 2025-12-27 13:57:28
+ * @FilePath: \zi-xiao-ai\src\api\common.js
  * @Description:
  */
 import request from "@/utils/request.js";
@@ -14,6 +14,24 @@ export function hello() {
     method: "get",
   });
 }
+
+//获取所有方案的列表
+export function getCaseList() {
+  return request({
+    url: "api/load_all",
+    method: "get",
+  });
+}
+
+//获取所有点的列表
+export function getPoints() {
+  return request({
+    url: "api/load_points",
+    method: "get",
+  });
+}
+
+
 export function addList(data) {
   return request({
     url: "api/tasks",

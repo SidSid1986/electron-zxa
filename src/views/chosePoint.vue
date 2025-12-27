@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-12 14:38:40
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-19 09:43:37
+ * @LastEditTime: 2025-12-27 16:56:52
  * @FilePath: \zi-xiao-ai\src\views\chosePoint.vue
  * @Description: 选择穴位页面  
 -->
@@ -13,11 +13,7 @@
     </div>
     <div class="point-content">
       <div class="point-content-left">
-        <component
-          :is="currentComponent"
-          ref="bodyRef"
-          :newPlanPoint="newPlanPoint"
-        />
+        <component :is="currentComponent" ref="bodyRef" :newPlanPoint="newPlanPoint" />
       </div>
       <div class="point-content-right">
         <div class="right-content">
@@ -89,6 +85,8 @@ const currentPointComponent = shallowRef(markRaw(BodyBackPoint));
 const newPlanPoint = ref([]);
 const newPlanName = ref("");
 
+const newPlanArr = ref([]);
+
 const newSelectedPoints = ref([]);
 
 const tabData = ref([
@@ -139,7 +137,7 @@ const chooseBody = (item, index) => {
 
   chooseBodyIndex.value = index;
 
-  //  修改bodyType字段（保留其他字段） 
+  //  修改bodyType字段（保留其他字段）
   // 1. 读取localStorage中的完整newPlan（无则初始化空对象）
   const storedPlan = JSON.parse(localStorage.getItem("newPlan")) || {};
   // 2. 仅修改bodyType为当前item.bodyType
@@ -173,14 +171,40 @@ const cancelPlan = () => {
 
 // 确认计划
 const confirmPlan = () => {
+  // 1. 校验：确保已选择穴位
   if (newSelectedPoints.value.length === 0) {
     ElMessageBox.alert("请选择至少一个穴位", "提示", {
       customClass: "custom-message-point",
       confirmButtonText: "确认",
-      type: "warning", // 警告类型，视觉更友好
+      type: "warning",
     });
-    return; // 终止后续逻辑
+    return;
   }
+
+  // 2. 获取新的计划数据
+  const newPlanStr = localStorage.getItem("newPlan");
+  // 增加一个校验，确保 newPlan 存在且有效
+  if (!newPlanStr) {
+    ElMessage.error("未找到新的治疗计划数据！");
+    return;
+  }
+  const newPlanObj = JSON.parse(newPlanStr);
+
+  // 3. 【核心修改】获取已有的计划数组
+  // 从 localStorage 读取，如果不存在，则初始化为一个空数组 []
+  const existingPlanArrStr = localStorage.getItem("newPlanArr");
+  const existingPlanArr = existingPlanArrStr ? JSON.parse(existingPlanArrStr) : [];
+
+  // 4. 追加新计划到已有数组中
+  existingPlanArr.push(newPlanObj);
+
+  // 5. 将更新后的完整数组保存回 localStorage
+  localStorage.setItem("newPlanArr", JSON.stringify(existingPlanArr));
+
+  // 6. 清理临时存储的新计划
+  localStorage.removeItem("newPlan");
+
+  // 7. 跳转页面
   router.push("/newPlan");
 };
 

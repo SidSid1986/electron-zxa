@@ -41,6 +41,7 @@
       <div class="dialog-content">
         <div class="dialog-title">新建灸方</div>
         <div class="dialog-text">请输入方案名称:</div>
+
         <div class="dialog-text">
           <el-input
             class="plan-input"
@@ -49,6 +50,17 @@
             @click.stop
             keyboard="true"
             data-mode="cn"
+          />
+        </div>
+
+        <div class="dialog-switch">
+          <span>是否预设:</span
+          ><el-switch
+            v-model="isReady"
+            active-value="true"
+            inactive-value="false"
+            active-text="是"
+            inactive-text="否"
           />
         </div>
         <div class="dialog-text">创建完成后可在下一个页面配置灸法详情</div>
@@ -95,6 +107,8 @@ import VirtualKeyboard from "@/components/VirtualKeyboard.vue";
 
 import caseData from "@/data/caseData.json";
 import pointData from "@/data/pointData.json";
+import { getCaseList, getPoints } from "@/api/common";
+import { lo } from "element-plus/es/locales.mjs";
 
 const router = useRouter();
 
@@ -119,11 +133,29 @@ const selectedPlan = ref([]);
 const caseArr = ref([]);
 const drawerVisible = ref(false);
 const planName = ref("");
-const newPlan = ref({});
+const newPlan = ref({
+  name: "",
+  isReady: null,
+});
+const isReady = ref(false);
 
-const getCaseList = () => {
-  caseArr.value = JSON.parse(JSON.stringify(caseData));
-  selectedPlan.value = caseArr.value[0].plan;
+const getCaseListFunc = () => {
+  //前端模拟
+  // caseArr.value = JSON.parse(JSON.stringify(caseData));
+  // selectedPlan.value = caseArr.value[0].plan;
+
+  //http请求获取数据
+  getCaseList().then((res) => {
+    caseArr.value = res || [];
+    selectedPlan.value = caseArr.value[0].plan || [];
+  });
+};
+
+const getPointsFunc = () => {
+  //http请求获取数据
+  getPoints().then((res) => {
+    localStorage.setItem("pointData", JSON.stringify(res || []));
+  });
 };
 
 const openMenu = () => {
@@ -151,7 +183,9 @@ const cancelDialog = () => {
 
 const confirmDialog = () => {
   newPlan.value.name = planName.value;
-  localStorage.setItem("newPlan", JSON.stringify(newPlan.value));
+  newPlan.value.isReady = isReady.value;
+  localStorage.setItem("newPlan", JSON.stringify({}));
+  localStorage.setItem("newPlanName", JSON.stringify(newPlan.value));
   router.push(`/newPlan`);
 };
 
@@ -165,9 +199,8 @@ watch(
 );
 
 onMounted(() => {
-  const arr = JSON.parse(JSON.stringify(pointData));
-  localStorage.setItem("pointData", JSON.stringify(arr));
-  getCaseList();
+  getPointsFunc();
+  getCaseListFunc();
   watchUserInfo();
 });
 
@@ -271,7 +304,7 @@ onUnmounted(() => {
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  height: 28vh;
+  height: 32vh;
   .dialog-title {
     font-size: 32px;
     font-weight: bold;
@@ -388,5 +421,19 @@ onUnmounted(() => {
   }
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+.dialog-switch {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  span {
+    font-size: 20px;
+    font-weight: 500;
+    color: #4c1c64;
+  }
 }
 </style>

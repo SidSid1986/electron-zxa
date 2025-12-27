@@ -79,6 +79,9 @@ import MainTable from "@/components/Main/MainTable.vue";
 import LeftScrollList from "@/components/Main/LeftScrollList.vue"; // 引入新组件
 import Top from "@/components/Top.vue";
 import pointData from "@/data/pointData.json";
+import { getCaseList, getPoints } from "@/api/common.js";
+
+const $ws = inject("$ws");
 
 const router = useRouter();
 
@@ -102,9 +105,34 @@ const selectedPlan = ref([]);
 const caseArr = ref([]);
 const drawerVisible = ref(false);
 
-const getCaseList = () => {
-  caseArr.value = JSON.parse(JSON.stringify(caseData));
-  selectedPlan.value = caseArr.value[0].plan;
+const getCaseListFunc = () => {
+  //前端模拟数据
+  // caseArr.value = JSON.parse(JSON.stringify(caseData));
+  // selectedPlan.value = caseArr.value[0].plan;
+  //======================================================
+  //ws暂时接口
+  // let data = {
+  //   command: "Load_all",
+  //   args: "",
+  // };
+  // $ws.SendMessage(`${data.command}`, `${data.args}`, (res) => {
+  //   console.log("WS响应:", res);
+  //   caseArr.value = res.result.message;
+  //   selectedPlan.value = caseArr.value[0].plan;
+  // });
+  //=====================================================
+  //http请求获取案例列表
+  getCaseList().then((res) => {
+    caseArr.value = res;
+    selectedPlan.value = caseArr.value[0].plan;
+  });
+};
+
+const getPointsFunc = () => {
+  getPoints().then((res) => {
+    const arr = JSON.parse(JSON.stringify(res));
+    localStorage.setItem("pointData", JSON.stringify(arr));
+  });
 };
 
 const openMenu = () => {
@@ -134,10 +162,30 @@ const cancelDialog = () => {
 };
 
 onMounted(() => {
-  const arr = JSON.parse(JSON.stringify(pointData));
-  console.log(arr);
-  localStorage.setItem("pointData", JSON.stringify(arr));
-  getCaseList();
+  //前端模拟数据
+  // const arr = JSON.parse(JSON.stringify(pointData));
+  // console.log(arr);
+  // localStorage.setItem("pointData", JSON.stringify(arr));
+
+  //====================================================================
+  //ws初始化数据
+  // let data = {
+  //   command: "Load_points",
+  //   args: "",
+  // };
+  // $ws.SendMessage(`${data.command}`, `${data.args}`, (res) => {
+  //   console.log("WS响应:", res);
+  //   const arr = res.result.message;
+  //   localStorage.setItem("pointData", JSON.stringify(arr));
+  // });
+  //====================================================================
+
+  //====================================================================
+  //http请求获取案例列表
+
+  getPointsFunc();
+
+  getCaseListFunc();
 
   watchUserInfo();
 });
@@ -192,6 +240,7 @@ onUnmounted(() => {
         font-size: 24px;
         color: #511d6a;
         font-weight: bold;
+        min-width: 80px;
       }
 
       :deep(.title-btn) {

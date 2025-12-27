@@ -1,6 +1,6 @@
 import { defineConfig, loadEnv } from "vite";
 import vue from "@vitejs/plugin-vue";
-import vueJsx from '@vitejs/plugin-vue-jsx'
+import vueJsx from "@vitejs/plugin-vue-jsx";
 import viteImagemin from "vite-plugin-imagemin";
 import AutoImport from "unplugin-auto-import/vite";
 import Components from "unplugin-vue-components/vite";
@@ -27,9 +27,7 @@ export default ({ mode }) => {
         plugins: [
           postCssPxToRem({
             rootValue: 10,
-
             propList: ["*", "!border"],
-
             selectorBlackList: ["norem"],
             unitPrecision: 5,
             replace: true,
@@ -54,7 +52,7 @@ export default ({ mode }) => {
       //  Element Plus 插件强制使用源码，关闭自动样式注入
       ElementPlus({
         useSource: true,
-        // 关闭自动导入样式，交给 main.js 全局引入
+        // 关闭自动导入样式，
         importStyle: false,
       }),
       //  自动导入仅导入 API，不导入样式
@@ -79,7 +77,7 @@ export default ({ mode }) => {
         "/api": {
           target: env.VITE_APP_API_HOST,
           changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/api/, "api"),
+          rewrite: (path) => path.replace(/^\/api/, ""),
         },
       },
     },

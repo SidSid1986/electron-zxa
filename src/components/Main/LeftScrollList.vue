@@ -21,7 +21,7 @@
       }"
     >
       <span class="title">{{ item.name }}</span>
-      <div class="btn">预设</div>
+      <div class="btn" v-if="item.isReady">预设</div>
     </div>
   </div>
 </template>

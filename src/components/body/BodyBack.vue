@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-13 14:06:46
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-18 15:14:04
+ * @LastEditTime: 2025-12-27 15:03:07
  * @FilePath: \zi-xiao-ai\src\components\body\BodyBack.vue
  * @Description: 身体正面图片组件
 -->
@@ -61,7 +61,8 @@ const initPointTreat = () => {
   const pointDataJson = JSON.parse(localStorage.getItem("pointData")) || [];
   pointDataCopy.value = JSON.parse(JSON.stringify(pointDataJson));
   // 过滤bodyType=2的穴位（如果为空，用原始数据）
-  pointTreat.value = pointDataCopy.value.filter(item => item.bodyType === 2) || pointDataCopy.value;
+  pointTreat.value =
+    pointDataCopy.value.filter((item) => item.bodyType === 2) || pointDataCopy.value;
   console.log("初始化pointTreat：", pointTreat.value);
 };
 
@@ -96,8 +97,8 @@ watch(
     pointData.value = [];
     nextTick(() => {
       pointData.value = updatedArr2;
+      console.log("最终pointData：", pointData.value);
     });
-    console.log("最终pointData：", pointData.value);
   },
   { immediate: true, deep: true }
 );

@@ -95,6 +95,7 @@ import BodyBack from "@/components/body/BodyBack.vue";
 import LegFront from "@/components/body/LegFront.vue";
 import LegBack from "@/components/body/LegBack.vue";
 import DragScrollWrapper from "@/components/DragScrollWrapper.vue";
+import { getCaseList } from "@/api/common";
 
 const $ws = inject("$ws");
 
@@ -136,6 +137,7 @@ const initTableData = (plan) => {
       rowIndex: 0,
       pointIndex: 0,
     };
+    console.log(currentPoint.value);
   }
   return newPlan;
 };
@@ -160,19 +162,65 @@ const chooseBody = (item) => {
 };
 
 const getPoint = (id) => {
-  const caseDataCopy = JSON.parse(JSON.stringify(caseData));
+  //前端模拟
+  // const caseDataCopy = JSON.parse(JSON.stringify(caseData));
+  // selectedCase.value = caseDataCopy.find((item) => {
+  //   return item.id * 1 === id * 1;
+  // });
 
-  selectedCase.value = caseDataCopy.find((item) => {
-    return item.id * 1 === id * 1;
+  // console.log(selectedCase.value);
+  // // 初始化数据
+  // tableData.value = initTableData(selectedCase.value.plan);
+  // console.log("初始化后表格数据:", tableData.value);
+
+  // newPlanPoint.value = tableData.value[0].points;
+  // chooseBody(newPlanPoint.value[0]);
+  // console.log(newPlanPoint.value);
+
+  //======================================================
+  //ws暂时接口
+  // let data = {
+  //   command: "Load_all",
+  //   args: "",
+  // };
+  // let caseDataCopy = [];
+  // $ws.SendMessage(`${data.command}`, `${data.args}`, (res) => {
+  //   console.log("WS响应:", res);
+  //   caseDataCopy = res.result.message;
+  //   selectedCase.value = caseDataCopy.find((item) => {
+  //     return item.id * 1 === id * 1;
+  //   });
+
+  //   console.log(selectedCase.value );
+
+  //   //初始化数据;
+  //   tableData.value = initTableData(selectedCase.value.plan);
+  //   console.log("初始化后表格数据:", tableData.value);
+
+  //   newPlanPoint.value = tableData.value[0].points;
+  //   chooseBody(newPlanPoint.value[0]);
+  //   console.log(newPlanPoint.value);
+  // });
+  //======================================================
+
+  //===================================================================
+  //从接口获取穴位数据;
+
+  getCaseList().then((res) => {
+    selectedCase.value = res.find((item) => {
+      return item.id * 1 === id * 1;
+    });
+
+    console.log(selectedCase.value);
+
+    //初始化数据
+    tableData.value = initTableData(selectedCase.value.plan);
+    console.log("初始化后表格数据:", tableData.value);
+
+    newPlanPoint.value = tableData.value[0].points;
+    console.log(newPlanPoint.value);
+    chooseBody(newPlanPoint.value[0]);
   });
-
-  // 初始化数据
-  tableData.value = initTableData(selectedCase.value.plan);
-  console.log("初始化后表格数据:", tableData.value);
-
-  newPlanPoint.value = tableData.value[0].points;
-  chooseBody(newPlanPoint.value[0]);
-  console.log(newPlanPoint.value);
 };
 
 // 表格行点击事件

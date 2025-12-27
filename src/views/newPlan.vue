@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-12 14:38:40
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-19 10:08:55
+ * @LastEditTime: 2025-12-27 17:19:20
  * @FilePath: \zi-xiao-ai\src\views\newPlan.vue
  * @Description: 新增灸方页面  
 -->
@@ -14,19 +14,13 @@
     <div class="point-content">
       <div class="point-content-left">
         <div class="left-img">
-          <component
-            :is="currentComponent"
-            ref="bodyRef"
-            :newPlanPoint="newPlanPoint"
-          />
+          <component :is="currentComponent" ref="bodyRef" :newPlanPoint="newPlanPoint" />
         </div>
       </div>
       <div class="point-content-right">
         <div class="right-content">
           <div class="table-nav">
-            <el-button @click="handleAdd" class="add-btn" type="primary"
-              >新增</el-button
-            >
+            <el-button @click="handleAdd" class="add-btn" type="primary">新增</el-button>
           </div>
           <div class="table-content">
             <div class="table-header">
@@ -55,11 +49,7 @@
                     : 'transform 0.2s cubic-bezier(0.25, 0.1, 0.25, 1)',
                 }"
               >
-                <div
-                  class="table-line"
-                  v-for="(item, index) in tableData"
-                  :key="index"
-                >
+                <div class="table-line" v-for="(item, index) in tableData" :key="index">
                   <div class="table-item">{{ item.chooseName }}</div>
                   <div class="table-item">{{ item.time }}</div>
                   <div class="table-item">
@@ -81,7 +71,9 @@
             <el-button @click="handleCancel" class="cancel-btn" type="primary"
               >取消</el-button
             >
-            <el-button class="save-btn" type="primary">保存</el-button>
+            <el-button class="save-btn" type="primary" @click="handleSave"
+              >保存</el-button
+            >
           </div>
         </div>
       </div>
@@ -98,13 +90,14 @@ import BodyFront from "@/components/body/BodyFront.vue";
 import BodyBack from "@/components/body/BodyBack.vue";
 import LegFront from "@/components/body/LegFront.vue";
 import LegBack from "@/components/body/LegBack.vue";
+import { lo } from "element-plus/es/locales.mjs";
 
 const router = useRouter();
 
 const bodyRef = ref(null);
 const currentComponent = shallowRef(markRaw(BodyBack));
 
-// 拖拽滚动状态 
+// 拖拽滚动状态
 const rightIsDragging = ref(false);
 const rightStartY = ref(0);
 const rightDragOffset = ref(0);
@@ -159,18 +152,38 @@ const handleCancel = () => {
 const handleAdd = () => {
   router.push("/chooseType");
 };
-// 更新最大滚动偏移 
+
+const handleSave = () => {
+  // 保存选中的穴位
+  const newPlan = JSON.parse(localStorage.getItem("newPlan")) || [];
+  console.log(newPlan);
+  //所有穴位status设置为0
+  newPlan.points.forEach((item) => {
+    item.status = 0;
+  });
+  console.log(newPlan);
+
+  let data = {
+    name: newPlan.name,
+    isReady: true,
+    plan: [newPlan],
+  };
+
+  console.log(data);
+
+  // router.push("/plan");
+};
+// 更新最大滚动偏移
 const updateRightMaxOffset = () => {
   if (rightContentHeight.value <= rightContainerHeight.value) {
     rightMaxOffset.value = 0;
     rightDragOffset.value = 0; // 内容不足时重置偏移
   } else {
-    rightMaxOffset.value =
-      rightContainerHeight.value - rightContentHeight.value;
+    rightMaxOffset.value = rightContainerHeight.value - rightContentHeight.value;
   }
 };
 
-// 初始化高度 
+// 初始化高度
 const initRightHeight = () => {
   nextTick(() => {
     const rightContainer = document.querySelector(".table-data");
@@ -271,8 +284,7 @@ const handleRightWheel = (e) => {
   const scrollStep = Math.abs(e.deltaY) > 100 ? 50 : 30; // 滚轮步长
 
   // 计算新偏移 + 边界限制
-  let newOffset =
-    rightDragOffset.value + (e.deltaY > 0 ? -scrollStep : scrollStep);
+  let newOffset = rightDragOffset.value + (e.deltaY > 0 ? -scrollStep : scrollStep);
   newOffset = Math.max(rightMaxOffset.value, Math.min(0, newOffset));
   rightDragOffset.value = newOffset;
 };
@@ -280,18 +292,21 @@ const handleRightWheel = (e) => {
 // 页面初始化
 onMounted(() => {
   // 获取灸方名称
-  const newPlan = JSON.parse(
-    localStorage.getItem("newPlan") || '{"name":"默认灸方"}'
-  );
-  name.value = newPlan.name;
-  console.log(newPlan);
-  chooseBody(newPlan);
+  const newPlan = JSON.parse(localStorage.getItem("newPlan"));
+  const newPlanName = JSON.parse(localStorage.getItem("newPlanName"));
+  name.value = newPlanName.name;
+  
+ 
 
-  newPlanPoint.value = JSON.parse(localStorage.getItem("newPlan")).points;
+  //初始表格数据
+  const newPlanArr = JSON.parse(localStorage.getItem("newPlanArr")) || [];
 
-  if (newPlan.points && newPlan.points.length > 0) {
-    tableData.value.push(newPlan);
+  if(newPlanArr.length > 0) {
+    newPlanPoint.value = newPlanArr[0].points;
+     chooseBody(newPlanArr[0]);
   }
+
+  tableData.value = newPlanArr;
 
   // 初始化高度（延迟确保DOM渲染完成）
   setTimeout(() => {
@@ -443,7 +458,6 @@ onUnmounted(() => {
             }
           }
 
-           
           .table-data {
             box-sizing: border-box;
             width: 100%;

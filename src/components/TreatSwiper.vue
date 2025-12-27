@@ -56,7 +56,12 @@
     </swiper>
     <span class="custom-swiper-button-next" @click="goNext"></span>
 
-    <el-dialog v-model="durationDialogVisible" title="修改倒计时时长" width="500px">
+    <el-dialog
+      class="treat-dialog"
+      v-model="durationDialogVisible"
+      title="修改倒计时时长"
+      width="500px"
+    >
       <el-input
         v-model="durationInputValue"
         :placeholder="`请输入${isDemoMode ? '秒数' : '分钟数'}`"
@@ -765,6 +770,13 @@ defineExpose({
       margin-top: 4px;
       font-size: 14px !important;
     }
+  }
+}
+.treat-dialog {
+  .el-dialog__title {
+    font-size: 24px;
+    font-weight: bold;
+    color: #693e9c;
   }
 }
 </style>
