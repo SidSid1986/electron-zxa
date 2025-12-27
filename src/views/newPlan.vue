@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-12 14:38:40
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-27 17:19:20
+ * @LastEditTime: 2025-12-27 17:30:01
  * @FilePath: \zi-xiao-ai\src\views\newPlan.vue
  * @Description: 新增灸方页面  
 -->
@@ -155,18 +155,19 @@ const handleAdd = () => {
 
 const handleSave = () => {
   // 保存选中的穴位
-  const newPlan = JSON.parse(localStorage.getItem("newPlan")) || [];
-  console.log(newPlan);
+  const plan = JSON.parse(localStorage.getItem("newPlanArr")) || [];
+  const planName = JSON.parse(localStorage.getItem("newPlanName")) || {};
+ 
   //所有穴位status设置为0
-  newPlan.points.forEach((item) => {
+  plan.forEach((item) => {
     item.status = 0;
   });
-  console.log(newPlan);
+  console.log(plan);
 
   let data = {
-    name: newPlan.name,
-    isReady: true,
-    plan: [newPlan],
+    name: planName.name,
+    isReady: planName.isReady,
+    plan: plan,
   };
 
   console.log(data);
