@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-12 14:38:40
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-27 16:56:52
+ * @LastEditTime: 2025-12-29 10:48:20
  * @FilePath: \zi-xiao-ai\src\views\chosePoint.vue
  * @Description: 选择穴位页面  
 -->
@@ -85,7 +85,7 @@ const currentPointComponent = shallowRef(markRaw(BodyBackPoint));
 const newPlanPoint = ref([]);
 const newPlanName = ref("");
 
-const newPlanArr = ref([]);
+const newPlan = ref({});
 
 const newSelectedPoints = ref([]);
 
@@ -211,6 +211,10 @@ const confirmPlan = () => {
 // 页面初始化
 onMounted(() => {
   newPlanName.value = JSON.parse(localStorage.getItem("newPlan")).chooseName;
+
+  newPlan.value = JSON.parse(localStorage.getItem("newPlan")) || {};
+  const item = tabData.value.find((item) => item.bodyType == newPlan.value.bodyType);
+  chooseBody(item, tabData.value.indexOf(item));
 });
 
 // 组件卸载：清理定时器和事件监听

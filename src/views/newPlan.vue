@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-12 14:38:40
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-27 17:30:01
+ * @LastEditTime: 2025-12-29 09:42:41
  * @FilePath: \zi-xiao-ai\src\views\newPlan.vue
  * @Description: 新增灸方页面  
 -->
@@ -59,8 +59,18 @@
                   </div>
 
                   <div class="table-item">
-                    <el-button class="edit-btn" type="primary">编辑</el-button>
-                    <el-button class="delete-btn" type="danger">删除</el-button>
+                    <el-button
+                      @click="handleEdit(item, index)"
+                      class="edit-btn"
+                      type="primary"
+                      >编辑</el-button
+                    >
+                    <el-button
+                      @click="handleDelete(item, index)"
+                      class="delete-btn"
+                      type="danger"
+                      >删除</el-button
+                    >
                   </div>
                 </div>
               </div>
@@ -90,7 +100,8 @@ import BodyFront from "@/components/body/BodyFront.vue";
 import BodyBack from "@/components/body/BodyBack.vue";
 import LegFront from "@/components/body/LegFront.vue";
 import LegBack from "@/components/body/LegBack.vue";
-import { lo } from "element-plus/es/locales.mjs";
+import { addPlan } from "@/api/common.js";
+import { ElMessageBox } from "element-plus";
 
 const router = useRouter();
 
@@ -150,6 +161,7 @@ const handleCancel = () => {
 };
 
 const handleAdd = () => {
+  localStorage.setItem("newPlanType", 1);
   router.push("/chooseType");
 };
 
@@ -157,10 +169,12 @@ const handleSave = () => {
   // 保存选中的穴位
   const plan = JSON.parse(localStorage.getItem("newPlanArr")) || [];
   const planName = JSON.parse(localStorage.getItem("newPlanName")) || {};
- 
+
   //所有穴位status设置为0
   plan.forEach((item) => {
-    item.status = 0;
+    item.points.forEach((point) => {
+      point.status = 0;
+    });
   });
   console.log(plan);
 
@@ -172,7 +186,33 @@ const handleSave = () => {
 
   console.log(data);
 
-  // router.push("/plan");
+  addPlan(data).then((res) => {
+    // router.push("/plan");
+  });
+};
+
+// 删除方案
+const handleDelete = (item, index) => {
+  ElMessageBox.confirm("确认删除该方案吗？", "删除确认", {
+    confirmButtonText: "确定",
+    cancelButtonText: "取消",
+    type: "warning",
+  }).then(() => {
+    // 删除逻辑
+    tableData.value.splice(index, 1);
+    ElMessage.success("删除成功");
+    //刷新localStorage
+    localStorage.setItem("newPlanArr", JSON.stringify(tableData.value));
+  });
+};
+
+// 编辑方案
+const handleEdit = (item, index) => {
+  // 编辑逻辑
+  console.log(item, index);
+  localStorage.setItem("newPlanType", 2);
+  localStorage.setItem("newPlan", JSON.stringify(item));
+  router.push("/chooseType");
 };
 // 更新最大滚动偏移
 const updateRightMaxOffset = () => {
@@ -296,15 +336,13 @@ onMounted(() => {
   const newPlan = JSON.parse(localStorage.getItem("newPlan"));
   const newPlanName = JSON.parse(localStorage.getItem("newPlanName"));
   name.value = newPlanName.name;
-  
- 
 
   //初始表格数据
   const newPlanArr = JSON.parse(localStorage.getItem("newPlanArr")) || [];
 
-  if(newPlanArr.length > 0) {
+  if (newPlanArr.length > 0) {
     newPlanPoint.value = newPlanArr[0].points;
-     chooseBody(newPlanArr[0]);
+    chooseBody(newPlanArr[0]);
   }
 
   tableData.value = newPlanArr;

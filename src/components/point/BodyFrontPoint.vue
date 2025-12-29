@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-13 14:48:09
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-19 10:07:23
+ * @LastEditTime: 2025-12-29 11:25:27
  * @FilePath: \zi-xiao-ai\src\components\point\BodyFrontPoint.vue
  * @Description: 
 -->
@@ -35,7 +35,7 @@ const router = useRouter();
 const currentPlan = ref(JSON.parse(localStorage.getItem("newPlan")));
 const pointList = ref([]);
 
-// 最大可选数量 
+// 最大可选数量
 const MAX_SELECT_COUNT = 2;
 
 // 判断穴位是否被选中
@@ -56,9 +56,7 @@ const treatPoint = (item) => {
     // 多选模式逻辑
     if (isSelected) {
       // 已选中 取消选中（不受数量限制）
-      currentPlan.value.points = currentPlan.value.points.filter(
-        (p) => p.id !== item.id
-      );
+      currentPlan.value.points = currentPlan.value.points.filter((p) => p.id !== item.id);
     } else {
       // 未选中   先判断当前选中数量是否达上限
       if (currentPlan.value.points.length >= MAX_SELECT_COUNT) {
@@ -107,7 +105,26 @@ onMounted(() => {
   const pointData = JSON.parse(localStorage.getItem("pointData")) || [];
   pointList.value = pointData.filter((item) => item.bodyType == 0);
   // currentPlan.value.bodyType = 2;
-  clearSelectedPoints(); // 挂载时清空选中状态
+
+  const newPlanType = localStorage.getItem("newPlanType");
+
+  // currentPlan.value.bodyType = 2;
+  if (newPlanType == 2) {
+    const filteredPoints = pointList.value.filter((point) =>
+      currentPlan.value.points.some((selectedPoint) => selectedPoint._id === point._id)
+    );
+    console.log(filteredPoints);
+    clearSelectedPoints();
+    filteredPoints.forEach((item) => {
+      console.log(item);
+      treatPoint(item);
+    });
+  }
+
+  if (newPlanType == 1) {
+    clearSelectedPoints(); // 挂载时清空选中状态
+  }
+
   console.log("筛选后的穴位列表:", pointList.value);
   console.log("当前计划数据:", currentPlan.value);
 });

@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-12 14:38:40
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-15 11:20:10
+ * @LastEditTime: 2025-12-29 10:39:02
  * @FilePath: \zi-xiao-ai\src\views\chooseType.vue
  * @Description: 选择灸方页面
 -->
@@ -45,9 +45,7 @@
         <el-button @click="handleCancel" class="cancel-btn" type="primary"
           >取消</el-button
         >
-        <el-button @click="handleSave" class="save-btn" type="primary"
-          >确认</el-button
-        >
+        <el-button @click="handleSave" class="save-btn" type="primary">确认</el-button>
       </div>
     </div>
   </div>
@@ -60,6 +58,7 @@ import { useRoute, useRouter } from "vue-router";
 
 const router = useRouter();
 const newPlan = ref(JSON.parse(localStorage.getItem("newPlan")) || {});
+const newPlanType = ref(JSON.parse(localStorage.getItem("newPlanType")));
 const chooseData = ref([
   {
     id: 1,
@@ -144,7 +143,7 @@ const chooseObj = ref({
 // 选择灸方
 const chooseItem = (item, index) => {
   chooseIndex.value = index;
-  chooseTimeIndex.value = 0;
+  // chooseTimeIndex.value = 0;
   chooseObj.value.treatType = item.treatType;
   chooseObj.value.chooseName = item.name;
 };
@@ -162,13 +161,33 @@ const handleSave = () => {
   newPlan.value.treatType = chooseObj.value.treatType;
   newPlan.value.chooseName = chooseObj.value.chooseName;
   newPlan.value.time = chooseObj.value.time;
-  newPlan.value.bodyType = 2;
+  if (newPlanType.value == 1) {
+    newPlan.value.bodyType = 2;
+  }
+
+  console.log(newPlan.value);
+
   localStorage.setItem("newPlan", JSON.stringify(newPlan.value));
   router.push("/chosePoint");
 };
 
 // 页面初始化
-onMounted(() => {});
+onMounted(() => {
+ 
+  newPlan.value = JSON.parse(localStorage.getItem("newPlan")) || {};
+  const item = chooseData.value.find((item) => item.treatType == newPlan.value.treatType);
+  if (item) {
+    chooseItem(item, chooseData.value.indexOf(item));
+  }
+  if (newPlan.value.time) {
+    chooseTimeItem(
+      timeData.value.find((item) => item.value == newPlan.value.time),
+      timeData.value.indexOf(
+        timeData.value.find((item) => item.value == newPlan.value.time)
+      )
+    );
+  }
+});
 
 onUnmounted(() => {});
 </script>

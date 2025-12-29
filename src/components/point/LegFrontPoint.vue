@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-13 14:48:09
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-19 09:56:31
+ * @LastEditTime: 2025-12-29 11:29:57
  * @FilePath: \zi-xiao-ai\src\components\point\LegFrontPoint.vue
  * @Description: 
 -->
@@ -107,7 +107,26 @@ onMounted(() => {
   const pointData = JSON.parse(localStorage.getItem("pointData")) || [];
   pointList.value = pointData.filter((item) => item.bodyType == 1);
   // currentPlan.value.bodyType = 2;
-  clearSelectedPoints(); // 挂载时清空选中状态
+
+  const newPlanType = localStorage.getItem("newPlanType");
+
+  // currentPlan.value.bodyType = 2;
+  if (newPlanType == 2) {
+    const filteredPoints = pointList.value.filter((point) =>
+      currentPlan.value.points.some((selectedPoint) => selectedPoint._id === point._id)
+    );
+    console.log(filteredPoints);
+    clearSelectedPoints();
+    filteredPoints.forEach((item) => {
+      console.log(item);
+      treatPoint(item);
+    });
+  }
+
+  if (newPlanType == 1) {
+    clearSelectedPoints(); // 挂载时清空选中状态
+  }
+
   console.log("筛选后的穴位列表:", pointList.value);
   console.log("当前计划数据:", currentPlan.value);
 });

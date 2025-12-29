@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-11-24 10:59:31
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-27 13:57:28
+ * @LastEditTime: 2025-12-29 09:06:37
  * @FilePath: \zi-xiao-ai\src\api\common.js
  * @Description:
  */
@@ -31,14 +31,23 @@ export function getPoints() {
   });
 }
 
-
-export function addList(data) {
+//添加新方案
+export function addPlan(data) {
   return request({
-    url: "api/tasks",
+    url: "api/save_a_plan",
     method: "post",
     data,
   });
 }
+
+//删除方案
+export function deletePlan(uuid) {
+  return request({
+    url: `api/delete_uuid?uuid_value=${uuid}`,
+    method: "get",
+  });
+}
+
 export function getList() {
   return request({
     url: "api/tasks",
