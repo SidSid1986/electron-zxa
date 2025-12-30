@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-12 14:38:40
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-30 17:17:33
+ * @LastEditTime: 2025-12-30 17:21:15
  * @FilePath: \zi-xiao-ai\src\views\newPlan.vue
  * @Description: 新增灸方页面  
 -->
@@ -204,6 +204,7 @@ const handleSave = () => {
     console.log(data);
 
     updatePlan(planName.uuid_id, data).then((res) => {
+      ElMessage.success("计划保存成功！");
       router.push("/plan");
     });
   } else {
@@ -216,6 +217,7 @@ const handleSave = () => {
     console.log(data);
 
     addPlan(data).then((res) => {
+      ElMessage.success("计划保存成功！");
       router.push("/plan");
     });
   }

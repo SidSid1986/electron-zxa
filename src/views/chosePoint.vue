@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-12 14:38:40
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-30 15:23:18
+ * @LastEditTime: 2025-12-30 17:20:18
  * @FilePath: \zi-xiao-ai\src\views\chosePoint.vue
  * @Description: 选择穴位页面  
 -->
@@ -206,7 +206,7 @@ const confirmPlan = () => {
       existingPlanArr[existingPlanIndex] = newPlanObj;
       // 8. 写回localStorage（更新newPlanArr）
       localStorage.setItem("newPlanArr", JSON.stringify(existingPlanArr));
-      ElMessage.success("计划编辑成功！");
+
       // 6. 清理临时存储的新计划
       localStorage.removeItem("newPlan");
       // 7. 跳转页面
