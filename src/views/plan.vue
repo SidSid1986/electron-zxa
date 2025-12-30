@@ -139,6 +139,7 @@ const newPlan = ref({
   isReady: null,
 });
 const isReady = ref(false);
+const currentId = ref("");
 const selectedItem = ref({});
 const dialogTitle = ref("");
 
@@ -191,6 +192,9 @@ const cancelDialog = () => {
 const confirmDialog = () => {
   newPlan.value.name = planName.value;
   newPlan.value.isReady = isReady.value;
+  if (localStorage.getItem("newPlanType") == 2) {
+    newPlan.value.uuid_id = currentId.value;
+  }
 
   console.log(localStorage.getItem("newPlanType"));
 
@@ -221,6 +225,7 @@ const handleEdit = () => {
   console.log(selectedItem.value);
   planName.value = selectedItem.value.name;
   isReady.value = selectedItem.value.isReady;
+  currentId.value = selectedItem.value.uuid_id;
   console.log(isReady.value);
 
   dialogVisible.value = true;
@@ -241,6 +246,7 @@ onMounted(() => {
   localStorage.removeItem("newPlanType");
   localStorage.removeItem("newPlanArr");
   localStorage.removeItem("newPlanName");
+  localStorage.removeItem("newPointType");
   getPointsFunc();
   getCaseListFunc();
   watchUserInfo();

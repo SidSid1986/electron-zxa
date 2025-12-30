@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-13 14:48:09
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-29 14:16:39
+ * @LastEditTime: 2025-12-30 16:10:05
  * @FilePath: \zi-xiao-ai\src\components\point\BodyFrontPoint.vue
  * @Description: 
 -->
@@ -107,7 +107,8 @@ onMounted(() => {
   // currentPlan.value.bodyType = 2;
   console.log(pointList.value);
 
-  const newPlanType = localStorage.getItem("newPlanType");
+    const newPlanType = localStorage.getItem("newPlanType");
+  const newPointType = localStorage.getItem("newPointType");
 
   // currentPlan.value.bodyType = 2;
   if (newPlanType == 2) {
@@ -122,7 +123,8 @@ onMounted(() => {
     });
   }
 
-  if (newPlanType == 1) {
+ if (newPlanType == 1 || newPointType == 1) {
+    console.log("啦啦啦");
     clearSelectedPoints(); // 挂载时清空选中状态
   }
 

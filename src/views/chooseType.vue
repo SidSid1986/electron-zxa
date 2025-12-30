@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-12 14:38:40
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-29 10:39:02
+ * @LastEditTime: 2025-12-30 16:17:23
  * @FilePath: \zi-xiao-ai\src\views\chooseType.vue
  * @Description: 选择灸方页面
 -->
@@ -58,7 +58,7 @@ import { useRoute, useRouter } from "vue-router";
 
 const router = useRouter();
 const newPlan = ref(JSON.parse(localStorage.getItem("newPlan")) || {});
-const newPlanType = ref(JSON.parse(localStorage.getItem("newPlanType")));
+const newPlanType = ref(0);
 const chooseData = ref([
   {
     id: 1,
@@ -83,6 +83,8 @@ const chooseData = ref([
 ]);
 const chooseIndex = ref(0);
 const chooseTimeIndex = ref(0);
+
+const newPointType = ref(0);
 
 const timeData = ref([
   {
@@ -161,7 +163,7 @@ const handleSave = () => {
   newPlan.value.treatType = chooseObj.value.treatType;
   newPlan.value.chooseName = chooseObj.value.chooseName;
   newPlan.value.time = chooseObj.value.time;
-  if (newPlanType.value == 1) {
+  if (newPlanType.value == 1 || newPointType.value == 1) {
     newPlan.value.bodyType = 2;
   }
 
@@ -173,7 +175,9 @@ const handleSave = () => {
 
 // 页面初始化
 onMounted(() => {
- 
+  newPlanType.value = JSON.parse(localStorage.getItem("newPlanType"));
+  newPointType.value = JSON.parse(localStorage.getItem("newPointType"));
+
   newPlan.value = JSON.parse(localStorage.getItem("newPlan")) || {};
   const item = chooseData.value.find((item) => item.treatType == newPlan.value.treatType);
   if (item) {

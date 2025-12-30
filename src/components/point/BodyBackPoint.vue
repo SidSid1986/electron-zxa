@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-13 14:48:09
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-29 11:30:07
+ * @LastEditTime: 2025-12-30 16:19:45
  * @FilePath: \zi-xiao-ai\src\components\point\BodyBackPoint.vue
  * @Description: 
 -->
@@ -107,14 +107,16 @@ const clearSelectedPoints = () => {
 
 onMounted(() => {
   console.log("组件挂载了");
+
   const pointData = JSON.parse(localStorage.getItem("pointData")) || [];
   pointList.value = pointData.filter((item) => item.bodyType == 2);
   // currentPlan.value.bodyType = 2;
 
   const newPlanType = localStorage.getItem("newPlanType");
+  const newPointType = localStorage.getItem("newPointType");
 
   // currentPlan.value.bodyType = 2;
-  if (newPlanType == 2) {
+  if (newPlanType == 2 && newPointType == 2) {
     const filteredPoints = pointList.value.filter((point) =>
       currentPlan.value.points.some((selectedPoint) => selectedPoint._id === point._id)
     );
@@ -126,7 +128,8 @@ onMounted(() => {
     });
   }
 
-  if (newPlanType == 1) {
+  if (newPlanType == 1 || newPointType == 1) {
+    console.log("啦啦啦");
     clearSelectedPoints(); // 挂载时清空选中状态
   }
 

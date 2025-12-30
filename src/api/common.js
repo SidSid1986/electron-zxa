@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-11-24 10:59:31
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-29 14:35:08
+ * @LastEditTime: 2025-12-30 14:41:59
  * @FilePath: \zi-xiao-ai\src\api\common.js
  * @Description:
  */
@@ -45,6 +45,15 @@ export function deletePlan(uuid) {
   return request({
     url: `api/delete_uuid?uuid_value=${uuid}`,
     method: "delete",
+  });
+}
+
+//export 修改计划
+export function updatePlan(uuid_value,data) {
+  return request({
+    url: `api/update_plan_by_uuid/${uuid_value}`,
+    method: "put",
+    data,
   });
 }
 

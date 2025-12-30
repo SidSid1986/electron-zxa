@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-12 14:38:40
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-29 14:44:44
+ * @LastEditTime: 2025-12-30 17:08:55
  * @FilePath: \zi-xiao-ai\src\views\newPlan.vue
  * @Description: 新增灸方页面  
 -->
@@ -100,7 +100,7 @@ import BodyFront from "@/components/body/BodyFront.vue";
 import BodyBack from "@/components/body/BodyBack.vue";
 import LegFront from "@/components/body/LegFront.vue";
 import LegBack from "@/components/body/LegBack.vue";
-import { addPlan } from "@/api/common.js";
+import { addPlan, updatePlan } from "@/api/common.js";
 import { ElMessageBox } from "element-plus";
 import { lo } from "element-plus/es/locales.mjs";
 
@@ -124,6 +124,7 @@ const rightMaxOffset = ref(0); // 最大滚动偏移（底部边界）
 const name = ref("");
 const tableData = ref([]);
 const newPlanPoint = ref([]);
+const newPointType = ref(0);
 
 const chooseBody = (item, index) => {
   switch (item.bodyType) {
@@ -162,6 +163,8 @@ const handleCancel = () => {
 };
 
 const handleAdd = () => {
+  newPointType.value = 1;
+  localStorage.setItem("newPointType", JSON.stringify(newPointType.value));
   router.push("/chooseType");
 };
 
@@ -178,17 +181,31 @@ const handleSave = () => {
   });
   console.log(plan);
 
-  let data = {
-    name: planName.name,
-    isReady: planName.isReady,
-    plan: plan,
-  };
+  if (localStorage.getItem("newPlanType") == 2) {
+    let data = {
+      name: planName.name,
+      isReady: planName.isReady,
+      plan: plan,
+    };
 
-  console.log(data);
+    console.log(data);
 
-  addPlan(data).then((res) => {
-    router.push("/plan");
-  });
+    updatePlan(planName.uuid_id, data).then((res) => {
+      router.push("/plan");
+    });
+  } else {
+    let data = {
+      name: planName.name,
+      isReady: planName.isReady,
+      plan: plan,
+    };
+
+    console.log(data);
+
+    addPlan(data).then((res) => {
+      router.push("/plan");
+    });
+  }
 };
 
 // 删除方案
@@ -210,6 +227,8 @@ const handleDelete = (item, index) => {
 const handleEdit = (item, index) => {
   // 编辑逻辑
   console.log(item, index);
+  newPointType.value = 2;
+  localStorage.setItem("newPointType", JSON.stringify(newPointType.value));
   localStorage.setItem("newPlan", JSON.stringify(item));
   router.push("/chooseType");
 };
@@ -340,6 +359,9 @@ onMounted(() => {
   const newPlanArr = JSON.parse(localStorage.getItem("newPlanArr")) || [];
 
   if (newPlanArr.length > 0) {
+    console.log("进入newPlan");
+    newPlanArr[0].points[0].status = 1;
+
     newPlanPoint.value = newPlanArr[0].points;
     chooseBody(newPlanArr[0]);
   }

@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-13 14:48:09
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-19 10:03:19
+ * @LastEditTime: 2025-12-30 16:10:17
  * @FilePath: \zi-xiao-ai\src\components\point\LegBackPoint.vue
  * @Description: 
 -->
@@ -106,7 +106,8 @@ onMounted(() => {
   pointList.value = pointData.filter((item) => item.bodyType == 3);
   // currentPlan.value.bodyType = 2;
 
-  const newPlanType = localStorage.getItem("newPlanType");
+   const newPlanType = localStorage.getItem("newPlanType");
+  const newPointType = localStorage.getItem("newPointType");
 
   // currentPlan.value.bodyType = 2;
   if (newPlanType == 2) {
@@ -121,7 +122,8 @@ onMounted(() => {
     });
   }
 
-  if (newPlanType == 1) {
+  if (newPlanType == 1 || newPointType == 1) {
+    console.log("啦啦啦");
     clearSelectedPoints(); // 挂载时清空选中状态
   }
   console.log("筛选后的穴位列表:", pointList.value);

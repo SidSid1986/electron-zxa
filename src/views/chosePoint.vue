@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-12 14:38:40
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-29 16:12:55
+ * @LastEditTime: 2025-12-30 15:23:18
  * @FilePath: \zi-xiao-ai\src\views\chosePoint.vue
  * @Description: 选择穴位页面  
 -->
@@ -171,7 +171,7 @@ const cancelPlan = () => {
 
 // 确认计划
 const confirmPlan = () => {
-  // 1. 校验：确保已选择穴位
+  // 1. 确保已选择穴位
   if (newSelectedPoints.value.length === 0) {
     ElMessageBox.alert("请选择至少一个穴位", "提示", {
       customClass: "custom-message-point",
@@ -183,41 +183,67 @@ const confirmPlan = () => {
 
   // 2. 获取新的计划数据
   const newPlanStr = localStorage.getItem("newPlan");
-  // 增加一个校验，确保 newPlan 存在且有效
+  // 确保 newPlan 存在且有效
   if (!newPlanStr) {
     ElMessage.error("未找到新的治疗计划数据！");
     return;
   }
   const newPlanObj = JSON.parse(newPlanStr);
 
-  // 3. 【核心修改】获取已有的计划数组
-  // 从 localStorage 读取，如果不存在，则初始化为一个空数组 []
-  const existingPlanArrStr = localStorage.getItem("newPlanArr");
-  const existingPlanArr = existingPlanArrStr ? JSON.parse(existingPlanArrStr) : [];
+  if (newPlanObj.plan_id) {
+    //编辑计划通过id判断
+    // 查找并更新已存在的计划，通过plan_id查找然后更新localStorage中的newPlanArr
+    const existingPlanArrStr = localStorage.getItem("newPlanArr");
+    if (!existingPlanArrStr) {
+      ElMessage.error("未找到已有的治疗计划数组！");
+      return;
+    }
+    const existingPlanArr = JSON.parse(existingPlanArrStr);
+    const existingPlanIndex = existingPlanArr.findIndex(
+      (plan) => plan.plan_id === newPlanObj.plan_id
+    );
+    if (existingPlanIndex !== -1) {
+      existingPlanArr[existingPlanIndex] = newPlanObj;
+      // 8. 写回localStorage（更新newPlanArr）
+      localStorage.setItem("newPlanArr", JSON.stringify(existingPlanArr));
+      ElMessage.success("计划编辑成功！");
+      // 6. 清理临时存储的新计划
+      localStorage.removeItem("newPlan");
+      // 7. 跳转页面
+      router.push("/newPlan");
+    } else {
+      ElMessage.error("未找到要编辑的计划！");
+      return;
+    }
+  } else {
+    // 新增计划时
+    // 3. 获取已有的计划数组
+    // 从 localStorage 读取，如果不存在，则初始化为一个空数组 []
+    const existingPlanArrStr = localStorage.getItem("newPlanArr");
+    const existingPlanArr = existingPlanArrStr ? JSON.parse(existingPlanArrStr) : [];
 
-  // 4. 追加新计划到已有数组中
-  existingPlanArr.push(newPlanObj);
+    // 4. 追加新计划到已有数组中
+    existingPlanArr.push(newPlanObj);
 
-  // 5. 将更新后的完整数组保存回 localStorage
-  localStorage.setItem("newPlanArr", JSON.stringify(existingPlanArr));
+    // 5. 将更新后的完整数组保存回 localStorage
+    localStorage.setItem("newPlanArr", JSON.stringify(existingPlanArr));
 
-  // 6. 清理临时存储的新计划
-  localStorage.removeItem("newPlan");
+    // 6. 清理临时存储的新计划
+    localStorage.removeItem("newPlan");
 
-  // 7. 跳转页面
-  router.push("/newPlan");
+    // 7. 跳转页面
+    router.push("/newPlan");
+  }
 };
 
 // 页面初始化
 onMounted(() => {
   newPlanName.value = JSON.parse(localStorage.getItem("newPlan")).chooseName;
-
   newPlan.value = JSON.parse(localStorage.getItem("newPlan")) || {};
   const item = tabData.value.find((item) => item.bodyType == newPlan.value.bodyType);
   chooseBody(item, tabData.value.indexOf(item));
 });
 
-// 组件卸载：清理定时器和事件监听
 onUnmounted(() => {});
 </script>
 
