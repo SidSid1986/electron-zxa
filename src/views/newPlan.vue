@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-12 14:38:40
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-30 17:08:55
+ * @LastEditTime: 2025-12-30 17:17:33
  * @FilePath: \zi-xiao-ai\src\views\newPlan.vue
  * @Description: 新增灸方页面  
 -->
@@ -49,7 +49,12 @@
                     : 'transform 0.2s cubic-bezier(0.25, 0.1, 0.25, 1)',
                 }"
               >
-                <div class="table-line" v-for="(item, index) in tableData" :key="index">
+                <div
+                  class="table-line"
+                  v-for="(item, index) in tableData"
+                  :key="index"
+                  @click="selectLine(item)"
+                >
                   <div class="table-item">{{ item.chooseName }}</div>
                   <div class="table-item">{{ item.time }}</div>
                   <div class="table-item">
@@ -125,6 +130,14 @@ const name = ref("");
 const tableData = ref([]);
 const newPlanPoint = ref([]);
 const newPointType = ref(0);
+
+const selectLine = (item) => {
+  console.log(item);
+  item.points[0].status = 1;
+  newPlanPoint.value = item.points;
+
+  chooseBody(item);
+};
 
 const chooseBody = (item, index) => {
   switch (item.bodyType) {
