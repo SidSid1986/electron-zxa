@@ -21,8 +21,10 @@
           <el-button @click="openDialog" class="edit-btn" type="primary"
             >新增灸方</el-button
           >
-          <el-button class="edit-btn" type="primary">编辑</el-button>
-          <el-button class="edit-btn" type="primary">删除</el-button>
+          <el-button class="edit-btn" type="primary" @click="handleEdit">编辑</el-button>
+          <el-button class="edit-btn" type="primary" @click="handleDelete"
+            >删除</el-button
+          >
         </div>
       </div>
       <div class="right">
@@ -39,7 +41,7 @@
     <!-- 新建灸方的Dialog -->
     <el-dialog v-model="dialogVisible" width="500">
       <div class="dialog-content">
-        <div class="dialog-title">新建灸方</div>
+        <div class="dialog-title">{{ dialogTitle }}</div>
         <div class="dialog-text">请输入方案名称:</div>
 
         <div class="dialog-text">
@@ -57,8 +59,8 @@
           <span>是否预设:</span
           ><el-switch
             v-model="isReady"
-            active-value="true"
-            inactive-value="false"
+            :active-value="true"
+            :inactive-value="false"
             active-text="是"
             inactive-text="否"
           />
@@ -107,8 +109,7 @@ import VirtualKeyboard from "@/components/VirtualKeyboard.vue";
 
 import caseData from "@/data/caseData.json";
 import pointData from "@/data/pointData.json";
-import { getCaseList, getPoints } from "@/api/common";
-import { lo } from "element-plus/es/locales.mjs";
+import { getCaseList, getPoints, deletePlan } from "@/api/common";
 
 const router = useRouter();
 
@@ -138,6 +139,8 @@ const newPlan = ref({
   isReady: null,
 });
 const isReady = ref(false);
+const selectedItem = ref({});
+const dialogTitle = ref("");
 
 const getCaseListFunc = () => {
   //前端模拟
@@ -148,6 +151,8 @@ const getCaseListFunc = () => {
   getCaseList().then((res) => {
     caseArr.value = res || [];
     selectedPlan.value = caseArr.value[0].plan || [];
+    selectedItem.value = caseArr.value[0];
+    handleClick(caseArr.value[0].id);
   });
 };
 
@@ -165,13 +170,15 @@ const openMenu = () => {
 // 列表项点击事件
 const handleClick = (id) => {
   selectedCaseId.value = id;
-  const selectedItem = caseArr.value.find((item) => item.id === id);
-  selectedPlan.value = selectedItem?.plan || [];
+  selectedItem.value = caseArr.value.find((item) => item.id === id);
+  selectedPlan.value = selectedItem.value?.plan || [];
 };
 
 // 新建灸方Dialog相关
 const openDialog = () => {
+  dialogTitle.value = "新建灸方";
   dialogVisible.value = true;
+  localStorage.setItem("newPlanType", 1);
   nextTick(() => {
     keyboardVisible.value = true;
   });
@@ -184,9 +191,39 @@ const cancelDialog = () => {
 const confirmDialog = () => {
   newPlan.value.name = planName.value;
   newPlan.value.isReady = isReady.value;
-  localStorage.setItem("newPlan", JSON.stringify({}));
+
+  console.log(localStorage.getItem("newPlanType"));
+
+  if (localStorage.getItem("newPlanType") == 2) {
+    console.log(selectedPlan.value);
+    localStorage.setItem("newPlanArr", JSON.stringify(selectedPlan.value));
+  }
+
   localStorage.setItem("newPlanName", JSON.stringify(newPlan.value));
   router.push(`/newPlan`);
+};
+
+const handleDelete = () => {
+  ElMessageBox.confirm("确认删除该方案吗？", "删除确认", {
+    confirmButtonText: "确定",
+    cancelButtonText: "取消",
+    type: "warning",
+  }).then(() => {
+    deletePlan(selectedItem.value.uuid_id).then(() => {
+      getCaseListFunc();
+    });
+  });
+};
+
+const handleEdit = () => {
+  localStorage.setItem("newPlanType", 2);
+  dialogTitle.value = "编辑灸方";
+  console.log(selectedItem.value);
+  planName.value = selectedItem.value.name;
+  isReady.value = selectedItem.value.isReady;
+  console.log(isReady.value);
+
+  dialogVisible.value = true;
 };
 
 watch(
@@ -194,11 +231,16 @@ watch(
   (newVal) => {
     if (!newVal) {
       planName.value = "";
+      isReady.value = false;
     }
   }
 );
 
 onMounted(() => {
+  localStorage.removeItem("newPlan");
+  localStorage.removeItem("newPlanType");
+  localStorage.removeItem("newPlanArr");
+  localStorage.removeItem("newPlanName");
   getPointsFunc();
   getCaseListFunc();
   watchUserInfo();

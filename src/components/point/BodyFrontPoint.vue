@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-13 14:48:09
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-29 11:25:27
+ * @LastEditTime: 2025-12-29 14:16:39
  * @FilePath: \zi-xiao-ai\src\components\point\BodyFrontPoint.vue
  * @Description: 
 -->
@@ -105,6 +105,7 @@ onMounted(() => {
   const pointData = JSON.parse(localStorage.getItem("pointData")) || [];
   pointList.value = pointData.filter((item) => item.bodyType == 0);
   // currentPlan.value.bodyType = 2;
+  console.log(pointList.value);
 
   const newPlanType = localStorage.getItem("newPlanType");
 

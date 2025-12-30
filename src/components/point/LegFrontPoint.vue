@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-13 14:48:09
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-29 11:29:57
+ * @LastEditTime: 2025-12-29 16:05:34
  * @FilePath: \zi-xiao-ai\src\components\point\LegFrontPoint.vue
  * @Description: 
 -->
@@ -109,6 +109,7 @@ onMounted(() => {
   // currentPlan.value.bodyType = 2;
 
   const newPlanType = localStorage.getItem("newPlanType");
+  
 
   // currentPlan.value.bodyType = 2;
   if (newPlanType == 2) {

@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-12 14:38:40
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-29 09:42:41
+ * @LastEditTime: 2025-12-29 14:44:44
  * @FilePath: \zi-xiao-ai\src\views\newPlan.vue
  * @Description: 新增灸方页面  
 -->
@@ -102,6 +102,7 @@ import LegFront from "@/components/body/LegFront.vue";
 import LegBack from "@/components/body/LegBack.vue";
 import { addPlan } from "@/api/common.js";
 import { ElMessageBox } from "element-plus";
+import { lo } from "element-plus/es/locales.mjs";
 
 const router = useRouter();
 
@@ -161,7 +162,6 @@ const handleCancel = () => {
 };
 
 const handleAdd = () => {
-  localStorage.setItem("newPlanType", 1);
   router.push("/chooseType");
 };
 
@@ -187,7 +187,7 @@ const handleSave = () => {
   console.log(data);
 
   addPlan(data).then((res) => {
-    // router.push("/plan");
+    router.push("/plan");
   });
 };
 
@@ -210,7 +210,6 @@ const handleDelete = (item, index) => {
 const handleEdit = (item, index) => {
   // 编辑逻辑
   console.log(item, index);
-  localStorage.setItem("newPlanType", 2);
   localStorage.setItem("newPlan", JSON.stringify(item));
   router.push("/chooseType");
 };

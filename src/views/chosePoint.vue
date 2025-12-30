@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-12 14:38:40
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-29 10:48:20
+ * @LastEditTime: 2025-12-29 16:12:55
  * @FilePath: \zi-xiao-ai\src\views\chosePoint.vue
  * @Description: 选择穴位页面  
 -->
@@ -80,7 +80,7 @@ import LegBackPoint from "@/components/point/LegBackPoint.vue";
 const router = useRouter();
 const chooseBodyIndex = ref(0);
 const currentComponent = shallowRef(markRaw(BodyBack));
-const currentPointComponent = shallowRef(markRaw(BodyBackPoint));
+const currentPointComponent = shallowRef(null);
 
 const newPlanPoint = ref([]);
 const newPlanName = ref("");
