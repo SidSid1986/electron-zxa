@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-12 14:38:40
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-30 17:21:15
+ * @LastEditTime: 2025-12-31 08:38:08
  * @FilePath: \zi-xiao-ai\src\views\newPlan.vue
  * @Description: 新增灸方页面  
 -->
@@ -133,7 +133,10 @@ const newPointType = ref(0);
 
 const selectLine = (item) => {
   console.log(item);
-  item.points[0].status = 1;
+
+  item.points.forEach((point) => {
+    point.status = 1;
+  });
   newPlanPoint.value = item.points;
 
   chooseBody(item);
