@@ -255,12 +255,20 @@ const resumeCountdown = () => {
   const activeItem = allItems.find((item) => item.isActive && item.status === "paused");
 
   if (!activeItem) {
-    ElMessage.warning("暂无暂停的倒计时可继续");
+    ElMessage({
+      message: "暂无暂停的倒计时可继续",
+      grouping: true,
+      type: "warning",
+    });
     return;
   }
 
   if (activeItem.remainingSeconds <= 0) {
-    ElMessage.warning("剩余时长不足1秒，无法继续");
+    ElMessage({
+      message: "剩余时长不足1秒，无法继续",
+      grouping: true,
+      type: "warning",
+    });
     return;
   }
 
@@ -367,7 +375,13 @@ const handleDurationConfirm = () => {
   const tipText = isDemoMode.value
     ? `已将${currentEditItem.value.point}时长修改为 ${inputVal} 秒`
     : `已将${currentEditItem.value.point}时长修改为 ${inputVal} 分钟（${newTimeInSeconds} 秒）`;
-  ElMessage.success(tipText);
+  // ElMessage.success(tipText);
+
+  ElMessage({
+    message: `${tipText}`,
+    grouping: true,
+    type: "success",
+  });
 
   // 关闭Dialog
   durationDialogVisible.value = false;

@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-19 15:36:43
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-20 14:30:33
+ * @LastEditTime: 2026-01-04 08:54:21
  * @FilePath: \zi-xiao-ai\src\components\DragScrollWrapper.vue
  * @Description: 可拖拽滚动容器组件
 -->
@@ -15,7 +15,7 @@
     @mouseup="handleDragEnd"
     @mouseleave="handleDragEnd"
   >
-    <!-- 占位容器：承载插槽内容 -->
+    <!-- 插槽内容 -->
     <div ref="placeholderRef" class="placeholder-container">
       <slot></slot>
     </div>

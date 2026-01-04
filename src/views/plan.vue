@@ -190,6 +190,15 @@ const cancelDialog = () => {
 };
 
 const confirmDialog = () => {
+  if (!planName.value) {
+    ElMessage({
+      message: "请输入方案名称",
+      grouping: true,
+      type: "error",
+    });
+    return;
+  }
+
   newPlan.value.name = planName.value;
   newPlan.value.isReady = isReady.value;
   if (localStorage.getItem("newPlanType") == 2) {

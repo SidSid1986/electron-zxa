@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-12 14:38:40
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-30 17:20:18
+ * @LastEditTime: 2026-01-04 08:44:09
  * @FilePath: \zi-xiao-ai\src\views\chosePoint.vue
  * @Description: 选择穴位页面  
 -->
@@ -185,7 +185,11 @@ const confirmPlan = () => {
   const newPlanStr = localStorage.getItem("newPlan");
   // 确保 newPlan 存在且有效
   if (!newPlanStr) {
-    ElMessage.error("未找到新的治疗计划数据！");
+    ElMessage({
+      message: "未找到新的治疗计划数据！",
+      grouping: true,
+      type: "error",
+    });
     return;
   }
   const newPlanObj = JSON.parse(newPlanStr);
