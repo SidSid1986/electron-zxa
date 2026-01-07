@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-12 14:38:40
  * @LastEditors: Sid Li
- * @LastEditTime: 2026-01-04 08:44:09
+ * @LastEditTime: 2026-01-07 10:25:01
  * @FilePath: \zi-xiao-ai\src\views\chosePoint.vue
  * @Description: 选择穴位页面  
 -->
@@ -222,7 +222,7 @@ const confirmPlan = () => {
   } else {
     // 新增计划时
     // 3. 获取已有的计划数组
-    // 从 localStorage 读取，如果不存在，则初始化为一个空数组 []
+    // 从 localStorage 读取，如果不存在，则初始化为一个空数组
     const existingPlanArrStr = localStorage.getItem("newPlanArr");
     const existingPlanArr = existingPlanArrStr ? JSON.parse(existingPlanArrStr) : [];
 

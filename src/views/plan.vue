@@ -8,7 +8,7 @@
           <span>方案灸</span>
         </div>
 
-        <!-- 替换为封装的左侧滚动组件 -->
+        <!-- 左侧滚动组件 -->
         <LeftScrollList
           :listData="caseArr"
           :selectedId="selectedCaseId"
@@ -28,7 +28,7 @@
         </div>
       </div>
       <div class="right">
-        <!-- 替换为封装的右侧表格组件 -->
+        <!-- 右侧表格组件 -->
         <MainTable
           :tableData="selectedPlan"
           :minBodyHeight="'5vh'"

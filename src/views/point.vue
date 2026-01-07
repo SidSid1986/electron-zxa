@@ -332,7 +332,7 @@ const getPointWs = () => {
 
     console.log("更新穴位坐标:", newPlan[rowIndex].points[pointIndex]);
 
-    // 修正：检查当前行所有穴位的完成状态
+    // 检查当前行所有穴位的完成状态
     const currentRow = newPlan[rowIndex];
     // 统计当前行未完成的穴位数量（status=0 或 status=1）
     const unfinishedPoints = currentRow.points.filter((p) => p.status !== 2);

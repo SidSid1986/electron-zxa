@@ -207,7 +207,7 @@ const picType = ref(-1);
 const picUrl = ref("");
 const selectedCaseId = ref("");
 const selectedCase = ref({});
-const tableData = ref([]); // 改为：扁平化的单个穴位数组
+const tableData = ref([]); //单个穴位数组
 const selectedObj = ref({});
 const testIndex = ref(-1);
 const treatSwiperRef = ref(null);
@@ -216,7 +216,7 @@ const wsCommandArray = ref([]);
 const newPlanPoint = ref([]);
 const currentPoint = ref({}); // 当前选中的单个穴位
 
-// 计算属性：判断是否还有未完成的穴位
+// 判断是否还有未完成的穴位
 const hasUnfinishedPoints = computed(() => {
   return tableData.value.some((item) => item.status !== 2);
 });
@@ -304,7 +304,7 @@ const flattenPlanData = (planList) => {
   return flatPoints;
 };
 
-// 获取穴位数据（适配新数据结构）
+// 获取穴位数据
 const getPoint = (id) => {
   selectedCase.value = JSON.parse(localStorage.getItem("selectedCase"));
   if (
@@ -316,7 +316,7 @@ const getPoint = (id) => {
     return;
   }
 
-  // 1. 扁平化处理plan数据（拆分为单个穴位数组）
+  // 1. 处理plan数据（拆分为单个穴位数组）
   const planList = selectedCase.value.plan;
   const flatPoints = flattenPlanData(planList);
   if (flatPoints.length === 0) {
@@ -369,7 +369,7 @@ const getPoint = (id) => {
 //  更新newPlanPoint的状态（全局生效）
 const updateNewPlanPointStatus = (pointId, status) => {
   if (!newPlanPoint.value || newPlanPoint.value.length === 0) return;
-  // 深拷贝+更新状态，强制触发响应式
+  // 深拷贝+更新状态
   const newArr = JSON.parse(JSON.stringify(newPlanPoint.value));
   const targetIndex = newArr.findIndex((item) => item.id === pointId);
   if (targetIndex > -1) {
@@ -460,7 +460,7 @@ const countdownEnd = (item) => {
   if (testIndex.value >= pointLength - 1) {
     // 第一步：先把当前最后一个穴位的status设为2
     updateNewPlanPointStatus(item.id, 2);
-    // 同步更新tableData里的状态（确保数据一致）
+    // 同步更新tableData里的状态
     const targetIndex = flatPoints.findIndex((p) => p.id === item.id);
     if (targetIndex > -1) {
       flatPoints[targetIndex].status = 2;
@@ -518,7 +518,7 @@ const countdownEnd = (item) => {
   }, 500);
 };
 
-//  删除bodyType关联，改为分页索引
+//  分页索引
 const handleSwiperChange = (swiperPageIndex) => {
   const flatPoints = tableData.value;
   if (flatPoints.length === 0) return;
@@ -536,7 +536,7 @@ const handleSwiperChange = (swiperPageIndex) => {
 
 // 处理时长更新事件（适配扁平化数据）
 const handleUpdateSwiperData = (newSwiperData) => {
-  // 1. 深拷贝覆盖，确保引用更新（触发子组件watch）
+  // 1. 触发子组件watch
   tableData.value = []; // 先清空
   nextTick(() => {
     tableData.value = JSON.parse(JSON.stringify(newSwiperData));
@@ -557,7 +557,7 @@ const pauseTreat = () => {
   ElMessage.info("治疗已暂停");
 };
 
-// 暂停当前倒计时（修改时长时）
+// 暂停当前倒计时
 const pauseEdit = () => {
   isPsuse.value = true;
   if (treatSwiperRef.value) {
@@ -565,7 +565,7 @@ const pauseEdit = () => {
   }
 };
 
-// 继续治疗（适配扁平化数据）
+// 继续治疗
 const continueTreat = () => {
   if (!hasUnfinishedPoints.value) {
     ElMessage.info("所有穴位已治疗完成，无法继续");
@@ -598,7 +598,7 @@ const continueTreat = () => {
   }
 };
 
-// 结束当前治疗（适配扁平化数据）
+// 结束当前治疗
 const endTreat = () => {
   isPsuse.value = true;
   ElMessageBox.confirm("确定要结束当前治疗吗？", "提示", {
@@ -649,7 +649,7 @@ const endTreat = () => {
     });
 };
 
-// 重新启动治疗（适配扁平化数据）
+// 重新启动治疗
 const restartTreat = () => {
   ElMessageBox.confirm("确定要重新启动整个灸疗方案吗？", "提示", {
     confirmButtonText: "确定",
@@ -793,10 +793,10 @@ const switchDemoMode = () => {
     }
   )
     .then(() => {
-      // 1. 标记演示模式（先赋值，确保子组件能拿到）
+      // 1. 标记演示模式（子组件）
       isDemoMode.value = true;
 
-      // 2. 深度修改tableData：替换数组（触发子组件watch）
+      // 2. 深度修改tableData：触发子组件watch
       const newTableData = JSON.parse(JSON.stringify(tableData.value)).map((item) => ({
         ...item,
         time: 8, // 演示模式：时长设为8秒

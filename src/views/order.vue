@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-12 16:15:42
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-20 16:36:30
+ * @LastEditTime: 2026-01-04 08:57:46
  * @FilePath: \zi-xiao-ai\src\views\order.vue
  * @Description: 
 -->
@@ -196,7 +196,7 @@ import DragScrollWrapper from "@/components/DragScrollWrapper.vue"; // 引入通
 
 const router = useRouter();
 
-// 扩展弹窗表格数据，确保有足够滚动内容
+// 扩展弹窗表格数据
 const orderInfo = ref({
   id: 1,
   name: "bob",
@@ -411,7 +411,7 @@ const tableData = ref([
   },
 ]);
 
-// 计算属性：过滤后的数据
+//  过滤后的数据
 const filteredData = computed(() => {
   return tableData.value.filter((item) => {
     if (searchPhone.value && !item.phone.includes(searchPhone.value)) return false;
@@ -421,7 +421,7 @@ const filteredData = computed(() => {
   });
 });
 
-// 计算属性：当前页的数据
+//  当前页的数据
 const currentTableData = computed(() => {
   const start = (currentPage.value - 1) * pageSize.value;
   const end = start + pageSize.value;

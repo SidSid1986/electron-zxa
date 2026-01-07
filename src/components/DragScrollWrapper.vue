@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-19 15:36:43
  * @LastEditors: Sid Li
- * @LastEditTime: 2026-01-04 08:54:21
+ * @LastEditTime: 2026-01-04 08:56:50
  * @FilePath: \zi-xiao-ai\src\components\DragScrollWrapper.vue
  * @Description: 可拖拽滚动容器组件
 -->
@@ -69,7 +69,7 @@ const handleDragEnd = () => {
 onMounted(() => {
   // setTimeout(() => {
   //   scrollContainer = findScrollContainer();
-  // }, 30000); // 适配 Element UI 渲染延迟
+  // }, 300); // 适配 Element UI 渲染延迟
 });
 </script>
 
