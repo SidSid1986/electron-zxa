@@ -28,7 +28,6 @@
           <!-- 封面+播放状态  -->
           <div class="player-cover-wrapper">
             <div class="player-cover" :class="{ playing: isPlaying }">
-              <!-- 统一静态图标，居中显示 -->
               <div class="cover-center-icon">
                 <img src="@/assets/pic/music-logo.png" alt="" />
               </div>
@@ -40,10 +39,7 @@
             <div class="song-name">{{ currentSong.name || "暂无音乐" }}</div>
             <div class="progress-wrapper">
               <div class="progress-bar" @click.stop="handleProgressClick">
-                <div
-                  class="progress-track"
-                  :style="{ width: `${progressPercent}%` }"
-                >
+                <div class="progress-track" :style="{ width: `${progressPercent}%` }">
                   <div class="progress-thumb"></div>
                 </div>
               </div>
@@ -122,7 +118,7 @@
             </div>
           </div>
 
-          <!-- 歌曲列表（修复高度变形） -->
+          <!-- 歌曲列表 -->
           <div class="song-list-wrapper">
             <div class="list-header">
               <svg
@@ -141,9 +137,7 @@
             </div>
             <div class="song-list-container">
               <div class="song-list">
-                <div v-if="!songList.length" class="empty-tip">
-                  暂无音乐文件
-                </div>
+                <div v-if="!songList.length" class="empty-tip">暂无音乐文件</div>
                 <div
                   v-else
                   class="song-item"
@@ -165,13 +159,7 @@
                       fill="none"
                       xmlns="http://www.w3.org/2000/svg"
                     >
-                      <circle
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="#693e9c"
-                        stroke-width="2"
-                      />
+                      <circle cx="12" cy="12" r="10" stroke="#693e9c" stroke-width="2" />
                       <path d="M9 8L15 12L9 16V8Z" fill="#693e9c" />
                     </svg>
                   </span>
@@ -188,11 +176,7 @@
 <script setup>
 import { ref, reactive, onMounted, onUnmounted, watch } from "vue";
 
-const emit = defineEmits([
-  "update:playing",
-  "update:currentSong",
-  "update:volume",
-]);
+const emit = defineEmits(["update:playing", "update:currentSong", "update:volume"]);
 
 // 弹窗显示状态
 const visible = ref(false);
@@ -223,8 +207,7 @@ let audio = null;
 async function loadMusicList() {
   try {
     if (isDev) {
-      // 开发模式（Electron开发/纯Web开发）统一用这个逻辑
-      // 路径改为 Vite 能识别的绝对路径（以 /@ 开头 或 /src 开头）
+      // 开发模式（Electron开发/纯Web开发）统一逻辑
       const musicFiles = import.meta.glob("@/assets/music/*.mp3", {
         eager: true,
         import: "default", // 显式指定导入default（Vite新版需加）
@@ -233,7 +216,7 @@ async function loadMusicList() {
       const arr = Object.entries(musicFiles).map(([filePath, mod]) => {
         const fileName = filePath.split("/").pop();
         const songName = fileName.replace(".mp3", "");
-        // Vite会自动处理资源路径，直接用mod（已加import: "default"）
+        // Vite 自动处理资源路径，用mod 
         const songUrl = mod;
         return { name: songName, url: songUrl };
       });
@@ -305,8 +288,7 @@ const initAudioInstance = () => {
 
   audio.addEventListener("timeupdate", () => {
     currentTime.value = audio.currentTime;
-    progressPercent.value =
-      (audio.currentTime / (audio.duration || 1)) * 100 || 0;
+    progressPercent.value = (audio.currentTime / (audio.duration || 1)) * 100 || 0;
   });
 
   audio.addEventListener("ended", () => {
@@ -401,8 +383,7 @@ const playSong = (index) => {
 // 上一曲 / 下一曲
 const prevSong = () => {
   if (!songList.length) return;
-  const newIndex =
-    (currentSongIndex.value - 1 + songList.length) % songList.length;
+  const newIndex = (currentSongIndex.value - 1 + songList.length) % songList.length;
   playSong(newIndex);
 };
 const nextSong = () => {

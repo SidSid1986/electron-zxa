@@ -32,9 +32,7 @@
           :key="index"
           :class="[
             'table-row',
-            index === selectedIndex
-              ? 'table-item-border-index'
-              : 'right-table-content',
+            index === selectedIndex ? 'table-item-border-index' : 'right-table-content',
           ]"
           @click="handleRowClick(item, index)"
         >
@@ -67,34 +65,30 @@
               v-for="(point, pointIndex) in item.points"
               :key="pointIndex"
               class="point-status-item"
-              @click.stop="
-                handlePointStatusClick(item, index, point, pointIndex)
-              "
+              @click.stop="handlePointStatusClick(item, index, point, pointIndex)"
             >
               <span
                 :class="[
                   point.status === 1
                     ? 'status-red'
                     : point.status === 0
-                      ? 'status-blue'
-                      : 'status-green',
+                    ? 'status-blue'
+                    : 'status-green',
                 ]"
               >
                 {{
                   point.status === 0
                     ? "未定穴"
                     : point.status === 1
-                      ? "正在定穴"
-                      : "已定穴"
+                    ? "正在定穴"
+                    : "已定穴"
                 }}
               </span>
             </div>
           </div>
         </div>
         <!-- 空数据占位 -->
-        <div v-if="!tableData || tableData.length === 0" class="empty-row">
-          暂无数据
-        </div>
+        <div v-if="!tableData || tableData.length === 0" class="empty-row">暂无数据</div>
       </div>
     </div>
   </div>
@@ -103,7 +97,6 @@
 <script setup>
 import { ref, onMounted, onUnmounted, watch, nextTick } from "vue";
 
-// 接收父组件传入的Props（对齐参考示例）
 const props = defineProps({
   // 表格数据源
   tableData: {
@@ -122,7 +115,7 @@ const props = defineProps({
     type: String,
     default: "5vh",
   },
-  // 表体最大高度 
+  // 表体最大高度
   maxBodyHeight: {
     type: String,
     default: "50vh",

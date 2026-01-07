@@ -133,20 +133,17 @@ const p4 = ref({});
 const p5 = ref({});
 const forceUpdate = ref(0);
 
-// 监听picType变化 强制触发响应式
 watch(
   () => props.picType,
   (newType) => {
     console.log("Body组件：picType更新为", newType);
     // 强制更新组件
-    // 通过更新一个空的响应式变量触发重新渲染
     forceUpdate.value++;
   },
   { immediate: true }
 );
 
-//  强制更新变量
-// 兼容空数据+深度监听
+ 
 watch(
   () => props.tableData,
   (newVal) => {
@@ -208,7 +205,7 @@ onMounted(() => {
     img {
       width: 441px;
       height: 636px;
-      border:1px solid red;
+      border: 1px solid red;
     }
   }
 

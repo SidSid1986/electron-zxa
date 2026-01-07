@@ -6,17 +6,12 @@
         <!-- 头部 -->
         <div class="modal-header">
           <div class="header-title">
-            <img
-              src="@/assets/pic/temperature.png"
-              alt="温度"
-              class="header-icon"
-            />
+            <img src="@/assets/pic/temperature.png" alt="温度" class="header-icon" />
             <span class="header-text">温度调节</span>
           </div>
           <button class="close-btn" @click.stop="closeModal">×</button>
         </div>
 
-        <!-- 主体：压缩空白，减小高度 -->
         <div class="modal-body">
           <div class="temp-display">
             <span class="temp-value">{{ temperature }}°C</span>
@@ -150,24 +145,24 @@ defineExpose({
     font-weight: 600;
 
     .header-icon {
-      width: 50px;  
+      width: 50px;
       height: 50px;
       // border: 1px solid red;
       object-fit: contain;
     }
     .header-text {
       font-size: 32px;
-      line-height: 1; 
+      line-height: 1;
     }
   }
 
   .close-btn {
-    width: 40px;  
+    width: 40px;
     height: 40px;
     border: none;
     background: transparent;
     color: #693e9c;
-    font-size: 50px;  
+    font-size: 50px;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -184,8 +179,8 @@ defineExpose({
 
 .modal-body {
   height: 20vh;
-  
-  padding: 16px;  
+
+  padding: 16px;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
@@ -193,9 +188,9 @@ defineExpose({
 
   .temp-display {
     text-align: center;
-    margin-bottom: 12px;  
-    line-height: 1;  
-    
+    margin-bottom: 12px;
+    line-height: 1;
+
     height: 6vh;
     display: flex;
     flex-direction: column;
@@ -204,14 +199,14 @@ defineExpose({
 
     .temp-value {
       display: block;
-      font-size: 28px;  
+      font-size: 28px;
       font-weight: 700;
       color: #693e9c;
-      margin-bottom: 2px;  
+      margin-bottom: 2px;
     }
 
     .temp-desc {
-      font-size: 24px;  
+      font-size: 24px;
       color: #8a5ca0;
     }
   }
@@ -234,12 +229,12 @@ defineExpose({
       background: #f0e0f7;
       border-radius: 3px;
       outline: none;
-      margin-bottom: 8px; 
+      margin-bottom: 8px;
 
       &::-webkit-slider-thumb {
         -webkit-appearance: none;
         appearance: none;
-        width: 18px;  
+        width: 18px;
         height: 18px;
         border-radius: 50%;
         background: #693e9c;
@@ -258,7 +253,7 @@ defineExpose({
       width: 100%;
       display: flex;
       justify-content: space-between;
-      font-size: 11px;  
+      font-size: 11px;
       color: #8a5ca0;
       font-size: 20px;
     }

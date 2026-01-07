@@ -1,15 +1,12 @@
 <template>
-  <!-- 容器：解决滚动条占位 + 边框（完全复制你的代码） -->
   <div class="table-outer">
     <div class="table-wrapper">
-      <!-- 固定表头（仅替换列名） -->
       <div class="table-header">
         <div class="table-cell">订单时间</div>
         <div class="table-cell">顾客姓名</div>
         <div class="table-cell no-border">是否完成</div>
       </div>
 
-      <!-- 可滚动表体（完全复制你的代码，包括事件和样式绑定） -->
       <div
         class="table-body"
         @mousedown="handleMouseDown"
@@ -23,7 +20,6 @@
           height: 'fit-content', // 自适应内容高度（不超最大高度）
         }"
       >
-        <!-- 表体数据行（仅替换显示字段） -->
         <div class="table-row" v-for="(item, index) in tableData" :key="index">
           <div class="table-cell line-bg">{{ item.date }}</div>
           <div class="table-cell line-bg">{{ item.name }}</div>
@@ -31,7 +27,7 @@
             {{ item.isComplete === 1 ? "已完成" : "未完成" }}
           </div>
         </div>
-        <!-- 空数据占位（完全复制你的代码） -->
+
         <div v-if="!tableData || tableData.length === 0" class="empty-row">暂无数据</div>
       </div>
     </div>
@@ -41,7 +37,6 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from "vue";
 
-// 完全复制你的Props定义
 const props = defineProps({
   tableData: {
     type: Array,
@@ -66,12 +61,10 @@ const props = defineProps({
   },
 });
 
-// 完全复制你的拖拽变量
 const isDragging = ref(false);
 const startY = ref(0);
 const startScrollTop = ref(0);
 
-// 完全复制你的拖拽方法（一字未改）
 const handleMouseDown = (e) => {
   isDragging.value = true;
   startY.value = e.clientY;
@@ -90,7 +83,6 @@ const handleMouseMove = (e) => {
   tableBody.scrollTop = startScrollTop.value - moveY;
 };
 
-// 完全复制你的生命周期（一字未改）
 onMounted(() => {
   document.addEventListener("mouseup", handleMouseUp);
 });
@@ -101,7 +93,6 @@ onUnmounted(() => {
 </script>
 
 <style scoped lang="scss">
-/* 完全复制你的样式（一字未改） */
 .table-outer {
   width: v-bind(tableWidth);
   overflow: hidden;

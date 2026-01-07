@@ -97,7 +97,7 @@ const remainingSecondsMap = ref({});
 
 const durationDialogVisible = ref(false); // Dialog显隐
 const durationInputValue = ref(""); // 输入框值
-const currentEditItem = ref(null); // 当前修改的item（仅存储，无复杂逻辑）
+const currentEditItem = ref(null); // 当前修改的item
 const isDemoMode = computed(() => props.isDemoMode);
 
 const props = defineProps({
@@ -138,18 +138,18 @@ const formatTime = (seconds) => {
   return `${mins}:${secs}`;
 };
 
-//  格式化数据：完全使用传入的time1/time2，不重新计算
+//  格式化数据
 const formatData = (data, activeIndex) => {
   return data.map((item, index) => {
     const timeNum = parseInt(item.time) || 60;
     const uniqueKey = item.uniqueId || `${item.name}-${item.point}`;
     const hasValidTime = timeNum > 0;
 
-    //  使用props传入的time1/time2（修改后的值），
+    //  使用props传入的time1/time2 ，
     const time1 = item.time1 || `00:01:00`; // 默认1分钟
     const time2 = item.time2 || `01:00`; // 默认1分钟
 
-    // 初始化剩余秒数（ 用已存在的，避免覆盖修改后的值）
+    // 初始化剩余秒数
     if (!remainingSecondsMap.value[uniqueKey]) {
       remainingSecondsMap.value[uniqueKey] = timeNum;
     }
@@ -234,7 +234,7 @@ const startCountdown = (targetIndex) => {
   }, 1000);
 };
 
-// 暂停倒计时（保留剩余时间）
+// 暂停倒计时
 const pauseCountdown = () => {
   const activeKey = Object.keys(countdownTimers.value)[0];
   if (!activeKey) return;
@@ -248,10 +248,10 @@ const pauseCountdown = () => {
   }
 };
 
-// 继续倒计时（ 找到暂停状态的激活项）
+// 继续倒计时
 const resumeCountdown = () => {
   const allItems = treatData.value.flat();
-  // 精准找到：激活+暂停状态的穴位
+  //  激活+暂停状态的穴位
   const activeItem = allItems.find((item) => item.isActive && item.status === "paused");
 
   if (!activeItem) {
@@ -272,7 +272,7 @@ const resumeCountdown = () => {
     return;
   }
 
-  // 启动倒计时（用修改后的剩余时间）
+  // 启动倒计时
   activeItem.status = "running";
   countdownTimers.value[activeItem.uniqueKey] = setInterval(() => {
     if (!isComponentMounted.value || !props.isTreating) {
@@ -316,13 +316,13 @@ const editTime = (item) => {
   emit("pauseEdit", item);
   pauseCountdown();
 
-  // 1. 存储当前item（和原逻辑一致）
+  // 1. 存储当前item
   currentEditItem.value = item;
-  // 2. 初始化输入值（和原逻辑完全一致）
+  // 2. 初始化输入值
   durationInputValue.value = isDemoMode.value
     ? (item.time || 60).toString()
     : Math.floor((item.time || 60) / 60).toString();
-  // 3. 打开Dialog（替代原ElMessageBox）
+  // 3. 打开Dialog
   durationDialogVisible.value = true;
 };
 
@@ -416,19 +416,18 @@ const onSlideChange = (swiper) => {
   emit("swiperChange", swiper.activeIndex);
 };
 
-//  监听swiperData时强制刷新（deep+immediate）
 watch(
   () => props.swiperData,
   (newVal) => {
     if (!newVal.length) return;
-    // 每次数据变化都重新格式化+分页，确保DOM刷新
+
     const formatted = formatData(newVal, props.activeIndex);
     treatData.value = groupByPageSize(formatted, 3);
   },
   { immediate: true, deep: true }
 );
 
-// 监听激活索引（仅更新状态，不自动启动）
+ 
 watch(
   () => props.activeIndex,
   (newIndex) => {

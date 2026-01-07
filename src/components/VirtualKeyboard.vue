@@ -1,3 +1,11 @@
+<!--
+ * @Author: Sid Li
+ * @Date: 2025-12-20 08:34:36
+ * @LastEditors: Sid Li
+ * @LastEditTime: 2026-01-07 11:07:25
+ * @FilePath: \zi-xiao-ai\src\components\VirtualKeyboard.vue
+ * @Description: 
+-->
 <template>
   <keyboard
     ref="innerKeyboardRef"
@@ -25,7 +33,7 @@ const handleDictInitResult = (result) => {
   }
 };
 
-// 如需手动重新绑定键盘（动态输入框场景），可暴露该方法
+// 手动重新绑定键盘（动态输入框场景） 
 const reBindKeyboard = () => {
   if (innerKeyboardRef.value) {
     innerKeyboardRef.value.inputBindKeyboard();
@@ -45,7 +53,7 @@ defineExpose({
   margin-left: 10% !important;
 }
 
-/* 词组候选框样式优化，更清晰 */
+
 :deep(.select-list) {
   /* border: 1px solid #e0dde9 !important;
   border-radius: 8px !important;

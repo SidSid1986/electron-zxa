@@ -54,7 +54,7 @@
 <script setup>
 import { ref, watch } from "vue";
 
-// 仅定义必要事件：传递音量数值
+// 传递音量数值
 const emit = defineEmits(["update:volume"]);
 
 // 接收外部传入的初始音量（父组件传递）
@@ -80,12 +80,12 @@ const closeModal = () => {
   visible.value = false;
 };
 
-// 音量变化时仅传递数值，不做任何控制逻辑
+// 音量变化时仅传递数值 
 const handleVolumeChange = () => {
   emit("update:volume", volume.value);
 };
 
-// 监听外部音量变化（父组件主动更新时同步）
+// 监听外部音量变化 
 watch(
   () => props.initialVolume,
   (newVal) => {
