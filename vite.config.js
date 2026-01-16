@@ -26,13 +26,13 @@ export default ({ mode }) => {
       postcss: {
         plugins: [
           postCssPxToRem({
-            rootValue: 10,
-            propList: ["*", "!border"],
-            selectorBlackList: ["norem"],
-            unitPrecision: 5,
-            replace: true,
-            mediaQuery: true,
-            minPixelValue: 2,
+            rootValue: 10, // 基准值：1rem = 10px（和你rem.js里的baseFontSize一致）
+            propList: ["*", "!border"], // 要转换的CSS属性：*表示所有属性，!border表示排除border属性
+            selectorBlackList: ["norem"], // 选择器黑名单：包含norem的选择器，其px不转换
+            unitPrecision: 5, // 转换后的rem保留5位小数
+            replace: true, // 直接替换px值，不保留原px（比如不会生成px和rem双属性）
+            mediaQuery: true, // 媒体查询（@media）中的px也会被转换
+            minPixelValue: 2, // 小于2px的数值不转换（避免极小值转换后出现0.xxxrem）
           }),
         ],
       },

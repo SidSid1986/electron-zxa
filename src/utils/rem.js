@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-09 15:10:24
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-22 14:54:34
+ * @LastEditTime: 2026-01-16 09:49:52
  * @FilePath: \zi-xiao-ai\src\utils\rem.js
  * @Description: REM 适配（严格保留1920px逻辑，仅高分辨率屏幕放大）
  */
@@ -33,12 +33,12 @@ export function setupRemAdaptation() {
     const currentHeight =
       document.documentElement.clientHeight || window.innerHeight;
 
-    // 1. 原有核心逻辑：计算宽高最小比例
+    // 1. 计算宽高最小比例
     const widthRatio = currentWidth / designWidth;
     const heightRatio = currentHeight / designHeight;
     let scaleRatio = Math.min(widthRatio, heightRatio);
 
-    // 2. 修复：严格判断分辨率，仅高分辨率屏幕放大
+    // 2. 严格判断分辨率，仅高分辨率屏幕放大
     let zoomFactor = 1; // 默认不放大（＜2560px屏幕保持1）
     let currentMaxFontSize = fontSizeMaxConfig.default; // 默认上限10px
     // 从大到小判断，确保只匹配最高分辨率阈值
@@ -58,7 +58,7 @@ export function setupRemAdaptation() {
     // 3. 计算实际根字体大小
     let fontSize = scaleRatio * designRootFontSize;
 
-    // 4. 修复：根据分辨率使用对应字体上限，1920px屏幕上限仍为10px
+    // 4.根据分辨率使用对应字体上限，1920px屏幕上限仍为10px
     const minFontSize = 7; // 小屏幕最小字体（不变）
     fontSize = Math.max(Math.min(fontSize, currentMaxFontSize), minFontSize);
 

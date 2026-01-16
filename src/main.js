@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-12-08 08:30:08
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-17 14:53:13
+ * @LastEditTime: 2026-01-16 09:59:22
  * @FilePath: \zi-xiao-ai\src\main.js
  * @Description:
  */
@@ -11,7 +11,7 @@ import App from "./App.vue";
 import ElementPlus from "element-plus";
 import zhCn from "element-plus/dist/locale/zh-cn.mjs";
 
-//  第一步：先导入 Element Plus 源码样式（不是编译后的 CSS）
+//  第一步：先导入 Element Plus 源码样式 
 import "element-plus/theme-chalk/src/index.scss";
 // 第二步：立即导入自定义主题（覆盖变量，顺序绝对不能反）
 import "@/styles/element/index.scss";
@@ -47,7 +47,7 @@ if (typeof window !== "undefined") {
 function bootstrapApp() {
   const app = createApp(App);
   app.use(store);
-  //  只注册组件，不自动导入任何样式（交给全局引入）
+  //  只注册组件，不自动导入任何样式 
   app.use(ElementPlus, { 
     locale: zhCn,
     importStyle: false // 彻底关闭自动样式导入

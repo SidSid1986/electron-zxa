@@ -2,8 +2,8 @@
  * @Author: Sid Li
  * @Date: 2025-12-09 15:10:24
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-22 14:42:24
- * @FilePath: \zi-xiao-ai\src\utils\rem.js
+ * @LastEditTime: 2026-01-16 09:56:20
+ * @FilePath: \zi-xiao-ai\src\utils\rem copy.js
  * @Description:
  */
 // src/utils/rem.js
@@ -29,7 +29,7 @@ export function setupRemAdaptation() {
     // 计算实际根字体大小（基于 10px 基准缩放）
     let fontSize = scaleRatio * designRootFontSize;
 
-    // 修正：合理的最小/最大根字体（按 10px 基准推导）
+    //  合理的最小/最大根字体（按 10px 基准推导）
     const minFontSize = 7; // 对应屏幕宽度≈1200px 时，1rem≈7px
     const maxFontSize = 10; // 对应屏幕宽度≥1920px 时，1rem=10px
     fontSize = Math.max(Math.min(fontSize, maxFontSize), minFontSize);
