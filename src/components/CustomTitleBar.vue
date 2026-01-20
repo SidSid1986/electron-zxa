@@ -10,12 +10,12 @@
 
     <!-- 窗口控制按钮 -->
     <div class="window-controls">
-      <button @click="minimizeWindow" class="control-btn minimize">
+      <!-- <button @click="minimizeWindow" class="control-btn minimize">
         <i class="iconfont icon-chuangkouzuixiaohua"></i>
       </button>
       <button @click="maximizeWindow" class="control-btn maximize">
         <i class="iconfont icon-chuangkouzuidahua"></i>
-      </button>
+      </button> -->
       <button @click="closeWindow" class="control-btn close">
         <i class="iconfont icon-delete_line"></i>
       </button>
@@ -25,6 +25,7 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from "vue";
+import { quitAll } from "@/api/common.js";
 
 const memoryUsage = ref({ used: "0", total: "0" });
 const isFullScreen = ref(false);
@@ -43,7 +44,10 @@ const maximizeWindow = () => {
 };
 
 const closeWindow = () => {
-  window.electronAPI?.closeWindow();
+  // 退出所有任务
+  quitAll().then(() => {
+    window.electronAPI?.closeWindow();
+  });
 };
 
 onMounted(() => {
@@ -81,16 +85,14 @@ onUnmounted(() => {
   align-items: center;
   justify-content: space-between;
   padding: 0 16px;
-  -webkit-app-region: drag;
+  // -webkit-app-region: drag;
   // position: fixed;
   top: 0;
   left: 0;
   right: 0;
   z-index: 9999;
   user-select: none;
-  transition:
-    opacity 0.3s,
-    transform 0.3s;
+  transition: opacity 0.3s, transform 0.3s;
   box-sizing: border-box;
 }
 

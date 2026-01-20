@@ -77,7 +77,7 @@ export default ({ mode }) => {
         "/api": {
           target: env.VITE_APP_API_HOST,
           changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/api/, ""),
+          rewrite: (path) => path.replace(/^\/api/, "api"),
         },
       },
     },

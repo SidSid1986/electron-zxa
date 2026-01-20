@@ -2,8 +2,8 @@
  * @Author: Sid Li
  * @Date: 2025-11-24 10:59:31
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-30 14:41:59
- * @FilePath: \zi-xiao-ai\src\api\common.js
+ * @LastEditTime: 2026-01-19 15:34:08
+ * @FilePath: \ZiXiaoAi-build\src\api\common.js
  * @Description:
  */
 import request from "@/utils/request.js";
@@ -49,13 +49,23 @@ export function deletePlan(uuid) {
 }
 
 //export 修改计划
-export function updatePlan(uuid_value,data) {
+export function updatePlan(uuid_value, data) {
   return request({
     url: `api/update_plan_by_uuid/${uuid_value}`,
     method: "put",
     data,
   });
 }
+
+//退出所有
+export function quitAll() {
+  return request({
+    url: "/sys/quit",
+    method: "get",
+  });
+}
+
+//============================================
 
 export function getList() {
   return request({

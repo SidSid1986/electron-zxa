@@ -2,8 +2,8 @@
  * @Author: Sid Li
  * @Date: 2025-12-08 08:30:08
  * @LastEditors: Sid Li
- * @LastEditTime: 2026-01-16 09:59:22
- * @FilePath: \zi-xiao-ai\src\main.js
+ * @LastEditTime: 2026-01-19 10:05:01
+ * @FilePath: \ZiXiaoAi-build\src\main.js
  * @Description:
  */
 import { createApp } from "vue";
@@ -11,7 +11,7 @@ import App from "./App.vue";
 import ElementPlus from "element-plus";
 import zhCn from "element-plus/dist/locale/zh-cn.mjs";
 
-//  第一步：先导入 Element Plus 源码样式 
+//  第一步：先导入 Element Plus 源码样式
 import "element-plus/theme-chalk/src/index.scss";
 // 第二步：立即导入自定义主题（覆盖变量，顺序绝对不能反）
 import "@/styles/element/index.scss";
@@ -26,13 +26,10 @@ import { setupRemAdaptation } from "@/utils/rem";
 import XPack_WebSocket from "@/utils/ws";
 
 // 实例化 WebSocket
-const webSocketInstance = new XPack_WebSocket(
-  6789,
-  {
-    heartBeatEnable: false,
-    messageCountEnable: true,
-  }
-);
+const webSocketInstance = new XPack_WebSocket(8000, {
+  heartBeatEnable: false,
+  messageCountEnable: true,
+});
 
 // REM 适配
 if (typeof document !== "undefined") {
@@ -47,11 +44,11 @@ if (typeof window !== "undefined") {
 function bootstrapApp() {
   const app = createApp(App);
   app.use(store);
-  //  只注册组件，不自动导入任何样式 
-  app.use(ElementPlus, { 
+  //  只注册组件，不自动导入任何样式
+  app.use(ElementPlus, {
     locale: zhCn,
-    importStyle: false // 彻底关闭自动样式导入
-  }); 
+    importStyle: false, // 彻底关闭自动样式导入
+  });
   app.use(router);
 
   // 全局注册 WebSocket

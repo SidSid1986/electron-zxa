@@ -2,17 +2,113 @@
  * @Author: Sid Li
  * @Date: 2025-11-29 13:33:24
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-20 17:05:17
- * @FilePath: \zi-xiao-ai\electron\main.js
+ * @LastEditTime: 2026-01-20 15:48:05
+ * @FilePath: \ZiXiaoAi-build\electron\main.js
  * @Description: 基于loudness库的跨平台音量控制主进程代码
  */
-const { app, BrowserWindow, Menu, ipcMain } = require("electron");
+const { app, BrowserWindow, Menu, ipcMain, session } = require("electron");
 const path = require("path");
 const os = require("os");
 const fs = require("fs");
 const { exec } = require("child_process"); // 用于系统命令执行
 const { pathToFileURL } = require("url");
 
+const BACKEND_ADDRESS = "localhost:8000"; // 或 192.168.3.65:8000
+// const BACKEND_ADDRESS = "192.168.3.65:8000"; // 或 192.168.3.65:8000
+// =====================   File 协议拦截器 =====================
+function registerFileProtocolInterceptor() {
+  // 清空 File 相关旧规则
+  session.defaultSession.webRequest.onBeforeRequest(
+    { urls: ["file:///*/api*", "file:///*/sys*", "file:///api*", "file:///sys*"] },
+    () => {},
+  );
+
+  // File 拦截核心逻辑 - 适配 Windows 盘符路径 + 修复双斜杠问题
+  session.defaultSession.webRequest.onBeforeRequest(
+    // ❶ 匹配规则：包含所有带盘符/不带盘符的 api/sys 路径
+    { urls: ["file:///*/api*", "file:///*/sys*", "file:///api*", "file:///sys*"] },
+    (details, callback) => {
+      try {
+        const url = details.url.toLowerCase();
+        // ❷ 匹配任意路径中的 /api/ 或 /sys/（忽略盘符）
+        if (url.includes("/api/") || url.includes("/sys/")) {
+          console.log(`[精准拦截] 触发拦截: ${details.url}`);
+          
+          // ❸ 提取 api/sys 开头的路径（去掉盘符和 file:/// 前缀）
+          let path = details.url
+            .replace(/^file:\/+/, "") // 去掉 file:///
+            .replace(/^[A-Za-z]:\//, "/") // 去掉 Windows 盘符（如 D:/ → /）
+            .replace(/\\/g, "/"); // 反斜杠转正斜杠
+
+          // ❹ 确保路径以 /api 或 /sys 开头
+          if (!path.startsWith("/api") && !path.startsWith("/sys")) {
+            const apiIndex = path.indexOf("/api");
+            const sysIndex = path.indexOf("/sys");
+            const startIndex = apiIndex !== -1 ? apiIndex : sysIndex;
+            if (startIndex !== -1) {
+              path = path.slice(startIndex);
+            }
+          }
+
+          // ❺ 修复双斜杠问题：使用 URL 构造函数自动处理路径拼接（核心修复）
+          const baseUrl = `http://${BACKEND_ADDRESS}`;
+          const encodedUrl = new URL(path, baseUrl).href.replace(/ /g, "%20");
+          
+          console.log(`[精准拦截] 原地址: ${details.url} → 新地址: ${encodedUrl}`);
+          
+          callback({
+            redirectURL: encodedUrl,
+            statusCode: 307,
+            responseHeaders: { "Cache-Control": "no-cache" },
+          });
+          return;
+        }
+        callback({ cancel: false });
+      } catch (error) {
+        console.error(`[拦截失败] ${error.message} | 地址: ${details.url}`);
+        callback({ cancel: false });
+      }
+    },
+  );
+
+  // 窗口内 File 兜底拦截（同样适配盘符 + 修复双斜杠）
+  if (mainWindow) {
+    mainWindow.webContents.session.webRequest.onBeforeRequest(
+      { urls: ["file:///*/api*", "file:///*/sys*", "file:///api*", "file:///sys*"] },
+      (details, callback) => {
+        try {
+          const url = details.url.toLowerCase();
+          if (url.includes("/api/") || url.includes("/sys/")) {
+            let path = details.url
+              .replace(/^file:\/+/, "")
+              .replace(/^[A-Za-z]:\//, "/")
+              .replace(/\\/g, "/");
+            
+            if (!path.startsWith("/api") && !path.startsWith("/sys")) {
+              const apiIndex = path.indexOf("/api");
+              const sysIndex = path.indexOf("/sys");
+              const startIndex = apiIndex !== -1 ? apiIndex : sysIndex;
+              if (startIndex !== -1) {
+                path = path.slice(startIndex);
+              }
+            }
+
+            // ❺ 同样修复双斜杠问题
+            const baseUrl = `http://${BACKEND_ADDRESS}`;
+            const encodedUrl = new URL(path, baseUrl).href.replace(/ /g, "%20");
+            
+            callback({ redirectURL: encodedUrl, statusCode: 307 });
+          } else {
+            callback({ cancel: false });
+          }
+        } catch (error) {
+          callback({ cancel: false });
+        }
+      },
+    );
+  }
+  log("File 拦截器注册成功（适配 Windows 盘符 + 修复双斜杠）");
+}
 // 1. 先创建日志目录
 const logDir = path.join(app.getPath("userData"), "logs");
 if (!fs.existsSync(logDir)) {
@@ -57,7 +153,7 @@ const isDev = process.env.NODE_ENV === "development";
 log(
   `应用启动，环境：${isDev ? "开发" : "生产"}，系统：${
     process.platform
-  }，架构：${os.arch()}`
+  }，架构：${os.arch()}`,
 );
 
 // 保持对窗口对象的全局引用
@@ -84,9 +180,9 @@ function getMusicFiles() {
           process.resourcesPath,
           "app.asar.unpacked",
           "assets",
-          "music"
+          "music",
         ), // 兼容 asarUnpack
-        path.join(app.getAppPath(), "dist", "assets", "music") // 备用
+        path.join(app.getAppPath(), "dist", "assets", "music"), // 备用
       );
     } else {
       // candidates.push(path.join(app.getAppPath(), "public/music"));
@@ -117,7 +213,7 @@ function getMusicFiles() {
         (dirent) =>
           dirent.isFile() &&
           dirent.name.toLowerCase().endsWith(".mp3") &&
-          !dirent.name.startsWith(".")
+          !dirent.name.startsWith("."),
       )
       .map((dirent) => dirent.name); // 直接获取原始文件名
 
@@ -140,7 +236,7 @@ function getMusicFiles() {
 
     log(
       `找到 ${result.length} 个音乐文件:`,
-      result.map((item) => item.name)
+      result.map((item) => item.name),
     );
     // 包含 name 和 url 的对象
     return result;
@@ -217,7 +313,7 @@ function checkLinuxDependencies() {
     if (error) {
       log("警告: Linux系统未检测到pactl工具，音量控制可能无法正常工作");
       log(
-        "请安装pulseaudio-utils: sudo apt-get install pulseaudio-utils (Ubuntu/Debian)"
+        "请安装pulseaudio-utils: sudo apt-get install pulseaudio-utils (Ubuntu/Debian)",
       );
       log("或: sudo dnf install pulseaudio-utils (Fedora/RHEL)");
       log("或: sudo pacman -S pulseaudio-utils (Arch Linux)");
@@ -254,14 +350,18 @@ function createWindow() {
         sandbox: false,
         preload: path.join(__dirname, "preload.js"),
         // 安全配置
-        webSecurity: true,
-        allowRunningInsecureContent: false,
+        webSecurity: false,
+        allowRunningInsecureContent: true,
+        experimentalFeatures: {
+          disableWebSecurityAutoUpgrade: true,
+        },
         devTools: true, // 调试开启开发环境下开启
-        contextIsolation: true,
         nodeIntegrationInWorker: false,
         nodeIntegrationInSubFrames: false,
       },
     });
+
+    mainWindow.maximize(); // 最大化窗口
 
     // 设置Content-Security-Policy
     if (!isDev) {
@@ -276,11 +376,13 @@ function createWindow() {
                 "style-src 'self' 'unsafe-inline';",
                 "img-src 'self' data: file:;",
                 "font-src 'self' data:;",
-                "connect-src 'self' http://localhost:* ws://192.168.3.29:6789 ws://localhost:*;",
+                // 同时兼容 localhost 和 IP 地址
+                "connect-src 'self' http://localhost:8000 http://192.168.3.65:8000 ws://localhost:6789 ws://192.168.3.29:6789 ws://localhost:8000 ws://192.168.3.65:8000;",
+                // "upgrade-insecure-requests;",
               ].join(" "),
             },
           });
-        }
+        },
       );
     }
 
@@ -291,7 +393,7 @@ function createWindow() {
     if (isDev) {
       log("加载开发环境: http://localhost:5173");
       mainWindow.loadURL("http://localhost:5173");
-      mainWindow.webContents.openDevTools();
+      // mainWindow.webContents.openDevTools();
     } else {
       const indexPath = path.join(__dirname, "../dist/index.html");
       log(`加载生产环境: ${indexPath}`);
@@ -308,7 +410,7 @@ function createWindow() {
       setTimeout(() => {
         try {
           // detach 模式：调试窗口独立显示，不影响主窗口
-          mainWindow.webContents.openDevTools({ mode: "detach" });
+          // mainWindow.webContents.openDevTools({ mode: "detach" });
           log("打包模式：强制打开开发者工具成功");
         } catch (error) {
           log(`打包模式打开开发者工具失败: ${error.message}`);
@@ -402,7 +504,7 @@ function createWindow() {
       "did-fail-load",
       (event, errorCode, errorDescription) => {
         log(`窗口加载失败: ${errorCode} - ${errorDescription}`);
-      }
+      },
     );
 
     log("窗口创建成功");
@@ -420,12 +522,23 @@ function checkSystemDependencies() {
   }
 }
 
+process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = "true";
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+
 // Electron 初始化完成后创建窗口
 app
   .whenReady()
   .then(() => {
+    app.commandLine.appendSwitch("disable-site-isolation-trials");
+    app.commandLine.appendSwitch("ignore-certificate-errors");
+    app.commandLine.appendSwitch("allow-insecure-localhost");
     log("Electron 准备就绪");
+    // =============================================
+    registerFileProtocolInterceptor(); // 注册文件协议拦截器
+    // =============================================
+
     checkSystemDependencies(); // 检查系统依赖
+
     createWindow();
   })
   .catch((error) => {

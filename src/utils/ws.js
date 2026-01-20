@@ -145,7 +145,7 @@ class XPack_WebSocket {
 
     this.EventAdd(
       this.#HeartBeatEventHandle.eventFlag,
-      this.#HeartBeatEventHandle.handle
+      this.#HeartBeatEventHandle.handle,
     );
   }
 
@@ -192,7 +192,7 @@ class XPack_WebSocket {
     if (event) {
       if (this.#_Events[event])
         console.log(
-          `EventTrigger - Key: ${event}, Handler: ${this.#_Events[event].handler}, Once: ${this.#_Events[event].once}`
+          `EventTrigger - Key: ${event}, Handler: ${this.#_Events[event].handler}, Once: ${this.#_Events[event].once}`,
         );
       else console.log(`EventTrigger - Key: ${event}, Not Found`);
       return;
@@ -200,7 +200,7 @@ class XPack_WebSocket {
     for (let key in this.#_Events) {
       if (this.#_Events.hasOwnProperty(key)) {
         console.log(
-          `现在:EventTrigger - Key: ${key}, Handler: ${this.#_Events[key].handler}, Once: ${this.#_Events[key].once}`
+          `现在:EventTrigger - Key: ${key}, Handler: ${this.#_Events[key].handler}, Once: ${this.#_Events[key].once}`,
         );
       }
     }
@@ -301,7 +301,7 @@ class XPack_WebSocket {
       console.log(
         "服务器[WebSocket]：数据[" +
           event.data +
-          "]解析失败，请检查数据格式是否正确！"
+          "]解析失败，请检查数据格式是否正确！",
       );
     }
   }
@@ -333,7 +333,9 @@ class XPack_WebSocket {
    */
   Connect() {
     // this.#_Socket = new WebSocket(`ws://192.168.3.29:${this.#_Port}`);
-    this.#_Socket = new WebSocket(`ws://localhost:${this.#_Port}`);
+
+    // this.#_Socket = new WebSocket(`ws://192.168.3.65:${this.#_Port}/ws`); //新版机器人
+    this.#_Socket = new WebSocket(`ws://localhost:${this.#_Port}/ws`); //机器人本地
     // this.#_Socket = new WebSocket(`ws://127.0.0.1:${this.#_Port}`);
     this.#_Socket.onopen = (event) => this.OnOpen(event);
     this.#_Socket.onmessage = (event) => this.OnMessage(event);

@@ -238,6 +238,10 @@ const handleEdit = () => {
   console.log(isReady.value);
 
   dialogVisible.value = true;
+
+  nextTick(() => {
+    keyboardVisible.value = true;
+  });
 };
 
 watch(
