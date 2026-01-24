@@ -172,6 +172,14 @@ import LegFront from "@/components/body/LegFront.vue";
 import LegBack from "@/components/body/LegBack.vue";
 const currentComponent = shallowRef(markRaw(BodyBack));
 
+// 往复灸相关状态
+const isReciprocating = ref(false); // 是否正在执行往复灸
+const reciprocateInterval = ref(2000); // 往复间隔（毫秒），可配置
+const currentReciprocateIndex = ref(0); // 0=第一个位置，1=第二个位置
+const reciprocateTimer = ref(null); // 往复灸定时器
+
+// import {selectedCase} from "./treate.js"
+
 const $ws = inject("$ws");
 const isDemoMode = ref(false);
 
@@ -264,15 +272,14 @@ const generateWsCommandArray = (flatPoints) => {
   });
 };
 
-// 替换原来的 flattenPlanData 函数为下面这个（只做注释/增强，不扁平化）
+// 父组件 - flattenPlanData函数（保留分组，不平铺）
 const flattenPlanData = (planList) => {
   if (!Array.isArray(planList)) return [];
 
-  // 返回新的数组，避免修改原始对象
+  // 遍历每个plan分组，保留分组结构，增强字段
   return planList.map((groupItem, groupIndex) => {
     const {
       points = [],
-      name: groupName,
       treatType,
       chooseName,
       time,
@@ -280,7 +287,8 @@ const flattenPlanData = (planList) => {
       plan_id,
     } = groupItem;
 
-    const timeInSeconds = (parseInt(time) || 1) * 60; // 组时长（秒）
+    // 计算分组时长（秒），保留原有时间转换逻辑
+    const timeInSeconds = (parseInt(time) || 1) * 60;
     const minutes = Math.floor(timeInSeconds / 60)
       .toString()
       .padStart(2, "0");
@@ -288,29 +296,25 @@ const flattenPlanData = (planList) => {
     const time1 = `00:${minutes}:${seconds}`; // 激活项显示格式
     const time2 = `${minutes}:${seconds}`; // 非激活项显示格式
 
-    const newPoints = (points || []).map((pointItem, pointIndex) => {
-      // 确保每个点都有唯一 id（优先保留已有 id 或 _id）
+    // 为分组内的每个穴位增强字段（保留原有逻辑）
+    const enhancedPoints = points.map((pointItem, pointIndex) => {
       const ensuredId =
         pointItem.id ??
         pointItem._id ??
         `${plan_id ?? groupIndex}-${pointIndex}-${pointItem.name}`;
-
-      // uniqueId 用于内部识别（不依赖外部 id）
-      const uniqueId = `${
-        groupName ?? chooseName ?? treatType
-      }-${groupIndex}-${pointIndex}-${(pointItem.name || "").replace(/\s+/g, "")}`;
+      const uniqueId = `${chooseName}-${groupIndex}-${pointIndex}-${(
+        pointItem.name || ""
+      ).replace(/\s+/g, "")}`;
 
       return {
         ...pointItem,
-        // 覆盖/补全字段
         id: ensuredId,
-        groupName,
         treatType,
         chooseName,
-        time: timeInSeconds, // 该点显示/使用时长，以组时长为准
-        bodyType: pointItem.bodyType ?? groupBodyType,
+        time: timeInSeconds, // 继承分组时长
+        bodyType: pointItem.bodyType || groupBodyType,
         point: pointItem.name,
-        status: 0, // 0 未开始，1 运行中，2 已完成
+        status: 0, // 0未开始 1运行中 2已完成
         isActive: false,
         uniqueId,
         time1,
@@ -318,16 +322,31 @@ const flattenPlanData = (planList) => {
       };
     });
 
+    // 每个分组作为一个独立项，包含：分组信息 + 增强后的穴位列表 + 分组级状态/时间
     return {
-      ...groupItem,
+      groupId: `group-${groupIndex}`, // 分组唯一标识
+      groupIndex,
+      treatType,
+      chooseName,
       time: timeInSeconds,
-      points: newPoints,
+      time1,
+      time2,
+      bodyType: groupBodyType,
+      plan_id,
+      points: enhancedPoints, // 该分组下的所有穴位
+      status: 0, // 分组级状态：0未开始 1运行中 2已完成
+      isActive: false, // 分组是否激活
+      // 新增：标记分组内的穴位数量，方便后续处理
+      pointCount: enhancedPoints.length,
     };
   });
 };
 
 // 获取穴位数据
 const getPoint = (id) => {
+  // 先停止可能存在的往复灸
+  stopReciprocate();
+  
   selectedCase.value = JSON.parse(localStorage.getItem("selectedCase"));
   if (
     !selectedCase.value ||
@@ -338,89 +357,114 @@ const getPoint = (id) => {
     return;
   }
 
-  // 1. 使用 annotatePlanData 对 plan 做增强（保留 group 结构）
+  // 1. 处理plan数据（保留分组结构，不平铺）
   const planList = selectedCase.value.plan;
-  const annotatedPlan = flattenPlanData(planList); 
-  console.log(annotatedPlan);// 每个 group.points 都被增强字段
+  const groupedData = flattenPlanData(planList); // 现在是分组数组，而非平铺穴位数组
 
-  // 2. 将增强后的 plan 赋给 displayItems（或覆盖 selectedCase.plan）
-  // 这里把它赋回 selectedCase 或单独存变量，方便后续使用
-  // 如果你想让 TreatSwiper 直接使用 this 结构，请确保 TreatSwiper 接收 display-style 数据
-  tableData.value = JSON.parse(JSON.stringify(annotatedPlan)); // 新增 displayItems ref（若尚未声明，请声明）
+  console.log("分组数据:", groupedData);
 
-  // // 3. 生成扁平化数组（仅用于生成 WS 命令和兼容旧逻辑）
-  // const flatForWs = [];
-  // annotatedPlan.forEach((group) => {
-  //   group.points.forEach((p) => flatForWs.push(p));
-  // });
+  if (groupedData.length === 0) {
+    ElMessage.error("未找到有效穴位计划分组");
+    return;
+  }
 
-  // // 4. 初始化第一个点（组内第一个）
-  // const firstPoint = annotatedPlan[0]?.points?.[0];
-  // if (!firstPoint) {
-  //   ElMessage.error("未找到有效穴位");
-  //   return;
-  // }
-  // firstPoint.status = 1;
-  // firstPoint.isActive = true;
-  // selectedObj.value = firstPoint;
-  // currentPoint.value = firstPoint;
+  // 2. 初始化第一个分组（而非第一个穴位）
+  const firstGroup = groupedData[0];
+  firstGroup.status = 1; // 分组状态设为运行中
+  firstGroup.isActive = true;
+  
+  // 初始化第一个分组内的第一个穴位为激活状态
+  let firstPoint = null;
+  if (firstGroup.points.length > 0) {
+    firstGroup.points[0].status = 1;
+    firstGroup.points[0].isActive = true;
+    selectedObj.value = firstGroup.points[0];
+    currentPoint.value = firstGroup.points[0];
+    chooseBody(firstGroup.points[0]);
+    firstPoint = firstGroup.points[0];
+  }
 
-  // // 5. 初始化 newPlanPoint 为扁平化（如果你希望 newPlanPoint 保持扁平结构以兼容子组件）
-  // newPlanPoint.value = JSON.parse(JSON.stringify(flatForWs));
+  // 3. 初始化newPlanPoint
+  newPlanPoint.value = JSON.parse(JSON.stringify(groupedData));
 
-  // // 6. 如果需要，初始化 tableData（子组件数据源）
-  // // 你可以把 tableData 改为 displayItems（groups）或保留扁平结构用于当前子组件。
-  // // 这里保持兼容：仍把 tableData 设为扁平数组（后续可逐步改造 TreatSwiper）
-  // tableData.value = JSON.parse(JSON.stringify(flatForWs));
+  // 4. 初始化图片类型
+  picType.value = firstPoint?.bodyType ?? firstGroup.bodyType;
+  picUrl.value = [0, 2].includes(picType.value) ? BodyPic : LegPic;
 
-  // // 7. 生成WS指令数组（基于扁平化数组 flatForWs）
-  // wsCommandArray.value = generateWsCommandArray(flatForWs);
-  // // 发送第一个穴位的WS指令（如果需要）
-  // if (wsCommandArray.value.length > 0) {
-  //   sendWsMessage(wsCommandArray.value[0]);
-  // }
+  // 5. 赋值给tableData
+  tableData.value = JSON.parse(JSON.stringify(groupedData));
 
-  // // 8. 初始化图片/身体显示（使用 firstPoint）
-  // chooseBody(firstPoint);
-  // picType.value = firstPoint.bodyType;
-  // picUrl.value = [0, 2].includes(firstPoint.bodyType) ? BodyPic : LegPic;
+  // 6. 生成WS指令数组（适配分组+往复灸）
+  const flatPointsForWS = [];
+  groupedData.forEach((group) => {
+    group.points.forEach((point) => flatPointsForWS.push(point));
+  });
+  wsCommandArray.value = generateWsCommandArray(flatPointsForWS);
 
-  // // 9. 标记治疗状态（保持原样）
-  // hasTreatmentStarted.value = true;
-  // isTreating.value = true;
-  // isPsuse.value = false;
-  // isTreatmentEnded.value = false;
-  // testIndex.value = 0;
+  // 7. 发送第一个指令（区分是否为往复灸）
+  if (wsCommandArray.value.length > 0) {
+    const firstWsData = wsCommandArray.value[0];
+    // 判断当前穴位/分组是否为往复灸（假设treatType=2代表往复灸，可根据实际值调整）
+    const isFirstReciprocate = firstGroup.treatType === 2 || (firstPoint && firstPoint.treatType === 2);
+    // 往复灸需要传两个位置点（假设points里包含两个位置的坐标）
+    const reciprocatePoints = isFirstReciprocate && firstGroup.points.length >= 2 
+      ? firstGroup.points 
+      : [];
+    
+    // 发送指令（往复灸/普通灸区分处理）
+    sendWsMessage(firstWsData, isFirstReciprocate, reciprocatePoints);
+  }
 
-  // // 10. 启动倒计时（父子组件通信保持原样）
-  // nextTick(() => {
-  //   if (swiperInstance.value) {
-  //     swiperInstance.value.slideTo(Math.floor(testIndex.value / 3));
-  //   }
-  //   if (treatSwiperRef.value) {
-  //     // 注意：TreatSwiper 如果仍以扁平 tableData 工作，则此处 startCountdown(0) 仍有效。
-  //     // 之后我们会把 TreatSwiper 改为按 displayItems（group）倒计时。
-  //     treatSwiperRef.value.startCountdown(0);
-  //   }
-  // });
+  // 8. 标记治疗状态
+  hasTreatmentStarted.value = true;
+  isTreating.value = true;
+  isPsuse.value = false;
+  isTreatmentEnded.value = false;
+  testIndex.value = 0; // 注意：如果是往复灸，testIndex仍代表分组索引
+
+  // 9. 启动倒计时
+  nextTick(() => {
+    if (swiperInstance.value) {
+      swiperInstance.value.slideTo(Math.floor(testIndex.value / 3));
+    }
+    if (treatSwiperRef.value) {
+      treatSwiperRef.value.startCountdown(0);
+    }
+  });
 };
 
-//  更新newPlanPoint的状态（全局生效）
+// 更新newPlanPoint的状态（适配分组结构）
 const updateNewPlanPointStatus = (pointId, status) => {
   if (!newPlanPoint.value || newPlanPoint.value.length === 0) return;
-  // 深拷贝+更新状态
-  const newArr = JSON.parse(JSON.stringify(newPlanPoint.value));
-  const targetIndex = newArr.findIndex((item) => item.id === pointId);
-  if (targetIndex > -1) {
-    newArr[targetIndex].status = status;
-    newPlanPoint.value = newArr;
-    console.log(`更新穴位${pointId}状态为${status}`, newPlanPoint.value);
-  }
-};
 
+  // 深拷贝+遍历分组更新穴位状态
+  const newArr = JSON.parse(JSON.stringify(newPlanPoint.value));
+  newArr.forEach((group) => {
+    group.points.forEach((point) => {
+      if (point.id === pointId) {
+        point.status = status;
+        point.isActive = status === 1; // 运行中则激活
+      }
+    });
+    // 同步更新分组状态：只要有一个穴位运行中，分组就运行中；全部完成则分组完成
+    const hasRunning = group.points.some((p) => p.status === 1);
+    const allFinished = group.points.every((p) => p.status === 2);
+    group.status = hasRunning ? 1 : allFinished ? 2 : 0;
+    group.isActive = hasRunning;
+  });
+
+  newPlanPoint.value = newArr;
+  console.log(`更新穴位${pointId}状态为${status}`, newPlanPoint.value);
+};
 // 父组件 - 自动切换穴位
 const usePoint = () => {
-  const flatPoints = tableData.value;
+  // 平铺所有穴位（用于切换逻辑）
+  const flatPoints = [];
+  tableData.value.forEach((group) => {
+    group.points.forEach((point) => {
+      flatPoints.push({ ...point, groupId: group.groupId });
+    });
+  });
   const pointLength = flatPoints.length;
 
   if (pointLength === 0) {
@@ -430,11 +474,18 @@ const usePoint = () => {
 
   // 标记当前穴位为已完成
   if (testIndex.value < pointLength) {
-    const currentPointId = flatPoints[testIndex.value].id;
-    flatPoints[testIndex.value].status = 2; // 已完成
-    flatPoints[testIndex.value].isActive = false;
-    // 同步更新newPlanPoint中该穴位的状态
-    updateNewPlanPointStatus(currentPointId, 2);
+    const currentPointItem = flatPoints[testIndex.value];
+    updateNewPlanPointStatus(currentPointItem.id, 2);
+
+    // 同步更新tableData
+    tableData.value.forEach((group) => {
+      group.points.forEach((point) => {
+        if (point.id === currentPointItem.id) {
+          point.status = 2;
+          point.isActive = false;
+        }
+      });
+    });
   }
 
   // 计算下一个索引
@@ -450,29 +501,30 @@ const usePoint = () => {
     return;
   }
 
-  //  更新下一个穴位状态为“运行中”
-  flatPoints.forEach((item, idx) => {
-    if (idx === nextIndex) {
-      item.status = 1; // 运行中
-      item.isActive = true;
-      // 同步更新newPlanPoint中该穴位的状态
-      updateNewPlanPointStatus(item.id, 1);
-    } else if (item.status !== 2) {
-      item.status = 0; // 未开始
-      item.isActive = false;
-      // 同步更新newPlanPoint中该穴位的状态
-      updateNewPlanPointStatus(item.id, 0);
-    }
+  // 更新下一个穴位状态为“运行中”
+  const nextPointItem = flatPoints[nextIndex];
+  updateNewPlanPointStatus(nextPointItem.id, 1);
+
+  // 同步更新tableData
+  tableData.value.forEach((group) => {
+    group.points.forEach((point) => {
+      if (point.id === nextPointItem.id) {
+        point.status = 1;
+        point.isActive = true;
+      } else if (point.status !== 2) {
+        point.status = 0;
+        point.isActive = false;
+      }
+    });
   });
 
   // 更新选中状态和图片
-  selectedObj.value = flatPoints[nextIndex];
-  currentPoint.value = flatPoints[nextIndex];
-  //  newPlanPoint始终保持所有穴位的最新状态
-  newPlanPoint.value = JSON.parse(JSON.stringify(flatPoints));
-  picType.value = flatPoints[nextIndex].bodyType;
-  picUrl.value = [0, 2].includes(flatPoints[nextIndex].bodyType) ? BodyPic : LegPic;
-  chooseBody(flatPoints[nextIndex]);
+  selectedObj.value = nextPointItem;
+  currentPoint.value = nextPointItem;
+  newPlanPoint.value = JSON.parse(JSON.stringify(tableData.value));
+  picType.value = nextPointItem.bodyType;
+  picUrl.value = [0, 2].includes(nextPointItem.bodyType) ? BodyPic : LegPic;
+  chooseBody(nextPointItem);
 
   // 发送WS指令
   if (wsCommandArray.value[nextIndex]) {
@@ -489,7 +541,6 @@ const usePoint = () => {
 
   testIndex.value = nextIndex;
 };
-
 // 父组件 - 处理倒计时结束事件
 const countdownEnd = (item) => {
   const flatPoints = tableData.value;
@@ -590,6 +641,8 @@ const handleUpdateSwiperData = (newSwiperData) => {
 // 暂停治疗
 const pauseTreat = () => {
   isPsuse.value = true;
+  // 暂停时停止往复灸
+  stopReciprocate();
   if (treatSwiperRef.value) {
     treatSwiperRef.value.pauseCountdown();
   }
@@ -622,8 +675,17 @@ const continueTreat = () => {
       testIndex.value = firstUnfinished;
       flatPoints[firstUnfinished].status = 1;
       flatPoints[firstUnfinished].isActive = true;
-      // 同步更新newPlanPoint
       updateNewPlanPointStatus(flatPoints[firstUnfinished].id, 1);
+      
+      // 继续时重新启动往复灸（如果当前是往复灸类型）
+      const currentGroup = newPlanPoint.value.find(g => 
+        g.points.some(p => p.id === flatPoints[firstUnfinished].id)
+      );
+      if (currentGroup?.treatType === 2 && currentGroup.points.length >= 2) {
+        const wsData = wsCommandArray.value[firstUnfinished];
+        sendWsMessage(wsData, true, currentGroup.points);
+      }
+
       if (treatSwiperRef.value) {
         treatSwiperRef.value.startCountdown(firstUnfinished);
       }
@@ -631,15 +693,27 @@ const continueTreat = () => {
     return;
   }
 
-  //  调用子组件的 resumeCountdown 恢复暂停的倒计时
+  // 恢复倒计时
   if (treatSwiperRef.value) {
     treatSwiperRef.value.resumeCountdown();
+  }
+
+  // 恢复往复灸（如果当前是往复灸）
+  const currentPointItem = flatPoints[testIndex.value];
+  const currentGroup = newPlanPoint.value.find(g => 
+    g.points.some(p => p.id === currentPointItem.id)
+  );
+  if (currentGroup?.treatType === 2 && currentGroup.points.length >= 2) {
+    const wsData = wsCommandArray.value[testIndex.value];
+    sendWsMessage(wsData, true, currentGroup.points);
   }
 };
 
 // 结束当前治疗
 const endTreat = () => {
   isPsuse.value = true;
+  // 结束时停止往复灸
+  stopReciprocate();
   ElMessageBox.confirm("确定要结束当前治疗吗？", "提示", {
     confirmButtonText: "确定",
     cancelButtonText: "取消",
@@ -647,6 +721,7 @@ const endTreat = () => {
     type: "warning",
   })
     .then(() => {
+      // 原有逻辑不变...
       isTreating.value = false;
       isTreatmentEnded.value = true;
 
@@ -688,6 +763,8 @@ const endTreat = () => {
     });
 };
 
+
+// 重新启动治疗
 // 重新启动治疗
 const restartTreat = () => {
   ElMessageBox.confirm("确定要重新启动整个灸疗方案吗？", "提示", {
@@ -697,46 +774,67 @@ const restartTreat = () => {
     type: "warning",
   })
     .then(() => {
-      // 重置状态
+      // 1. 重置基础状态
       isTreatmentEnded.value = false;
       isPsuse.value = false;
       isTreating.value = true;
 
-      // 重置所有穴位状态
-      const flatPoints = tableData.value;
-      flatPoints.forEach((item, idx) => {
-        item.status = idx === 0 ? 1 : 0;
-        item.isActive = idx === 0;
-        // 同步更新每个穴位的状态
-        updateNewPlanPointStatus(item.id, idx === 0 ? 1 : 0);
-      });
+      // 2. 重新获取原始分组数据（关键：避免复用已修改的状态）
+      const originalPlan = selectedCase.value.plan || [];
+      const resetGroupedData = flattenPlanData(originalPlan);
 
-      // 重置选中状态
-      selectedObj.value = flatPoints[0];
-      currentPoint.value = flatPoints[0];
-      // 重置newPlanPoint
-      newPlanPoint.value = JSON.parse(JSON.stringify(flatPoints));
-      picType.value = flatPoints[0].bodyType;
-      picUrl.value = [0, 2].includes(flatPoints[0].bodyType) ? BodyPic : LegPic;
-      chooseBody(flatPoints[0]);
+      // 3. 重置分组和穴位状态
+      if (resetGroupedData.length > 0) {
+        // 激活第一个分组
+        resetGroupedData[0].status = 1;
+        resetGroupedData[0].isActive = true;
 
-      // 重置索引
+        // 激活第一个分组的第一个穴位
+        if (resetGroupedData[0].points.length > 0) {
+          resetGroupedData[0].points.forEach((point, idx) => {
+            point.status = idx === 0 ? 1 : 0;
+            point.isActive = idx === 0;
+          });
+
+          // 更新当前选中穴位
+          selectedObj.value = resetGroupedData[0].points[0];
+          currentPoint.value = resetGroupedData[0].points[0];
+          chooseBody(resetGroupedData[0].points[0]);
+
+          // 更新图片类型
+          picType.value = resetGroupedData[0].points[0].bodyType;
+          picUrl.value = [0, 2].includes(picType.value) ? BodyPic : LegPic;
+        }
+      }
+
+      // 4. 重置核心数据（关键：同步更新tableData和newPlanPoint）
+      tableData.value = JSON.parse(JSON.stringify(resetGroupedData));
+      newPlanPoint.value = JSON.parse(JSON.stringify(resetGroupedData));
+
+      // 5. 重置索引
       testIndex.value = 0;
 
-      // ========== 重新启动时主动发送第一个穴位的WS指令 ==========
+      // 6. 重新生成WS指令并发送第一个穴位指令
+      wsCommandArray.value = generateWsCommandArray(resetGroupedData);
       if (wsCommandArray.value.length > 0) {
         sendWsMessage(wsCommandArray.value[0]);
         console.log("重新启动治疗，发送第一个穴位WS指令");
       }
 
-      //  切到分页索引0（第一页），而非bodyType
+      // 7. 强制刷新子组件（关键：解决穴位消失）
       nextTick(() => {
+        // 切回第一页
         if (swiperInstance.value) {
-          swiperInstance.value.slideTo(0); // 强制切回第一页
+          swiperInstance.value.slideTo(0);
         }
+        // 重启倒计时
         if (treatSwiperRef.value) {
-          treatSwiperRef.value.stopCountdown(); // 先停止旧的倒计时
-          treatSwiperRef.value.startCountdown(0); // 启动第0个穴位的倒计时
+          treatSwiperRef.value.stopCountdown();
+          treatSwiperRef.value.startCountdown(0);
+        }
+        // 强制更新身体组件（可选：如果子组件有刷新方法）
+        if (bodyRef.value) {
+          console.log("强制刷新身体组件");
         }
       });
 
@@ -885,13 +983,68 @@ const switchDemoMode = () => {
 };
 
 // 发送WS消息
-const sendWsMessage = (data) => {
-  if (!$ws) return;
-  $ws.SendMessage(`${data.command}`, `${data.args}`, (res) => {
-    console.log("WS响应:", res);
-  });
+const sendWsMessage = (data, isReciprocateType = false, reciprocatePoints = []) => {
+  // 非往复灸：直接发送
+  if (!isReciprocateType || reciprocatePoints.length < 2) {
+    if (!$ws) return;
+    $ws.SendMessage(`${data.command}`, `${data.args}`, (res) => {
+      console.log("WS响应:", res);
+    });
+    return;
+  }
+
+  // 往复灸：先停止已有定时器，再启动新的循环
+  if (reciprocateTimer.value) {
+    clearInterval(reciprocateTimer.value);
+    reciprocateTimer.value = null;
+  }
+
+  isReciprocating.value = true;
+  currentReciprocateIndex.value = 0;
+
+  // 定义单次发送逻辑
+  const sendSingleReciprocate = () => {
+    const currentPointData = reciprocatePoints[currentReciprocateIndex.value];
+    const { x, y, z, rx, ry, rz } = currentPointData;
+    const poseStr = `pose={${x},${y},${z},${rx},${ry},${rz}}`;
+    const wsData = {
+      command: "MovJ_vertical",
+      args: `pose='${poseStr}'`,
+      pointInfo: {
+        name: currentPointData.name,
+        point: currentPointData.name,
+        index: currentReciprocateIndex.value,
+      },
+    };
+
+    // 发送当前位置指令
+    if ($ws) {
+      $ws.SendMessage(`${wsData.command}`, `${wsData.args}`, (res) => {
+        console.log(
+          `往复灸-${currentReciprocateIndex.value === 0 ? "位置1" : "位置2"}-WS响应:`,
+          res
+        );
+      });
+    }
+
+    // 切换下一个位置索引
+    currentReciprocateIndex.value = currentReciprocateIndex.value === 0 ? 1 : 0;
+  };
+
+  // 立即发送第一个位置，然后按间隔循环
+  sendSingleReciprocate();
+  reciprocateTimer.value = setInterval(sendSingleReciprocate, reciprocateInterval.value);
 };
 
+// 新增：停止往复灸
+const stopReciprocate = () => {
+  if (reciprocateTimer.value) {
+    clearInterval(reciprocateTimer.value);
+    reciprocateTimer.value = null;
+  }
+  isReciprocating.value = false;
+  currentReciprocateIndex.value = 0;
+};
 // 恢复正常模式（刷新页面）
 const refreshNormal = () => {
   isDemoMode.value = false;
@@ -920,12 +1073,14 @@ watch(
 
 // 初始化
 onMounted(() => {
+  //  localStorage.setItem("selectedCase", JSON.stringify(selectedCase));
   selectedCaseId.value = localStorage.getItem("selectedCaseId") || 1;
   getPoint(selectedCaseId.value);
 });
 
 onUnmounted(() => {});
 </script>
+>
 
 <style scoped lang="scss">
 .container {

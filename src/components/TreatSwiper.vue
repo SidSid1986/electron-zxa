@@ -16,40 +16,42 @@
         v-for="(pageData, pageIndex) in treatData"
         :key="`page-${pageIndex}`"
       >
+        <!-- 保留3个/页的布局，遍历当前页的分组项 -->
         <div
           class="swiper-item"
-          v-for="(item, itemIndex) in pageData"
-          :key="item.uniqueKey"
-          @click="detailIconClick(item, itemIndex)"
+          v-for="(group, groupIndex) in pageData"
+          :key="group.groupId"
+          @click="detailIconClick(group, groupIndex)"
         >
           <div class="swiper-item-title">
-            <div class="swiper-item-name">{{ item.chooseName }}</div>
-            <div class="swiper-item-point">{{ item.point }}</div>
+            <div class="swiper-item-name">{{ group.chooseName }}</div>
+            <!-- 显示分组内的所有穴位名称 -->
+            <div class="swiper-item-point">
+              {{ group.points.map(p => p.name).join(' / ') }}
+            </div>
           </div>
-          <div class="swiper-item-time">时长:{{ item.time1 }}</div>
+          <!-- 显示分组的正确时长 -->
+          <div class="swiper-item-time">时长:{{ group.time1 }}</div>
           <div class="swiper-item-circle">
             <div class="circle-bg">
               <div class="circle-content">
-                <!-- 运行中：白圈 -->
+                <!-- 仅当前激活分组闪烁 -->
                 <div
-                  v-if="item.isActive && item.status === 'running'"
+                  v-if="group.isActive && group.status === 'running'"
                   class="light-border"
                 ></div>
-                <!-- 暂停/结束：红圈（ 恢复暂停状态的红圈） -->
                 <div
                   v-if="
-                    item.isActive && (item.status === 'paused' || item.status === 'ended')
+                    group.isActive && (group.status === 'paused' || group.status === 'ended')
                   "
                   class="light-border-red"
                 ></div>
                 <div class="circle-text">
-                  <span>
-                    {{ formatTime(item.remainingSeconds) }}
-                  </span>
+                  <span>{{ formatTime(group.remainingSeconds) }}</span>
                 </div>
               </div>
             </div>
-            <div class="circle-btn" @click="editTime(item)">修改</div>
+            <div class="circle-btn" @click="editTime(group)">修改</div>
           </div>
         </div>
       </swiper-slide>
@@ -80,7 +82,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onUnmounted, onMounted, nextTick } from "vue";
+import { ref, watch, onUnmounted, onMounted, nextTick, computed } from "vue";
 import { Swiper, SwiperSlide } from "swiper/vue";
 import "swiper/css";
 import { Navigation } from "swiper/modules";
@@ -95,18 +97,18 @@ const isComponentMounted = ref(false);
 const countdownTimers = ref({});
 const remainingSecondsMap = ref({});
 
-const durationDialogVisible = ref(false); // Dialog显隐
-const durationInputValue = ref(""); // 输入框值
-const currentEditItem = ref(null); // 当前修改的item
+const durationDialogVisible = ref(false);
+const durationInputValue = ref("");
+const currentEditItem = ref(null);
 const isDemoMode = computed(() => props.isDemoMode);
 
 const props = defineProps({
-  swiperData: {
+  swiperData: { // 父组件传入的分组数组（悬停灸、往复灸）
     type: Array,
     required: true,
     default: () => [],
   },
-  activeIndex: {
+  activeIndex: { // 父组件传入的「分组在当前页的索引」（0=悬停灸，1=往复灸）
     type: Number,
     default: -1,
   },
@@ -115,7 +117,6 @@ const props = defineProps({
     default: false,
   },
   isDemoMode: {
-    // 接收演示模式状态
     type: Boolean,
     default: false,
   },
@@ -129,46 +130,38 @@ const emit = defineEmits([
   "pauseEdit",
 ]);
 
-// 格式化时间
+// 格式化时间（不变）
 const formatTime = (seconds) => {
-  const mins = Math.floor(seconds / 60)
-    .toString()
-    .padStart(2, "0");
+  const mins = Math.floor(seconds / 60).toString().padStart(2, "0");
   const secs = (seconds % 60).toString().padStart(2, "0");
   return `${mins}:${secs}`;
 };
 
-//  格式化数据
-const formatData = (data, activeIndex) => {
-  return data.map((item, index) => {
-    const timeNum = parseInt(item.time) || 60;
-    const uniqueKey = item.uniqueId || `${item.name}-${item.point}`;
-    const hasValidTime = timeNum > 0;
+// 核心修改1：格式化分组数据（保留分组属性，适配3个/页）
+const formatData = (groupList, activeIndex) => {
+  if (!Array.isArray(groupList)) return [];
 
-    //  使用props传入的time1/time2 ，
-    const time1 = item.time1 || `00:01:00`; // 默认1分钟
-    const time2 = item.time2 || `01:00`; // 默认1分钟
-
-    // 初始化剩余秒数
-    if (!remainingSecondsMap.value[uniqueKey]) {
-      remainingSecondsMap.value[uniqueKey] = timeNum;
+  return groupList.map((group, groupIndex) => {
+    // 分组时长（秒）：悬停灸60，往复灸120
+    const groupTime = parseInt(group.time) || 60;
+    // 初始化剩余秒数（按分组ID存储）
+    if (!remainingSecondsMap.value[group.groupId]) {
+      remainingSecondsMap.value[group.groupId] = groupTime;
     }
 
     return {
-      ...item,
-      uniqueKey,
-      time1: time1,
-      time2: time2,
-      totalSeconds: timeNum,
-      remainingSeconds: remainingSecondsMap.value[uniqueKey],
-      isActive: index === activeIndex,
-      status: index === activeIndex ? "paused" : "idle",
-      hasValidTime,
+      ...group,
+      totalSeconds: groupTime,
+      remainingSeconds: remainingSecondsMap.value[group.groupId],
+      // 激活状态：仅匹配父组件传入的activeIndex
+      isActive: groupIndex === activeIndex,
+      status: groupIndex === activeIndex ? "paused" : "idle",
+      hasValidTime: groupTime > 0,
     };
   });
 };
 
-// 分页
+// 核心修改2：恢复分页逻辑（3个分组/页）
 const groupByPageSize = (data, pageSize = 3) => {
   const pages = [];
   for (let i = 0; i < data.length; i += pageSize) {
@@ -177,64 +170,66 @@ const groupByPageSize = (data, pageSize = 3) => {
   return pages;
 };
 
-// 启动倒计时
+// 核心修改3：启动倒计时（按分组索引）
 const startCountdown = (targetIndex) => {
   if (!props.isTreating || targetIndex === -1) return;
-  const allItems = treatData.value.flat();
-  const targetItem = allItems[targetIndex];
-
-  if (!targetItem || !targetItem.hasValidTime || targetItem.status === "ended") {
+  
+  // 平铺所有分组项，找到目标分组
+  const allGroups = treatData.value.flat();
+  const targetGroup = allGroups[targetIndex];
+  
+  if (!targetGroup || !targetGroup.hasValidTime || targetGroup.status === "ended") {
     return;
   }
 
-  // 1. 停止所有其他定时器
+  // 停止所有其他定时器
   Object.keys(countdownTimers.value).forEach((key) => {
     clearInterval(countdownTimers.value[key]);
     delete countdownTimers.value[key];
   });
 
-  // 2. 重置所有穴位状态（
-  allItems.forEach((item) => {
-    if (item.uniqueKey === targetItem.uniqueKey) {
-      item.status = "running"; // 运行中 绿圈
-      item.isActive = true;
+  // 重置所有分组状态
+  allGroups.forEach((group) => {
+    if (group.groupId === targetGroup.groupId) {
+      group.status = "running"; // 运行中-绿圈
+      group.isActive = true;
     } else {
-      item.status = "idle";
-      item.isActive = false;
+      group.status = "idle";
+      group.isActive = false;
     }
   });
 
-  // 3. 初始化剩余时间（用总时长）
-  if (targetItem.remainingSeconds <= 0) {
-    targetItem.remainingSeconds = targetItem.totalSeconds;
-    remainingSecondsMap.value[targetItem.uniqueKey] = targetItem.totalSeconds;
+  // 初始化剩余时间
+  if (targetGroup.remainingSeconds <= 0) {
+    targetGroup.remainingSeconds = targetGroup.totalSeconds;
+    remainingSecondsMap.value[targetGroup.groupId] = targetGroup.totalSeconds;
   }
 
-  // 4. 启动定时器
-  countdownTimers.value[targetItem.uniqueKey] = setInterval(() => {
+  // 启动分组倒计时
+  countdownTimers.value[targetGroup.groupId] = setInterval(() => {
     if (!isComponentMounted.value || !props.isTreating) {
-      clearInterval(countdownTimers.value[targetItem.uniqueKey]);
-      delete countdownTimers.value[targetItem.uniqueKey];
-      targetItem.status = "paused"; // 暂停  红圈
+      clearInterval(countdownTimers.value[targetGroup.groupId]);
+      delete countdownTimers.value[targetGroup.groupId];
+      targetGroup.status = "paused";
       return;
     }
 
-    remainingSecondsMap.value[targetItem.uniqueKey] -= 1;
-    targetItem.remainingSeconds = remainingSecondsMap.value[targetItem.uniqueKey];
+    remainingSecondsMap.value[targetGroup.groupId] -= 1;
+    targetGroup.remainingSeconds = remainingSecondsMap.value[targetGroup.groupId];
 
-    if (targetItem.remainingSeconds <= 0) {
-      clearInterval(countdownTimers.value[targetItem.uniqueKey]);
-      delete countdownTimers.value[targetItem.uniqueKey];
-      targetItem.status = "ended"; // 结束 红圈
-      targetItem.remainingSeconds = 0;
+    if (targetGroup.remainingSeconds <= 0) {
+      clearInterval(countdownTimers.value[targetGroup.groupId]);
+      delete countdownTimers.value[targetGroup.groupId];
+      targetGroup.status = "ended";
+      targetGroup.remainingSeconds = 0;
       setTimeout(() => {
-        emit("countdownEnd", targetItem);
+        emit("countdownEnd", targetGroup);
       }, 100);
     }
   }, 1000);
 };
 
-// 暂停倒计时
+// 暂停倒计时（按分组）
 const pauseCountdown = () => {
   const activeKey = Object.keys(countdownTimers.value)[0];
   if (!activeKey) return;
@@ -242,55 +237,46 @@ const pauseCountdown = () => {
   clearInterval(countdownTimers.value[activeKey]);
   delete countdownTimers.value[activeKey];
 
-  const targetItem = treatData.value.flat().find((item) => item.uniqueKey === activeKey);
-  if (targetItem) {
-    targetItem.status = "paused"; // 标记暂停
+  const allGroups = treatData.value.flat();
+  const targetGroup = allGroups.find((group) => group.groupId === activeKey);
+  if (targetGroup) {
+    targetGroup.status = "paused";
   }
 };
 
-// 继续倒计时
+// 继续倒计时（按分组）
 const resumeCountdown = () => {
-  const allItems = treatData.value.flat();
-  //  激活+暂停状态的穴位
-  const activeItem = allItems.find((item) => item.isActive && item.status === "paused");
+  const allGroups = treatData.value.flat();
+  const activeGroup = allGroups.find((group) => group.isActive && group.status === "paused");
 
-  if (!activeItem) {
-    ElMessage({
-      message: "暂无暂停的倒计时可继续",
-      grouping: true,
-      type: "warning",
-    });
+  if (!activeGroup) {
+    ElMessage.warning("暂无暂停的倒计时可继续");
     return;
   }
 
-  if (activeItem.remainingSeconds <= 0) {
-    ElMessage({
-      message: "剩余时长不足1秒，无法继续",
-      grouping: true,
-      type: "warning",
-    });
+  if (activeGroup.remainingSeconds <= 0) {
+    ElMessage.warning("剩余时长不足1秒，无法继续");
     return;
   }
 
-  // 启动倒计时
-  activeItem.status = "running";
-  countdownTimers.value[activeItem.uniqueKey] = setInterval(() => {
+  activeGroup.status = "running";
+  countdownTimers.value[activeGroup.groupId] = setInterval(() => {
     if (!isComponentMounted.value || !props.isTreating) {
-      clearInterval(countdownTimers.value[activeItem.uniqueKey]);
-      delete countdownTimers.value[activeItem.uniqueKey];
+      clearInterval(countdownTimers.value[activeGroup.groupId]);
+      delete countdownTimers.value[activeGroup.groupId];
       return;
     }
 
-    remainingSecondsMap.value[activeItem.uniqueKey] -= 1;
-    activeItem.remainingSeconds = remainingSecondsMap.value[activeItem.uniqueKey];
+    remainingSecondsMap.value[activeGroup.groupId] -= 1;
+    activeGroup.remainingSeconds = remainingSecondsMap.value[activeGroup.groupId];
 
-    if (activeItem.remainingSeconds <= 0) {
-      clearInterval(countdownTimers.value[activeItem.uniqueKey]);
-      delete countdownTimers.value[activeItem.uniqueKey];
-      activeItem.status = "ended";
-      activeItem.remainingSeconds = 0;
+    if (activeGroup.remainingSeconds <= 0) {
+      clearInterval(countdownTimers.value[activeGroup.groupId]);
+      delete countdownTimers.value[activeGroup.groupId];
+      activeGroup.status = "ended";
+      activeGroup.remainingSeconds = 0;
       setTimeout(() => {
-        emit("countdownEnd", activeItem);
+        emit("countdownEnd", activeGroup);
       }, 100);
     }
   }, 1000);
@@ -303,45 +289,44 @@ const stopCountdown = () => {
     clearInterval(countdownTimers.value[key]);
     delete countdownTimers.value[key];
   });
-  treatData.value.flat().forEach((item) => {
-    item.status = "idle";
-    item.isActive = false;
-    item.remainingSeconds = item.totalSeconds;
-    remainingSecondsMap.value[item.uniqueKey] = item.totalSeconds;
+  const allGroups = treatData.value.flat();
+  allGroups.forEach((group) => {
+    group.status = "idle";
+    group.isActive = false;
+    group.remainingSeconds = group.totalSeconds;
+    remainingSecondsMap.value[group.groupId] = group.totalSeconds;
   });
 };
 
-//  修改时长方法：输入分钟，转换为秒
-const editTime = (item) => {
-  emit("pauseEdit", item);
+// 修改时长（适配分组）
+const editTime = (group) => {
+  emit("pauseEdit", group);
   pauseCountdown();
 
-  // 1. 存储当前item
-  currentEditItem.value = item;
-  // 2. 初始化输入值
+  currentEditItem.value = group;
   durationInputValue.value = isDemoMode.value
-    ? (item.time || 60).toString()
-    : Math.floor((item.time || 60) / 60).toString();
-  // 3. 打开Dialog
+    ? (group.time || 60).toString()
+    : Math.floor((group.time || 60) / 60).toString();
+  
   durationDialogVisible.value = true;
 };
 
+// 确认修改时长
 const handleDurationConfirm = () => {
-  const inputVal =
-    parseInt(durationInputValue.value.trim()) || (isDemoMode.value ? 8 : 1);
+  const inputVal = parseInt(durationInputValue.value.trim()) || (isDemoMode.value ? 8 : 1);
   const newTimeInSeconds = isDemoMode.value ? inputVal : inputVal * 60;
 
-  const minutes = Math.floor(newTimeInSeconds / 60);
-  const seconds = newTimeInSeconds % 60;
-  const minutesStr = minutes.toString().padStart(2, "0");
-  const secondsStr = seconds.toString().padStart(2, "0");
-  const newTime1 = `00:${minutesStr}:${secondsStr}`;
-  const newTime2 = `${minutesStr}:${secondsStr}`;
+  // 格式化时长显示
+  const minutes = Math.floor(newTimeInSeconds / 60).toString().padStart(2, "0");
+  const seconds = (newTimeInSeconds % 60).toString().padStart(2, "0");
+  const newTime1 = `00:${minutes}:${seconds}`;
+  const newTime2 = `${minutes}:${seconds}`;
 
-  const newSwiperData = JSON.parse(JSON.stringify(props.swiperData)).map((d) => {
-    if (d.uniqueKey === currentEditItem.value.uniqueKey) {
+  // 更新分组数据
+  const newSwiperData = JSON.parse(JSON.stringify(props.swiperData)).map((group) => {
+    if (group.groupId === currentEditItem.value.groupId) {
       return {
-        ...d,
+        ...group,
         time: newTimeInSeconds,
         time1: newTime1,
         time2: newTime2,
@@ -349,48 +334,42 @@ const handleDurationConfirm = () => {
         remainingSeconds: newTimeInSeconds,
       };
     }
-    return d;
+    return group;
   });
+
   emit("updateSwiperData", newSwiperData);
 
   nextTick(() => {
     const formatted = formatData(newSwiperData, props.activeIndex);
     treatData.value = groupByPageSize(formatted, 3);
-
-    const targetItem = treatData.value
-      .flat()
-      .find((i) => i.uniqueKey === currentEditItem.value.uniqueKey);
-    if (targetItem) {
-      targetItem.time = newTimeInSeconds;
-      targetItem.totalSeconds = newTimeInSeconds;
-      targetItem.time1 = newTime1;
-      targetItem.time2 = newTime2;
-      targetItem.remainingSeconds = newTimeInSeconds;
-      targetItem.status = "paused";
-      targetItem.isActive = true;
-      remainingSecondsMap.value[targetItem.uniqueKey] = newTimeInSeconds;
+    
+    // 更新当前修改的分组
+    const allGroups = treatData.value.flat();
+    const targetGroup = allGroups.find(g => g.groupId === currentEditItem.value.groupId);
+    if (targetGroup) {
+      targetGroup.time = newTimeInSeconds;
+      targetGroup.totalSeconds = newTimeInSeconds;
+      targetGroup.time1 = newTime1;
+      targetGroup.time2 = newTime2;
+      targetGroup.remainingSeconds = newTimeInSeconds;
+      targetGroup.status = "paused";
+      targetGroup.isActive = true;
+      remainingSecondsMap.value[targetGroup.groupId] = newTimeInSeconds;
     }
   });
 
   const tipText = isDemoMode.value
-    ? `已将${currentEditItem.value.point}时长修改为 ${inputVal} 秒`
-    : `已将${currentEditItem.value.point}时长修改为 ${inputVal} 分钟（${newTimeInSeconds} 秒）`;
-  // ElMessage.success(tipText);
-
-  ElMessage({
-    message: `${tipText}`,
-    grouping: true,
-    type: "success",
-  });
-
-  // 关闭Dialog
+    ? `已将${currentEditItem.value.chooseName}时长修改为 ${inputVal} 秒`
+    : `已将${currentEditItem.value.chooseName}时长修改为 ${inputVal} 分钟`;
+  
+  ElMessage.success(tipText);
   durationDialogVisible.value = false;
 };
 
-// 其他辅助方法
-const detailIconClick = (item) => {
-  emit("detailSelectOne", item);
-  localStorage.setItem("oneItem", JSON.stringify(item));
+// 辅助方法
+const detailIconClick = (group, index) => {
+  emit("detailSelectOne", group);
+  localStorage.setItem("oneItem", JSON.stringify(group));
 };
 
 const goPrev = () => {
@@ -400,10 +379,7 @@ const goPrev = () => {
 };
 
 const goNext = () => {
-  if (
-    swiperInstance.value &&
-    swiperInstance.value.activeIndex < treatData.value.length - 1
-  ) {
+  if (swiperInstance.value && swiperInstance.value.activeIndex < treatData.value.length - 1) {
     swiperInstance.value.slideNext();
   }
 };
@@ -416,18 +392,18 @@ const onSlideChange = (swiper) => {
   emit("swiperChange", swiper.activeIndex);
 };
 
+// 监听分组数据变化（格式化+分页）
 watch(
   () => props.swiperData,
   (newVal) => {
     if (!newVal.length) return;
-
     const formatted = formatData(newVal, props.activeIndex);
-    treatData.value = groupByPageSize(formatted, 3);
+    treatData.value = groupByPageSize(formatted, 3); // 恢复3个/页
   },
   { immediate: true, deep: true }
 );
 
- 
+// 监听激活索引变化
 watch(
   () => props.activeIndex,
   (newIndex) => {
@@ -435,12 +411,11 @@ watch(
       stopCountdown();
       return;
     }
-    //  标记激活状态，不启动倒计时
-    const allItems = treatData.value.flat();
-    allItems.forEach((item, idx) => {
-      item.isActive = idx === newIndex;
-      if (item.isActive && item.status === "idle") {
-        item.status = "paused"; // 激活项默认暂停
+    const allGroups = treatData.value.flat();
+    allGroups.forEach((group, idx) => {
+      group.isActive = idx === newIndex;
+      if (group.isActive && group.status === "idle") {
+        group.status = "paused";
       }
     });
   },
@@ -470,6 +445,7 @@ defineExpose({
 </script>
 
 <style scoped lang="scss">
+// 样式完全保留原有逻辑（3个/页的布局）
 .swiper-main {
   width: 100%;
   box-sizing: border-box;
@@ -519,7 +495,7 @@ defineExpose({
 
 .swiper-item {
   flex: 1;
-  max-width: 32%;
+  max-width: 32%; // 保留3个/页的宽度
   box-sizing: border-box;
   height: 100%;
   display: flex;
@@ -694,7 +670,7 @@ defineExpose({
 </style>
 
 <style lang="scss">
-// 全局样式（消息提示美化）
+// 全局样式保留不变
 .custom-message {
   &.el-message--success {
     background-color: rgba(105, 62, 156, 0.1) !important;

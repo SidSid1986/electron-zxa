@@ -2,13 +2,12 @@
  * @Author: Sid Li
  * @Date: 2025-12-13 14:06:46
  * @LastEditors: Sid Li
- * @LastEditTime: 2025-12-19 09:49:36
- * @FilePath: \zi-xiao-ai\src\components\body\LegFront.vue
+ * @LastEditTime: 2026-01-24 21:00:58
+ * @FilePath: \electron-zxa\src\components\body\LegFront.vue
  * @Description:腿正面图片组件
 -->
 <template>
   <div class="body-img">
-    <!-- <img src="@/assets/pic/body/body2.png" alt="" /> -->
     <div class="bg-body-norem">
       <div class="light-ball-item" v-for="item in pointData" :key="item.id">
         <div
@@ -45,76 +44,173 @@ import { ref, onMounted, watch, nextTick } from "vue";
 
 const props = defineProps({
   newPlanPoint: {
+    // 父组件传入的分组数组（groupedData）
     type: Array,
     default: () => [],
   },
+  currentPoint: {
+    // 当前激活的穴位/分组（用于定位当前执行的分组）
+    type: Object,
+    default: () => ({}),
+  },
+  // 新增：治疗结束标识（父组件治疗结束时置为true）
+  isTreatEnd: {
+    type: Boolean,
+    default: false,
+  },
 });
+
+// 新增：触发父组件重置结束标识
+const emit = defineEmits(["resetTreatEnd"]);
 
 const pointData = ref([]);
 const pointDataCopy = ref([]);
 const pointTreat = ref([]);
 
+// 初始化穴位基础数据（适配腿部正面：过滤bodyType=1）
 const initPointTreat = () => {
   const pointDataJson = JSON.parse(localStorage.getItem("pointData")) || [];
   pointDataCopy.value = JSON.parse(JSON.stringify(pointDataJson));
-
+  // 过滤bodyType=1的穴位（腿部正面），如果为空则用原始数据
   pointTreat.value =
-    pointDataCopy.value.filter((item) => item.bodyType === 1) ||
-    pointDataCopy.value;
+    pointDataCopy.value.filter((item) => item.bodyType === 1) || pointDataCopy.value;
   console.log("初始化pointTreat（bodyType=1）：", pointTreat.value);
 };
 
-const replaceStatusById = (sourceArr, targetArr) => {
-  const statusMap = sourceArr.reduce((map, item) => {
+// 核心：平铺分组数据为穴位数组，并按治疗类型设置状态（强化结束状态优先级）
+const flattenGroupData = (groupList) => {
+  if (!Array.isArray(groupList) || groupList.length === 0) return [];
+
+  // 1. 找到当前激活的分组（通过currentPoint的groupId匹配）
+  const activeGroupId =
+    props.currentPoint?.groupId || groupList.find((g) => g.isActive)?.groupId || "";
+  const activeGroup = groupList.find((g) => g.groupId === activeGroupId) || {};
+
+  // 2. 平铺所有分组的穴位，并标记状态
+  let flatPoints = [];
+  groupList.forEach((group) => {
+    group.points.forEach((point) => {
+      let status = 0; // 默认未激活
+
+      // 优先级1：分组已结束（status=2），直接设为绿色
+      if (group.status === 2) {
+        status = 2;
+      }
+      // 优先级2：激活分组的治疗状态
+      else if (group.groupId === activeGroupId) {
+        // 往复灸（treatType=3）：激活分组下所有穴位设为status=1
+        // 悬停灸（treatType=0）：仅当前激活的单个穴位设为status=1
+        if (group.treatType === 3) {
+          status = 1; // 往复灸：所有穴位闪烁
+        } else if (group.treatType === 0 && point.id === props.currentPoint?.id) {
+          status = 1; // 悬停灸：仅当前穴位闪烁
+        }
+      }
+      // 优先级3：已完成的单个穴位
+      else if (point.status === 2) {
+        status = 2;
+      }
+
+      flatPoints.push({
+        ...point,
+        status, // 覆盖原有status
+        groupId: group.groupId, // 关联分组ID
+        treatType: group.treatType, // 关联治疗类型
+      });
+    });
+  });
+
+  return flatPoints;
+};
+
+// 替换穴位状态（适配平铺后的分组穴位数据）
+const replaceStatusById = (flatPoints, targetArr) => {
+  const statusMap = flatPoints.reduce((map, item) => {
     map[item.id] = item.status;
     return map;
   }, {});
+
   return targetArr.map((item) => {
     if (statusMap.hasOwnProperty(item.id)) {
       return { ...item, status: statusMap[item.id] };
     }
-    return { ...item };
+    return { ...item, status: 0 }; // 无匹配的穴位设为未激活
   });
 };
 
+// 重构：状态更新核心函数（复用）
+const updatePointStatus = () => {
+  if (props.newPlanPoint.length === 0 || pointTreat.value.length === 0) return;
+
+  const flatPoints = flattenGroupData(props.newPlanPoint);
+  const updatedArr = replaceStatusById(flatPoints, pointTreat.value);
+
+  pointData.value = [];
+  nextTick(() => {
+    pointData.value = updatedArr;
+    console.log("腿部正面最终渲染的穴位数据：", pointData.value);
+  });
+};
+
+// 监听分组数据变化（核心逻辑）
 watch(
   () => [...props.newPlanPoint],
   (newVal) => {
-    console.log("最新newPlanPoint数据：", newVal);
+    console.log("最新newPlanPoint分组数据（腿部正面）：", newVal);
     if (!newVal || newVal.length === 0) return;
 
+    // 确保基础穴位数据已初始化
     if (pointTreat.value.length === 0) {
       initPointTreat();
     }
-
-    console.log("更新前pointTreat：", pointTreat.value);
-    const updatedArr2 = replaceStatusById(newVal, pointTreat.value);
-    console.log("更新后pointData：", updatedArr2);
-
-    pointData.value = [];
-    nextTick(() => {
-      pointData.value = updatedArr2;
-    });
-    console.log("最终pointData：", pointData.value);
+    updatePointStatus();
   },
   { immediate: true, deep: true }
 );
 
+// 监听当前激活穴位变化（切换分组/穴位时更新）
+watch(
+  () => props.currentPoint,
+  () => {
+    updatePointStatus();
+  },
+  { deep: true }
+);
+
+// 新增：监听治疗结束标识（核心修复）
+watch(
+  () => props.isTreatEnd,
+  (isEnd) => {
+    if (isEnd) {
+      updatePointStatus();
+      emit("resetTreatEnd"); // 通知父组件重置标识
+    }
+  },
+  { immediate: true }
+);
+
+// 调试监听
 watch(
   () => pointData.value,
   (newVal) => {
     console.log("pointData最终渲染数据（bodyType=1）：", newVal);
-    const hasStatus2 = newVal.some((item) => item.status === 2);
-    console.log("是否有治疗完成的穴位（status=2）：", hasStatus2);
+    const flashingPoints = newVal.filter((item) => item.status === 1);
+    console.log(
+      "腿部正面当前闪烁的穴位：",
+      flashingPoints.map((p) => p.name)
+    );
+    console.log(
+      "腿部正面治疗完成的穴位：",
+      newVal.filter((item) => item.status === 2).map((p) => p.name)
+    );
   },
   { deep: true }
 );
 
 onMounted(() => {
-  console.log("组件挂载了（bodyType=1）");
+  console.log("LegFront组件挂载（bodyType=1）");
   initPointTreat();
-  const updatedArr2 = replaceStatusById(props.newPlanPoint, pointTreat.value);
-  pointData.value = updatedArr2;
+  updatePointStatus();
 });
 </script>
 
@@ -129,24 +225,21 @@ onMounted(() => {
   justify-content: center;
   background-color: #fff;
   border-radius: 12px;
-  // border: 1px solid green;
+}
 
-  .bg-body-norem {
-    width: 441px;
-    height: 636px;
-    // border: 1px solid red;
-    background: url("@/assets/pic/body/body1.png") no-repeat center center;
-    background-size: cover;
-    border-radius: 12px;
-    position: relative;
-  }
+.bg-body-norem {
+  width: 441px;
+  height: 636px;
+  background: url("@/assets/pic/body/body1.png") no-repeat center center;
+  background-size: cover;
+  border-radius: 12px;
+  position: relative;
+}
 
-  .light-ball-item {
-    // border: 2px solid green;
-    height: 100%;
-    width: 100%;
-    position: absolute;
-  }
+.light-ball-item {
+  height: 100%;
+  width: 100%;
+  position: absolute;
 }
 
 .light-ball-red2 {
@@ -207,11 +300,6 @@ onMounted(() => {
   z-index: 9999 !important;
 }
 
-.blink {
-  transform: scale(1.2);
-  animation: blink 1.5s infinite ease-in-out;
-  transform-origin: center center;
-}
 @keyframes blink {
   0% {
     opacity: 0.6; /* 初始透明度 */

@@ -1,4 +1,4 @@
-const pointData = [
+export const pointData = [
   {
     _id: "ae8031c0-2997-482b-ab4e-07f8ea040ac4",
     bodyType: 2,
@@ -361,7 +361,7 @@ const pointData = [
   },
 ];
 
-const selectedCase = {
+export const selectedCase = {
   uuid_id: "a6a0f427-e704-49c6-a9ce-4f7adca25f03",
   id: 11,
   name: "测试",
@@ -433,10 +433,9 @@ const selectedCase = {
   ],
 };
 
+export const selectedCaseId = 11;
 
-const selectedCaseId = 11;
-
-const userInfo = {
+export const userInfo = {
   nickName: "管理员",
   username: "admin",
   role: "admin",
