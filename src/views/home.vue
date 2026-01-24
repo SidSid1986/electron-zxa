@@ -15,20 +15,13 @@
             <div class="home-right-btn">
               <el-button
                 class="connect"
-                :class="[
-                  'custom-btn',
-                  isDeviceConnected ? 'connected-btn' : '',
-                ]"
+                :class="['custom-btn', isDeviceConnected ? 'connected-btn' : '']"
                 @click="connectDevice"
                 round
                 :disabled="isSending || isDeviceConnected"
               >
                 {{
-                  isSending
-                    ? "发送中..."
-                    : isDeviceConnected
-                      ? "已连接设备"
-                      : "连接设备"
+                  isSending ? "发送中..." : isDeviceConnected ? "已连接设备" : "连接设备"
                 }}
               </el-button>
             </div>
@@ -67,34 +60,46 @@ const connectDevice = () => {
   isSending.value = true;
   console.log("正在请求连接设备...");
 
-  $ws.SendMessage("EnableRobot", "", (data) => {
-    console.log(data);
-
-    // 标记发送完成
+  //新版本模拟处理
+  setTimeout(() => {
     isSending.value = false;
 
-    // 处理设备连接响应
-    if (data && data.result.status == 0) {
-      isDeviceConnected.value = true;
-      ElMessage.success("设备连接成功,准备自检！");
-      setTimeout(() => {
-        router.push({ path: "/check" });
-      }, 1000);
-    } else {
-      console.log("设备连接失败，请重试");
+    isDeviceConnected.value = true;
 
-      isDeviceConnected.value = false;
-    }
-  });
+    ElMessage.success("设备连接成功,准备自检！");
+    setTimeout(() => {
+      router.push({ path: "/check" });
+    }, 1000);
+  }, 2000);
+
+  //原版本代码
+  // $ws.SendMessage("EnableRobot", "", (data) => {
+  //   console.log(data);
+
+  //   // 标记发送完成
+  //   isSending.value = false;
+
+  //   // 处理设备连接响应
+  //   if (data && data.result.status == 0) {
+  //     isDeviceConnected.value = true;
+  //     ElMessage.success("设备连接成功,准备自检！");
+  //     setTimeout(() => {
+  //       router.push({ path: "/check" });
+  //     }, 1000);
+  //   } else {
+  //     console.log("设备连接失败，请重试");
+  //     isDeviceConnected.value = false;
+  //   }
+  // });
 
   // 5. 超时处理：15秒未响应则标记超时
-  timeoutTimer = setTimeout(() => {
-    if (isSending.value) {
-      msg.value = "连接请求超时，请重试";
-      isSending.value = false;
-      ElMessage.warning("连接请求超时，请重试");
-    }
-  }, 15000);
+  // timeoutTimer = setTimeout(() => {
+  //   if (isSending.value) {
+  //     msg.value = "连接请求超时，请重试";
+  //     isSending.value = false;
+  //     ElMessage.warning("连接请求超时，请重试");
+  //   }
+  // }, 15000);
 };
 
 // 页面挂载时初始化
@@ -226,9 +231,7 @@ onUnmounted(() => {
               &.is-disabled {
                 --el-button-disabled-text-color: #fff;
                 --el-button-disabled-bg-color: var(--el-button-bg-color);
-                --el-button-disabled-border-color: var(
-                  --el-button-border-color
-                );
+                --el-button-disabled-border-color: var(--el-button-border-color);
               }
             }
 

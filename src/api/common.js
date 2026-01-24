@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-11-24 10:59:31
  * @LastEditors: Sid Li
- * @LastEditTime: 2026-01-19 15:34:08
+ * @LastEditTime: 2026-01-24 14:49:37
  * @FilePath: \ZiXiaoAi-build\src\api\common.js
  * @Description:
  */
@@ -65,6 +65,15 @@ export function quitAll() {
   });
 }
 
+//机器人初始化
+export function initRobot() {
+  return request({
+    url: "/sys/robot/init",
+    method: "get",
+    timeout: 0,
+  });
+}
+
 //============================================
 
 export function getList() {
@@ -121,7 +130,7 @@ export function removerUser(n) {
 
 export function post2DArray(data) {
   return request({
-    url: "/api/data", // 替换为你实际的API地址
+    url: "/api/data",  
     method: "post",
     data,
   });

@@ -264,12 +264,10 @@ const generateWsCommandArray = (flatPoints) => {
   });
 };
 
-// 替换原来的 flattenPlanData 函数为下面这个（只做注释/增强，不扁平化）
+// 父组件 - flattenPlanData函数
 const flattenPlanData = (planList) => {
-  if (!Array.isArray(planList)) return [];
-
-  // 返回新的数组，避免修改原始对象
-  return planList.map((groupItem, groupIndex) => {
+  const flatPoints = [];
+  planList.forEach((groupItem) => {
     const {
       points = [],
       name: groupName,
@@ -277,53 +275,33 @@ const flattenPlanData = (planList) => {
       chooseName,
       time,
       bodyType: groupBodyType,
-      plan_id,
     } = groupItem;
-
-    const timeInSeconds = (parseInt(time) || 1) * 60; // 组时长（秒）
-    const minutes = Math.floor(timeInSeconds / 60)
-      .toString()
-      .padStart(2, "0");
-    const seconds = (timeInSeconds % 60).toString().padStart(2, "0");
-    const time1 = `00:${minutes}:${seconds}`; // 激活项显示格式
-    const time2 = `${minutes}:${seconds}`; // 非激活项显示格式
-
-    const newPoints = (points || []).map((pointItem, pointIndex) => {
-      // 确保每个点都有唯一 id（优先保留已有 id 或 _id）
-      const ensuredId =
-        pointItem.id ??
-        pointItem._id ??
-        `${plan_id ?? groupIndex}-${pointIndex}-${pointItem.name}`;
-
-      // uniqueId 用于内部识别（不依赖外部 id）
-      const uniqueId = `${
-        groupName ?? chooseName ?? treatType
-      }-${groupIndex}-${pointIndex}-${(pointItem.name || "").replace(/\s+/g, "")}`;
-
-      return {
+    points.forEach((pointItem, pointIndex) => {
+      const timeInSeconds = (parseInt(time) || 1) * 60; // 1→60秒
+      // 秒数转 分:秒
+      const minutes = Math.floor(timeInSeconds / 60)
+        .toString()
+        .padStart(2, "0");
+      const seconds = (timeInSeconds % 60).toString().padStart(2, "0");
+      const time1 = `00:${minutes}:${seconds}`;
+      const time2 = `${minutes}:${seconds}`; // 非激活项显示字段
+      flatPoints.push({
         ...pointItem,
-        // 覆盖/补全字段
-        id: ensuredId,
-        groupName,
-        treatType,
-        chooseName,
-        time: timeInSeconds, // 该点显示/使用时长，以组时长为准
-        bodyType: pointItem.bodyType ?? groupBodyType,
+        groupName: groupName,
+        treatType: treatType,
+        chooseName: chooseName,
+        time: timeInSeconds,
+        bodyType: pointItem.bodyType || groupBodyType,
         point: pointItem.name,
-        status: 0, // 0 未开始，1 运行中，2 已完成
+        status: 0,
         isActive: false,
-        uniqueId,
-        time1,
-        time2,
-      };
+        uniqueId: `${groupName}-${treatType}-${pointIndex}-${pointItem.name}`,
+        time1: time1,
+        time2: time2, // 确保初始化时存在该字段
+      });
     });
-
-    return {
-      ...groupItem,
-      time: timeInSeconds,
-      points: newPoints,
-    };
   });
+  return flatPoints;
 };
 
 // 获取穴位数据
@@ -338,71 +316,54 @@ const getPoint = (id) => {
     return;
   }
 
-  // 1. 使用 annotatePlanData 对 plan 做增强（保留 group 结构）
+  // 1. 处理plan数据（拆分为单个穴位数组）
   const planList = selectedCase.value.plan;
-  const annotatedPlan = flattenPlanData(planList); 
-  console.log(annotatedPlan);// 每个 group.points 都被增强字段
+  const flatPoints = flattenPlanData(planList);
+  if (flatPoints.length === 0) {
+    ElMessage.error("未找到有效穴位");
+    return;
+  }
 
-  // 2. 将增强后的 plan 赋给 displayItems（或覆盖 selectedCase.plan）
-  // 这里把它赋回 selectedCase 或单独存变量，方便后续使用
-  // 如果你想让 TreatSwiper 直接使用 this 结构，请确保 TreatSwiper 接收 display-style 数据
-  tableData.value = JSON.parse(JSON.stringify(annotatedPlan)); // 新增 displayItems ref（若尚未声明，请声明）
+  // 2. 初始化第一个穴位
+  flatPoints[0].status = 1;
+  flatPoints[0].isActive = true;
+  selectedObj.value = flatPoints[0];
+  currentPoint.value = flatPoints[0];
+  //  初始化newPlanPoint为所有穴位（而非仅第一个）
+  newPlanPoint.value = JSON.parse(JSON.stringify(flatPoints));
+  chooseBody(flatPoints[0]);
 
-  // // 3. 生成扁平化数组（仅用于生成 WS 命令和兼容旧逻辑）
-  // const flatForWs = [];
-  // annotatedPlan.forEach((group) => {
-  //   group.points.forEach((p) => flatForWs.push(p));
-  // });
+  // 3. 初始化图片类型
+  picType.value = flatPoints[0].bodyType;
+  picUrl.value = [0, 2].includes(flatPoints[0].bodyType) ? BodyPic : LegPic;
 
-  // // 4. 初始化第一个点（组内第一个）
-  // const firstPoint = annotatedPlan[0]?.points?.[0];
-  // if (!firstPoint) {
-  //   ElMessage.error("未找到有效穴位");
-  //   return;
-  // }
-  // firstPoint.status = 1;
-  // firstPoint.isActive = true;
-  // selectedObj.value = firstPoint;
-  // currentPoint.value = firstPoint;
+  // 4. 赋值给tableData（子组件数据源）
+  tableData.value = JSON.parse(JSON.stringify(flatPoints));
 
-  // // 5. 初始化 newPlanPoint 为扁平化（如果你希望 newPlanPoint 保持扁平结构以兼容子组件）
-  // newPlanPoint.value = JSON.parse(JSON.stringify(flatForWs));
+  // 5. 生成WS指令数组（基于单个穴位）
+  wsCommandArray.value = generateWsCommandArray(flatPoints);
+  // 发送第一个穴位的WS指令
+  if (wsCommandArray.value.length > 0) {
+    sendWsMessage(wsCommandArray.value[0]);
+  }
 
-  // // 6. 如果需要，初始化 tableData（子组件数据源）
-  // // 你可以把 tableData 改为 displayItems（groups）或保留扁平结构用于当前子组件。
-  // // 这里保持兼容：仍把 tableData 设为扁平数组（后续可逐步改造 TreatSwiper）
-  // tableData.value = JSON.parse(JSON.stringify(flatForWs));
+  // 6. 标记治疗状态
+  hasTreatmentStarted.value = true;
+  isTreating.value = true;
+  isPsuse.value = false;
+  isTreatmentEnded.value = false;
+  testIndex.value = 0;
 
-  // // 7. 生成WS指令数组（基于扁平化数组 flatForWs）
-  // wsCommandArray.value = generateWsCommandArray(flatForWs);
-  // // 发送第一个穴位的WS指令（如果需要）
-  // if (wsCommandArray.value.length > 0) {
-  //   sendWsMessage(wsCommandArray.value[0]);
-  // }
-
-  // // 8. 初始化图片/身体显示（使用 firstPoint）
-  // chooseBody(firstPoint);
-  // picType.value = firstPoint.bodyType;
-  // picUrl.value = [0, 2].includes(firstPoint.bodyType) ? BodyPic : LegPic;
-
-  // // 9. 标记治疗状态（保持原样）
-  // hasTreatmentStarted.value = true;
-  // isTreating.value = true;
-  // isPsuse.value = false;
-  // isTreatmentEnded.value = false;
-  // testIndex.value = 0;
-
-  // // 10. 启动倒计时（父子组件通信保持原样）
-  // nextTick(() => {
-  //   if (swiperInstance.value) {
-  //     swiperInstance.value.slideTo(Math.floor(testIndex.value / 3));
-  //   }
-  //   if (treatSwiperRef.value) {
-  //     // 注意：TreatSwiper 如果仍以扁平 tableData 工作，则此处 startCountdown(0) 仍有效。
-  //     // 之后我们会把 TreatSwiper 改为按 displayItems（group）倒计时。
-  //     treatSwiperRef.value.startCountdown(0);
-  //   }
-  // });
+  // 7. 启动倒计时
+  nextTick(() => {
+    if (swiperInstance.value) {
+      // 初始索引0  分页索引0（第一页3个）
+      swiperInstance.value.slideTo(Math.floor(testIndex.value / 3));
+    }
+    if (treatSwiperRef.value) {
+      treatSwiperRef.value.startCountdown(0);
+    }
+  });
 };
 
 //  更新newPlanPoint的状态（全局生效）
@@ -926,6 +887,7 @@ onMounted(() => {
 
 onUnmounted(() => {});
 </script>
+>
 
 <style scoped lang="scss">
 .container {

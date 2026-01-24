@@ -1,5 +1,16 @@
+<!--
+ * @Author: Sid Li
+ * @Date: 2025-12-13 14:06:46
+ * @LastEditors: Sid Li
+ * @LastEditTime: 2025-12-27 15:03:07
+ * @FilePath: \zi-xiao-ai\src\components\body\BodyBack.vue
+ * @Description: 身体正面图片组件
+-->
+
 <template>
   <div class="body-img">
+    <!-- <img src="@/assets/pic/body/body2.png" alt="" /> -->
+
     <div class="bg-body-norem">
       <div class="light-ball-item" v-for="item in pointData" :key="item.id">
         <div
@@ -45,7 +56,7 @@ const pointData = ref([]);
 const pointDataCopy = ref([]);
 const pointTreat = ref([]);
 
-// 确保pointTreat始终有数据的初始化函数
+//  确保pointTreat始终有数据的初始化函数
 const initPointTreat = () => {
   const pointDataJson = JSON.parse(localStorage.getItem("pointData")) || [];
   pointDataCopy.value = JSON.parse(JSON.stringify(pointDataJson));
@@ -55,37 +66,26 @@ const initPointTreat = () => {
   console.log("初始化pointTreat：", pointTreat.value);
 };
 
-// 核心修复：适配二维数组的状态替换函数
 const replaceStatusById = (sourceArr, targetArr) => {
-  // 先将二维数组平铺为一维数组
-  const flatSource = Array.isArray(sourceArr[0]) 
-    ? sourceArr.flat() 
-    : sourceArr;
-  
-  // 构建状态映射表
-  const statusMap = flatSource.reduce((map, item) => {
-    if (item.id) { // 确保有id才映射
-      map[item.id] = item.status;
-    }
+  const statusMap = sourceArr.reduce((map, item) => {
+    map[item.id] = item.status;
     return map;
   }, {});
-  
-  // 更新目标数组的状态
   return targetArr.map((item) => {
     if (statusMap.hasOwnProperty(item.id)) {
       return { ...item, status: statusMap[item.id] };
     }
-    return { ...item, status: 0 }; // 默认未开始
+    return { ...item };
   });
 };
 
 watch(
-  () => props.newPlanPoint,
+  () => [...props.newPlanPoint],
   (newVal) => {
-    console.log("最新newPlanPoint数据（二维）：", newVal);
+    console.log("最新newPlanPoint数据：", newVal);
     if (!newVal || newVal.length === 0) return;
 
-    // 每次watch前先确保pointTreat已初始化
+    //  每次watch前先确保pointTreat已初始化
     if (pointTreat.value.length === 0) {
       initPointTreat();
     }
@@ -94,7 +94,6 @@ watch(
     const updatedArr2 = replaceStatusById(newVal, pointTreat.value);
     console.log("更新后pointData：", updatedArr2);
 
-    // 强制触发视图更新
     pointData.value = [];
     nextTick(() => {
       pointData.value = updatedArr2;
@@ -108,9 +107,7 @@ watch(
   () => pointData.value,
   (newVal) => {
     console.log("pointData最终渲染数据：", newVal);
-    const hasStatus1 = newVal.some((item) => item.status === 1);
     const hasStatus2 = newVal.some((item) => item.status === 2);
-    console.log("是否有治疗中穴位（status=1）：", hasStatus1);
     console.log("是否有治疗完成的穴位（status=2）：", hasStatus2);
   },
   { deep: true }
@@ -125,7 +122,6 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-// 保留原有样式，此处省略（样式无问题）
 .body-img {
   box-sizing: border-box;
   width: 100%;
@@ -135,11 +131,14 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   background-color: #fff;
+
   border-radius: 12px;
+  // border: 1px solid green;
 
   .bg-body-norem {
     width: 441px !important;
     height: 636px !important;
+
     background: url("@/assets/pic/body/body2.png") no-repeat center center;
     background-size: cover;
     border-radius: 12px;
@@ -147,6 +146,7 @@ onMounted(() => {
   }
 
   .light-ball-item {
+    // border: 2px solid green;
     height: 100%;
     width: 100%;
     position: absolute;
@@ -211,18 +211,27 @@ onMounted(() => {
   z-index: 9999 !important;
 }
 
+.blink {
+  transform: scale(1.2);
+  animation: blink 1.5s infinite ease-in-out;
+  transform-origin: center center;
+}
 @keyframes blink {
   0% {
-    opacity: 0.6;
-    transform: scale(1.2);
+    opacity: 0.6; /* 初始透明度 */
+    transform: scale(1.2); /* 初始放大比例 */
   }
   50% {
-    opacity: 1;
-    transform: scale(1.3);
+    opacity: 1; /* 最亮状态 */
+    transform: scale(1.3); /* 轻微放大增强闪烁感 */
   }
   100% {
-    opacity: 0.6;
+    opacity: 0.6; /* 回到初始状态 */
     transform: scale(1.2);
   }
+}
+
+.light-index {
+  z-index: 9999 !important;
 }
 </style>

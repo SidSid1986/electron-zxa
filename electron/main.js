@@ -2,7 +2,7 @@
  * @Author: Sid Li
  * @Date: 2025-11-29 13:33:24
  * @LastEditors: Sid Li
- * @LastEditTime: 2026-01-20 15:48:05
+ * @LastEditTime: 2026-01-21 15:20:03
  * @FilePath: \ZiXiaoAi-build\electron\main.js
  * @Description: 基于loudness库的跨平台音量控制主进程代码
  */
@@ -17,30 +17,30 @@ const BACKEND_ADDRESS = "localhost:8000"; // 或 192.168.3.65:8000
 // const BACKEND_ADDRESS = "192.168.3.65:8000"; // 或 192.168.3.65:8000
 // =====================   File 协议拦截器 =====================
 function registerFileProtocolInterceptor() {
-  // 清空 File 相关旧规则
+  // 清空 File 相关规则
   session.defaultSession.webRequest.onBeforeRequest(
     { urls: ["file:///*/api*", "file:///*/sys*", "file:///api*", "file:///sys*"] },
     () => {},
   );
 
-  // File 拦截核心逻辑 - 适配 Windows 盘符路径 + 修复双斜杠问题
+  // File 适配 Windows 盘符路径 + 修复双斜杠问题
   session.defaultSession.webRequest.onBeforeRequest(
-    // ❶ 匹配规则：包含所有带盘符/不带盘符的 api/sys 路径
+    // 匹配规则：包含所有带盘符/不带盘符的 api/sys 路径
     { urls: ["file:///*/api*", "file:///*/sys*", "file:///api*", "file:///sys*"] },
     (details, callback) => {
       try {
         const url = details.url.toLowerCase();
-        // ❷ 匹配任意路径中的 /api/ 或 /sys/（忽略盘符）
+        // 匹配任意路径中的 /api/ 或 /sys/（忽略盘符）
         if (url.includes("/api/") || url.includes("/sys/")) {
           console.log(`[精准拦截] 触发拦截: ${details.url}`);
           
-          // ❸ 提取 api/sys 开头的路径（去掉盘符和 file:/// 前缀）
+          // 提取 api/sys 开头的路径（去掉盘符和 file:/// 前缀）
           let path = details.url
             .replace(/^file:\/+/, "") // 去掉 file:///
             .replace(/^[A-Za-z]:\//, "/") // 去掉 Windows 盘符（如 D:/ → /）
             .replace(/\\/g, "/"); // 反斜杠转正斜杠
 
-          // ❹ 确保路径以 /api 或 /sys 开头
+          // 确保路径以 /api 或 /sys 开头
           if (!path.startsWith("/api") && !path.startsWith("/sys")) {
             const apiIndex = path.indexOf("/api");
             const sysIndex = path.indexOf("/sys");
@@ -50,7 +50,7 @@ function registerFileProtocolInterceptor() {
             }
           }
 
-          // ❺ 修复双斜杠问题：使用 URL 构造函数自动处理路径拼接（核心修复）
+          // 使用 URL 构造函数自动处理路径拼接
           const baseUrl = `http://${BACKEND_ADDRESS}`;
           const encodedUrl = new URL(path, baseUrl).href.replace(/ /g, "%20");
           
@@ -71,7 +71,7 @@ function registerFileProtocolInterceptor() {
     },
   );
 
-  // 窗口内 File 兜底拦截（同样适配盘符 + 修复双斜杠）
+  // 窗口内 File （适配盘符 + 修复双斜杠）
   if (mainWindow) {
     mainWindow.webContents.session.webRequest.onBeforeRequest(
       { urls: ["file:///*/api*", "file:///*/sys*", "file:///api*", "file:///sys*"] },
@@ -93,7 +93,7 @@ function registerFileProtocolInterceptor() {
               }
             }
 
-            // ❺ 同样修复双斜杠问题
+            // 修复双斜杠
             const baseUrl = `http://${BACKEND_ADDRESS}`;
             const encodedUrl = new URL(path, baseUrl).href.replace(/ /g, "%20");
             

@@ -31,8 +31,7 @@
 <script setup>
 import { ref, computed, onMounted, getCurrentInstance } from "vue";
 import { useRouter } from "vue-router";
-const { $XPack_WebSocket } =
-  getCurrentInstance().appContext.config.globalProperties;
+const { $XPack_WebSocket } = getCurrentInstance().appContext.config.globalProperties;
 
 const router = useRouter();
 
@@ -57,7 +56,7 @@ onMounted(() => {
       clearInterval(timer);
       router.push("/home");
     }
-  }, 30); // 调整速度，总时长约3秒
+  }, 20); // 调整速度，总时长约2秒
 });
 </script>
 

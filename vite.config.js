@@ -79,6 +79,11 @@ export default ({ mode }) => {
           changeOrigin: true,
           rewrite: (path) => path.replace(/^\/api/, "api"),
         },
+        "/sys": {
+          target: env.VITE_APP_API_HOST,
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/sys/, "sys"),
+        },
       },
     },
 
